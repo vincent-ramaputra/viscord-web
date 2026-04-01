@@ -80,18 +80,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 
-  span {
+  .span {
     display: flex;
   }
 
-  h2 {
+  .h2 {
     width: fit-content;
     display: flex;
     flex-wrap: nowrap;
     gap: 4px;
   }
 
-  p {
+  .p {
     color: var(--text-default);
   }
 }

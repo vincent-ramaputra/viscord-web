@@ -9,7 +9,6 @@ import { FormEvent, useEffect, useRef, useState } from "react"
 import { MIN_AGE_REQUIREMENT, MIN_PASSWORD_LENGTH } from "@/constants/validations"
 import { RegisterDTO } from "@/interfaces/dto/register.dto"
 import { register } from "@/services/auth/auth.service"
-import { AuthResponse } from "@/interfaces/auth-response"
 import { ErrorResponse } from "@/interfaces/errors/error-response"
 import { Response } from "@/interfaces/response"
 import { RegisterError } from "@/interfaces/errors/register-error"
@@ -121,7 +120,7 @@ export default function Register() {
         };
 
         setIsSubmitting(true)
-        const response: Response<AuthResponse> = await register(dto);
+        const response: Response<null> = await register(dto);
         setIsSubmitting(false)
         if (!response.success) {
             if (response.message instanceof ErrorResponse) {

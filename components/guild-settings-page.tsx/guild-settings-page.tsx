@@ -84,7 +84,7 @@ export default function GuildSettingsPage({ guildId, show, onClose }: GuildSetti
                                 return (
                                     <div key={header}>
                                         <div className={styles["section-header"]}>
-                                            <h2>{header}</h2>
+                                            <h2 className="h2">{header}</h2>
                                         </div>
                                         {sidebarItems[header].map((item: SidebarItem, index: number) => {
                                             return (

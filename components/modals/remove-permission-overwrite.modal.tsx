@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import ButtonDanger from "../buttons/button-danger";
 import { useGetGuild } from "@/app/stores/guilds-store";
 import { useDeleteGuildChannelMutation, useDeletePermissionOverwrite } from "@/hooks/mutations";
-import { useSettingsOverlay } from "@/contexts/settings-overlay.context";
 import { GuildMember } from "@/interfaces/guild-member";
 import { Role } from "@/interfaces/role";
 import { PermissionOverwriteTargetType } from "@/enums/permission-overwrite-target-type.enum";

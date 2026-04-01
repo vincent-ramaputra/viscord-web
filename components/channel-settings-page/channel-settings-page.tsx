@@ -76,8 +76,8 @@ export default function ChannelSettingsPage({ channelId, guildId, show, onClose 
                         <div className={styles["sidebar-menu"]}>
                             <div>
                                 <div className={styles["section-header"]}>
-                                    {channel && <h2>
-                                        <span className="flex gap-[4px] items-center">
+                                    {channel && <h2 className="h2">
+                                        <span className="span flex gap-[4px] items-center">
                                             {channel.type === ChannelType.Text ?
                                                 <PiHash />
                                                 :
@@ -99,7 +99,7 @@ export default function ChannelSettingsPage({ channelId, guildId, show, onClose 
                             <div>
                                 <SidebarItem isActive={false} onClick={() => openModal(ModalType.DELETE_CHANNEL, { channel })}>
                                     <div className="flex justify-between items-center text-[var(--text-danger)]">
-                                        <p>Delete Channel</p>
+                                        <p className=".p">Delete Channel</p>
                                         <FaTrash size={14} />
                                     </div>
                                 </SidebarItem>
@@ -122,7 +122,7 @@ export default function ChannelSettingsPage({ channelId, guildId, show, onClose 
                             <div className={styles["close-button"]} onClick={onClose}>
                                 <svg aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M17.3 18.7a1 1 0 0 0 1.4-1.4L13.42 12l5.3-5.3a1 1 0 0 0-1.42-1.4L12 10.58l-5.3-5.3a1 1 0 0 0-1.4 1.42L10.58 12l-5.3 5.3a1 1 0 1 0 1.42 1.4L12 13.42l5.3 5.3Z"></path></svg>
                             </div>
-                            <p className={styles["close-label"]}>ESC</p>
+                            <p className={"p" + styles["close-label"]}>ESC</p>
                         </div>
                     </div>
                 </div>

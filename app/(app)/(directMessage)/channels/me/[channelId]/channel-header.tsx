@@ -74,6 +74,7 @@ const CallHeaderContainer = styled.div`
     width: 100%;
     background: black;
     flex-direction: column;
+    flex-shrink: 0;
     overflow: hidden;
 `
 
@@ -248,7 +249,7 @@ function CallHeader({ channel }: { channel: Channel }) {
     const { user } = useCurrentUserStore();
     const { getUserProfile } = useUserProfileStore();
     const voiceStates = useGetChannelVoiceStates(channel.id);
-    const recipient: UserProfile = getUserProfile(channel.recipients[0].id) || channel.recipients[0];
+    const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const { emitVoiceEvent } = useVoiceEvents();
     const { mediaSettings } = useAppSettingsStore();
 
@@ -308,7 +309,7 @@ function CallHeaderTop({
 }) {
     const [isHoveringName, setIsHoveringName] = useState(false);
     const { getUserProfile } = useUserProfileStore();
-    const recipientProfile = getUserProfile(channel.recipients[0].id) || channel.recipients[0];
+    const recipientProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const isTyping = useIsUserTyping(channel.id, recipient.id);
 
     return (
@@ -421,7 +422,7 @@ function VideoView({
     return (
         <div className="flex flex-wrap gap-4 justify-center">
             {focusedTile ?
-                <div className="flex items-center justify-center relative w-1/2 bg-black" onClick={() => setFocusedTile(null)}>
+                <div className="flex items-center justify-center relative bg-black" onClick={() => setFocusedTile(null)}>
                     {focusedTile}
                 </div>
             :
@@ -489,7 +490,7 @@ function VoiceOnlyView({
 
             {voiceStates.map((vs) => {
                 const participant = getUserProfile(vs.userId);
-                const isSpeaking = voiceStates.find(state => state.userId === user.id) && activeSpeakers.has(vs.userId);
+                const isSpeaking = voiceStates.find(state => state.userId === user!.id) && activeSpeakers.has(vs.userId);
 
                 return (
                     <motion.div
@@ -801,7 +802,7 @@ function getTileKey(tile: Consumer | Producer | VoiceRingState | VoiceState): st
 export function DMChannelHeader({ channel }: { channel: Channel }) {
     const [isHoveringName, setIsHoveringName] = useState(false);
     const { getUserProfile } = useUserProfileStore();
-    const recipient: UserProfile = getUserProfile(channel.recipients[0].id) || channel.recipients[0];
+    const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const isTyping = useIsUserTyping(channel.id, recipient.id);
     const voiceStates = useGetChannelVoiceStates(channel.id);
     const { emitVoiceEvent } = useVoiceEvents();

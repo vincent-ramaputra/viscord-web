@@ -56,6 +56,7 @@ export default function RelationshipListItem({ relationship, children }: { relat
     const { isUserOnline } = useUserPresenceStore();
     const user = useGetUserProfile(relationship.user.id);
     
+    if (!user) return;
     
     return (
         <UserListItemContainer onContextMenu={(e) => showMenu(e, ContextMenuType.USER, relationship)}>

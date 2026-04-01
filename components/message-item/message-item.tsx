@@ -148,7 +148,7 @@ export default function MessageItem({ sender, message, isSubsequent = false, gui
                 {!isSubsequent &&
                     <SubsequentMessageHelper>
                         <SenderNameText
-                        style={{color: highestRole ? numberToHex(highestRole.color) : ''}}
+                        style={{color: highestRole ? numberToHex(highestRole.color!) : ''}}
                         onContextMenu={(e) => {
                             const relationship = relationships?.find(rel => rel.user.id === sender.id)
                             if (relationship) {

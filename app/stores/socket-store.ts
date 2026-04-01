@@ -4,7 +4,7 @@ import { create } from "zustand";
 interface SocketStoreState {
     socket: Socket | undefined,
     initializeSocket: () => Socket,
-    removeSocket: () => void
+    removeSocket: () => any
 }
 
 export const useSocketStore = create<SocketStoreState>((set, get) => ({
@@ -26,7 +26,7 @@ export const useSocketStore = create<SocketStoreState>((set, get) => ({
     },
     removeSocket: () => set(state => {
         const socket = state.socket;
-        if (!socket) return;
+        if (!socket) return { socket: undefined };
 
         socket.disconnect();
         socket.removeAllListeners();

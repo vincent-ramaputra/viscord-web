@@ -27,7 +27,7 @@ export const useChannelsStore = create<ChannelsStoreState>((set, get) => ({
         return get().channels.get(channelId);
     },
     getFriendChannel: (userId: string) => {
-        return Array.from(get().channels.values()).find(ch => ch.recipients.find(r => r.id === userId))
+        return Array.from(get().channels.values()).find(ch => ch.recipients!.find(r => r.id === userId))
     }
 }))
 

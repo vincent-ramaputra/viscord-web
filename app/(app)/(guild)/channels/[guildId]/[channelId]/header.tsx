@@ -107,12 +107,13 @@ const SearchBarContainer = styled.div`
 function SearchBar({ channel }: { channel: Channel }) {
     return (
         <SearchBarContainer>
-            <TextInputSecondary
+            {/* <TextInputSecondary
+
                 placeholder="Search"
                 
             >
 
-            </TextInputSecondary>
+            </TextInputSecondary> */}
         </SearchBarContainer>
     );
 }
@@ -269,7 +270,7 @@ function CallHeader({ channel }: { channel: Channel }) {
     const { user } = useCurrentUserStore();
     const { getUserProfile } = useUserProfileStore();
     const voiceStates = useGetChannelVoiceStates(channel.id);
-    const recipient: UserProfile = getUserProfile(channel.recipients[0].id) || channel.recipients[0];
+    const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const { emitVoiceEvent } = useVoiceEvents();
     const { mediaSettings } = useAppSettingsStore();
 
@@ -328,7 +329,7 @@ function CallHeaderTop({
 }) {
     const [isHoveringName, setIsHoveringName] = useState(false);
     const { getUserProfile } = useUserProfileStore();
-    const recipientProfile = getUserProfile(channel.recipients[0].id) || channel.recipients[0];
+    const recipientProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const isTyping = useIsUserTyping(channel.id, recipient.id);
 
     return (
@@ -509,7 +510,7 @@ function VoiceOnlyView({
 
             {voiceStates.map((vs) => {
                 const participant = getUserProfile(vs.userId);
-                const isSpeaking = voiceStates.find(state => state.userId === user.id) && activeSpeakers.has(vs.userId);
+                const isSpeaking = voiceStates.find(state => state.userId === user!.id) && activeSpeakers.has(vs.userId);
 
                 return (
                     <motion.div

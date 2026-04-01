@@ -330,7 +330,7 @@ export default function Page() {
         return <div>bingbong</div>
     }
 
-    if (!allowedMembers.find(m => m.userId === user.id)) {
+    if (!allowedMembers.find(m => m.userId === user!.id)) {
         return <div>Not allowed</div>
     }
 

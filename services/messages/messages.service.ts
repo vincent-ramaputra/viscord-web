@@ -33,15 +33,10 @@ export async function getMessages(channelId: string): Promise<Response<Message[]
 
 export async function sendMessage(dto: CreateMessageDto): Promise<Response<Message>> {
     const formData = new FormData()
-    formData.append('content', dto.content);
-    formData.append('channelId', dto.channelId);
+    formData.append('data', JSON.stringify(dto));
 
     for (const att of dto.attachments) {
-        formData.append('files', att);
-    }
-
-    for (const mention of dto.mentions) {
-        formData.append('mentions', mention);
+        formData.append('attachments', att);
     }
 
     try {

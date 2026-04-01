@@ -68,7 +68,7 @@ export function ChannelCategory({ channel, children }: { channel: Channel, child
     const { showMenu } = useContextMenu();
     const guild = useGetGuild(channel.guildId)!;
     const { user } = useCurrentUserStore();
-    const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user.id)!, guild, channel);
+    const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild, channel);
 
     return (
         <Container >

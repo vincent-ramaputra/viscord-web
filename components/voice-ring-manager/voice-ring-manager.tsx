@@ -187,7 +187,7 @@ export function VoiceRingManager() {
     return (
         <div>
             {Array.from(voiceRingStates.entries()).map(([k, v], i) => {
-                let pos: Pos = { x: window.innerWidth / 2 + (i * 10), y: window.innerHeight / 2 };
+                const pos: Pos = { x: window.innerWidth / 2 + (i * 10), y: window.innerHeight / 2 };
 
                 const initiator = getUserProfile(v.initiatorId);
                 if (v.recipientId !== user?.id || pathname.endsWith(v.channelId) || !initiator) {

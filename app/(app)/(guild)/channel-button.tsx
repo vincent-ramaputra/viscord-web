@@ -207,7 +207,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     const { getUserProfile } = useUserProfileStore();
     const { getChannel, getGuild } = useGuildsStore();
     const guild = getGuild(channel.guildId)!;
-    const member = guild.members.find(m => m.userId === user.id);
+    const member = guild.members.find(m => m.userId === user!.id);
     const parent = channel.parent ? getChannel(channel.parent.id) : undefined;
     const effectivePermission = member ? getEffectivePermission(member, guild, channel, parent) : 0n;
     const everyoneOW = channel.isSynced && parent
