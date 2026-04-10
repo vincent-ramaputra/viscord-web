@@ -4,9 +4,9 @@ WORKDIR /app
 
 COPY package*.json .
 
-ARG BACKEND_API_URL
+ARG NEXT_PUBLIC_API_URL
 
-ENV NEXT_PUBLIC_API_URL=${BACKEND_API_URL}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 RUN npm install
 
@@ -14,9 +14,12 @@ COPY . .
 
 RUN npm run build
 
-EXPOSE 80
+EXPOSE 3000
 
-# CMD ["npm", "run", "start"]
-CMD ["npm", "next" , "dev", "--experimental-https", "-p 3002", "--turbopack"]
+# CMD ["npm", "run", "dev"]
+# CMD ["npm", "next" , "dev", "--experimental-https", "-p 3002", "--turbopack"]
 # CMD ["npx", "next", "dev", "--turbopack", "-p 80"]
+RUN cp -r public .next/standalone/
+RUN cp -r .next/static .next/standalone/.next/
 
+CMD ["node", ".next/standalone/server.js"]
