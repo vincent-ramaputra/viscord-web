@@ -3,7 +3,7 @@ import { api } from "../api";
 import { Response } from "@/interfaces/response";
 import { Guild } from "@/interfaces/guild";
 
-const INVITE_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL}/invites`
+const INVITE_ENDPOINT = `/invites`
 
 export async function deleteInvite(inviteId: string): Promise<Response<null>> {
     try {

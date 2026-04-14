@@ -10,9 +10,9 @@ import { PermissionOverwrite } from "@/interfaces/permission-ovewrite";
 import { updatePermissionOverwriteDTO } from "@/interfaces/dto/update-permission-overwrite.dto";
 
 
-const GUILD_ENDPOINT = process.env.NEXT_PUBLIC_API_URL + '/guilds'
-const USER_ENDPOINT = process.env.NEXT_PUBLIC_API_URL + '/users/me/channels'
-const CHANNEL_ENDPOINT = process.env.NEXT_PUBLIC_API_URL + '/channels'
+const GUILD_ENDPOINT = '/guilds'
+const USER_ENDPOINT = '/users/me/channels'
+const CHANNEL_ENDPOINT =  '/channels'
 export async function getDMChannels(): Promise<Response<Channel[]>> {
     try {
         const response = await api.get(`${USER_ENDPOINT}`, {

@@ -13,7 +13,7 @@ import { Invite } from "@/interfaces/invite";
 import { DeleteRoleDTO } from "@/interfaces/dto/delete-role.dto";
 
 
-const ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL}/guilds`
+const ENDPOINT = `/guilds`
 export async function createGuild(dto: CreateGuildDto): Promise<Response<Guild>> {
     const formData = new FormData();
     if (dto.iconImage) {

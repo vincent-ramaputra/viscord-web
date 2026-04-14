@@ -5,7 +5,7 @@ import { RegisterDTO } from "@/interfaces/dto/register.dto";
 import { api } from "../api";
 import { RegisterError } from "@/interfaces/errors/register-error";
 
-const ENDPOINT = process.env.NEXT_PUBLIC_API_URL + '/auth';
+const ENDPOINT = '/auth';
 export async function login(dto: LoginDTO): Promise<Response<null>> {
     try {
         const response = await api.post(ENDPOINT + '/login', dto, {
