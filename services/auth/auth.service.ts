@@ -63,7 +63,7 @@ export async function register(dto: RegisterDTO): Promise<Response<null>> {
 
 export async function refreshToken(): Promise<Response<string>> {
     try {
-        const response = await axios.post(api.defaults.baseURL + '/refresh-token', null, {
+        const response = await axios.post(api.defaults.baseURL + ENDPOINT +  '/refresh-token', null, {
             withCredentials: true,
             timeout: 10000
         });
