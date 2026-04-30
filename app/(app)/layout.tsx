@@ -317,7 +317,7 @@ function AppInitializer({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (!isReady) return;
-        console.log("emitting client ready event");
+        console.log("emitting client ready event", socket);
         socket?.emit(CLIENT_READY_EVENT, (data: ClientReadyResponseDTO) => {
             const currentUser = data.user;
             const guildsMap: Map<string, Guild> = new Map();
