@@ -42,7 +42,7 @@ jobs:
         run: |
           cd infra/k8s/apps/web-client/overlays/dev
           IMAGE_TAG=${{ steps.meta.outputs.version }}
-          kustomize edit set image vincentramaputra/viscord-web-client:$IMAGE_TAG
+          kustomize edit set image vincentramaputra/viscord-web:$IMAGE_TAG
       - name: Commit and push to infra repo
         run: |
           IMAGE_TAG=${{ steps.meta.outputs.version }}
