@@ -217,7 +217,9 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         const { socket } = useSocketStore.getState();
         const socketAndMediasoupReady = socket ? socket.connected : false && mediaSoupReady;
         console.log('socket is ready?', isConnected, mediaSoupReady, socket?.connected);
+        console.log('test', socketAndMediasoupReady, isReady)
         if (socketAndMediasoupReady !== isReady) {
+            console.log('ready!');
             setIsReady(socketAndMediasoupReady);
         }
     }, [socket?.connected, mediaSoupReady]);
