@@ -7,13 +7,18 @@ interface SocketStoreState {
     removeSocket: () => any
 }
 
+const URL = 
+  process.env.NODE_ENV === "production"
+    ? "/ws"
+    : process.env.NEXT_PUBLIC_WS_GATEWAY;
+
 export const useSocketStore = create<SocketStoreState>((set, get) => ({
     socket: undefined,
     initializeSocket: () => {
         const { socket } = get();
         if (socket) return socket;
-
-        const newSocket = io(process.env.NEXT_PUBLIC_WS_GATEWAY!, {
+        const newSocket = io(URL, {
+            secure: true,
             withCredentials: true,
             reconnection: true,
             reconnectionDelay: 5000,
