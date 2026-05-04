@@ -23,7 +23,6 @@ import { MdGroupAdd } from "react-icons/md";
 import { PiPhoneCallFill, PiVideoCameraFill } from "react-icons/pi";
 import styled from "styled-components";
 import { AnimatePresence, motion } from "framer-motion";
-import { getImageURL } from "@/services/storage/storage.service";
 import { ContentFooter } from "@/app/(app)/content-footer";
 import { ImPhoneHangUp } from "react-icons/im";
 import { VoiceRingState } from "@/interfaces/voice-ring-state";

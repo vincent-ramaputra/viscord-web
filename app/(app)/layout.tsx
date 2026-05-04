@@ -278,7 +278,7 @@ function GuildListSidebar() {
                         {guild.iconURL ?
                             <img
                                 className="w-full h-full"
-                                src={getImageURL(`icons/${guild.id}`, guild.iconURL)} alt="initials" />
+                                src={guild.iconURL} alt="initials" />
                             :
                             <p>{initials}</p>
                         }

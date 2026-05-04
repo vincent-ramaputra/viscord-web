@@ -7,8 +7,6 @@ import { UserStatus, UserStatusString } from "@/enums/user-status.enum";
 import { FaAngleRight, FaCopy } from "react-icons/fa6";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import ColorThief from "colorthief";
-import Image from "next/image";
-import { getImageURL } from "@/services/storage/storage.service";
 import { updateStatus } from "@/services/user-profiles/user-profiles.service";
 import { useUpdateCurrentUser } from "@/hooks/queries";
 import { IoIosCopy } from "react-icons/io";
@@ -158,7 +156,7 @@ function CopyUsernameButton({ user, show }: { user: UserProfile, show: boolean }
 function Banner({ user }: { user: UserProfile }) {
     const imgRef = useRef<HTMLImageElement>(null!);
     const [bannerColor, setBannerColor] = useState<string | null>();
-    const avatarURL = user.avatarURL ? getImageURL('avatars', user.avatarURL) : getImageURL('assets', user.defaultAvatarURL);
+    const avatarURL = user.avatarURL ?? user.defaultAvatarURL;
 
     async function getBannerColor() {
         const img = imgRef.current;
@@ -193,7 +191,7 @@ function Banner({ user }: { user: UserProfile }) {
                             <div
                                 className="rounded-full self-center overflow-hidden z-0"
                                 style={{ height: "80px", width: "80px" }}>
-                                <AvatarImage className="" src={user.avatarURL ? getImageURL('avatars', user.avatarURL) : getImageURL('assets', user.defaultAvatarURL)} />
+                                <AvatarImage className="" src={user.avatarURL ?? user.defaultAvatarURL} />
                             </div>
                         </div>
                     </div>

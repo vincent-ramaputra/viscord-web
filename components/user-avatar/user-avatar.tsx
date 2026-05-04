@@ -65,7 +65,7 @@ export default function UserAvatar({ user, showStatus = true, size, isTyping }: 
             <div
                 className={`${styles["pfp-container"]}`}
                 style={{ height: size ? `${size}px` : "32px", width: size ? `${size}px` : "32px" }}>
-                <img className="" src={user.avatarURL ? getImageURL('avatars', user.avatarURL) : getImageURL('assets', user.defaultAvatarURL)} />
+                <img className="" src={user.avatarURL ?? user.defaultAvatarURL } />
             </div>
             {showStatus &&
                 <Fragment>
