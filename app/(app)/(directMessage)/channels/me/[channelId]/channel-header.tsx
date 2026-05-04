@@ -203,7 +203,7 @@ const Overlay = styled.div`
 function UserTile({ user, showDisplayName, isSpeaking, isMuted = false, isDeafened = false }: { user: UserProfile, showDisplayName: boolean, isSpeaking: boolean, isMuted?: boolean, isDeafened?: boolean }) {
     const imgRef = useRef<HTMLImageElement>(null!);
     const [bannerColor, setBannerColor] = useState<string | null>();
-    const avatarURL = user.avatarURL ? getImageURL('avatars', user.avatarURL) : getImageURL('assets', user.defaultAvatarURL);
+    const avatarURL = user.avatarURL ?? user.defaultAvatarURL;
 
     async function getBannerColor() {
         const img = imgRef.current;
@@ -477,10 +477,7 @@ function VoiceOnlyView({
                         {userProfile && (
                             <AvatarImage
                                 className="brightness-50"
-                                src={userProfile.avatarURL ?
-                                    getImageURL('avatars', userProfile.avatarURL) :
-                                    getImageURL('assets', userProfile.defaultAvatarURL)
-                                }
+                                src={userProfile.avatarURL ?? userProfile.defaultAvatarURL}
                             />
                         )}
                     </motion.div>
@@ -504,10 +501,7 @@ function VoiceOnlyView({
                             <>
                                 <AvatarImage
                                     className={`${isSpeaking ? 'ring-2 ring-green-500 p-[1px]' : ''}`}
-                                    src={participant.avatarURL ?
-                                        getImageURL('avatars', participant.avatarURL) :
-                                        getImageURL('assets', participant.defaultAvatarURL)
-                                    }
+                                    src={participant.avatarURL ?? participant.defaultAvatarURL}
                                 />
                                 {vs.isDeafened ? <DeafenedIcon /> : vs.isMuted && <MutedIcon />}
                             </>
