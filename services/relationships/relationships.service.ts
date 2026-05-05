@@ -4,7 +4,7 @@ import Relationship from "@/interfaces/relationship";
 import { Response } from "@/interfaces/response";
 
 
-const ENDPOINT = process.env.NEXT_PUBLIC_API_URL + '/relationships';
+const ENDPOINT = '/relationships';
 
 export async function getRelationships(): Promise<Response<Relationship[]>> {
     try {
