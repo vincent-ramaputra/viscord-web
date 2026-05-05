@@ -1,10 +1,9 @@
 import { Response } from "@/interfaces/response";
 import { UserData } from "@/interfaces/user-data";
-import axios, { AxiosError, HttpStatusCode } from "axios";
+import { AxiosError, HttpStatusCode } from "axios";
 import { api } from "../api";
-import { UserStatus } from "@/enums/user-status.enum";
 
-const ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL}/users`
+const ENDPOINT = `/users`
 
 export async function getCurrentUserData(): Promise<Response<UserData>> {
     try {
