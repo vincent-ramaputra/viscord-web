@@ -4,10 +4,13 @@ import { Message } from "@/interfaces/message";
 import { Response } from "@/interfaces/response";
 import { CreateMessageDto } from "@/interfaces/dto/create-message.dto";
 
-const ENDPOINT = process.env.NEXT_PUBLIC_API_URL;
+const messagePath = (channelId: string, ...segments: string[]) => {
+    return `/channels/${channelId}/messages${segments.length ? '/' + segments.join('/') : ''}`;
+}
+
 export async function getMessages(channelId: string): Promise<Response<Message[]>> {
     try {
-        const response = await api.get(`${ENDPOINT}/channels/${channelId}/messages/`, {
+        const response = await api.get(messagePath(channelId), {
             withCredentials: true
         });
         if (response.status === HttpStatusCode.Ok) {
@@ -40,7 +43,7 @@ export async function sendMessage(dto: CreateMessageDto): Promise<Response<Messa
     }
 
     try {
-        const response = await api.post(`${ENDPOINT}/channels/${dto.channelId}/messages/`, formData, {
+        const response = await api.post(messagePath(dto.channelId), formData, {
             withCredentials: true
         });
         if (response.status === HttpStatusCode.Created) {
@@ -67,7 +70,7 @@ export async function sendMessage(dto: CreateMessageDto): Promise<Response<Messa
 export async function acknowledgeMessage(channelId: string, messageId: string) {
     console.log('yeehaw');
     try {
-        const response = await api.post(`${ENDPOINT}/channels/${channelId}/messages/${messageId}/ack`, null, {
+        const response = await api.post(messagePath(channelId, messageId, 'ack'), null, {
             withCredentials: true
         });
         if (response.status === HttpStatusCode.NoContent) {
