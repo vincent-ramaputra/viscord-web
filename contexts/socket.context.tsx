@@ -48,11 +48,11 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     const { userProfiles, upsertUserProfile } = useUserProfileStore();
     const { handleTypingStart, handleTypingStop } = useUserTypingStore();
     const { updateVoiceState, removeVoiceState, setVoiceStates } = useVoiceStateStore();
-    const { getChannel, updateChannel } = useChannelsStore();
     const { ready: mediaSoupReady } = useMediasoupStore();
 
 
-    function handleFriendReceived(payload: Relationship) {
+    function handleFriendReceived(payload: Relationship) {;
+        upsertUserProfile(payload.user);
         queryClient.setQueryData<Relationship[]>([RELATIONSHIPS_CACHE], (old) => {
             if (!old) {
                 return [payload];

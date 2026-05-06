@@ -129,6 +129,7 @@ export function PendingRequestsTab({ relationships }: { relationships: Relations
             {relationships.filter(rel => rel.type === RelationshipType.PendingReceived).length > 0 &&
                 <FilterTypeContainer>{`Received — ${relationships.length}`}</FilterTypeContainer>}
             {relationships.filter(rel => rel.type === RelationshipType.PendingReceived).map((rel) => {
+                console.log(relationships);
                 return (
                     <RelationshipListItem relationship={rel} key={rel.id}>
                         {rel.type === RelationshipType.PendingReceived &&

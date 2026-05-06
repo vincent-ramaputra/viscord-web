@@ -1,3 +1,4 @@
+import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store";
 import ButtonPrimary from "@/components/buttons/button-primary";
 import { RELATIONSHIPS_CACHE } from "@/constants/query-keys";
 import Relationship from "@/interfaces/relationship";
@@ -81,6 +82,7 @@ export function AddFriendTab() {
     const [responseText, setResponseText] = useState<string | undefined>();
     const [responseSuccess, setResponseSuccess] = useState<boolean | undefined>();
     const queryClient = useQueryClient();
+    const { upsertUserProfile } = useUserProfileStore();
 
     const { mutate: addFriendMutation, isPending, } = useMutation(
         {
@@ -95,6 +97,7 @@ export function AddFriendTab() {
                 setResponseText(usernameText);
                 setResponseSuccess(true);
                 if (response.data) {
+                    upsertUserProfile(response.data.user);
                     queryClient.setQueryData<Relationship[]>([RELATIONSHIPS_CACHE], (old) => {
                         if (!old) {
                             return [response.data!];
