@@ -70,9 +70,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_74A63C4A986A492BBAA12A5B7C26F764 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_EF42E0E6292349749AD8493B89CD0981 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5A7B9E7C32254DB49C47460DC5201BEE }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Update Azure Web App container image
         run: |

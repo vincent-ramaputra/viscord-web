@@ -82,7 +82,7 @@ export default function Login() {
         <div className={styles['content-container'] + " drop-shadow-xl"} ref={containerRef}>
             <div className={styles['login-container']}>
                 <div className={styles['title-container']}>
-                    <h1 className={"font-semibold text-2xl mb-2"}>Welcome back!</h1>
+                    <h1 className={"font-semibold text-2xl mb-2"}>Welcome back!!</h1>
                     <p className={styles["second-title"]}>We&apos;re so excited to see you again!</p>
                 </div>
                 <form action="" onSubmit={handleSubmit}>
