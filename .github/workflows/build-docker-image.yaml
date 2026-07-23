@@ -59,29 +59,3 @@ jobs:
           git add .
           git commit -m "update: updated web-client image tag to $IMAGE_TAG"
           git push
-
-  deploy-azure:
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-    steps:
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Update Azure Web App container image
-        run: |
-          IMAGE_TAG=${{ needs.build.outputs.image_tag }}
-          az webapp config container set \
-            --name viscord \
-            --resource-group my-resourcegroup \
-            --container-image-name vincentramaputra/viscord-web:$IMAGE_TAG \
-            --container-registry-url https://index.docker.io
-
-      - name: Restart Azure Web App
-        run: az webapp restart --name viscord --resource-group my-resourcegroup
