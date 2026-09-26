@@ -15,6 +15,7 @@ import { CreateProducerDTO } from "@/interfaces/dto/create-producer.dto";
 import { ProducerCreatedDTO } from "@/interfaces/dto/producer-created.dto";
 import { VoiceEventDTO } from "@/interfaces/dto/voice-event.dto";
 import { VoiceState } from "@/interfaces/voice-state";
+import { createVoiceTicket } from "@/services/channels/channels.service";
 import { Device } from "mediasoup-client";
 import { ConsumerOptions, RtpCapabilities, Transport } from "mediasoup-client/types";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -189,10 +190,15 @@ export function PeerConnectionManager() {
 
 
 
-    const setupJoinCall = (channelId: string) => {
+    const setupJoinCall = async (channelId: string) => {
         if (peerSocket) return;
 
-        const socket = io(process.env.NEXT_PUBLIC_SFU_SERVER);
+        const ticketResponse = await createVoiceTicket(channelId);
+        if (!ticketResponse.success || !ticketResponse.data) return;
+
+        const socket = io(ticketResponse.data.sfuUrl, {
+            auth: { ticket: ticketResponse.data.ticket }
+        });
         const user = useCurrentUserStore.getState().user;
         setSocket(socket);
         console.log('creating socket', socket);
@@ -211,7 +217,7 @@ export function PeerConnectionManager() {
         socket.on('connect_error', (e) => console.log('connect error', e));
         socket.on('connect', () => {
             console.log('peer socket connected')
-            socket.emit(JOIN_ROOM, { channelId, userId: user!.id }, onRoomJoined);
+            socket.emit(JOIN_ROOM, onRoomJoined);
         });
     }
 
