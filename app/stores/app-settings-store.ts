@@ -79,10 +79,10 @@ export const useAppSettingsStore = create<AppSettings>((set) => {
         },
         setDeafened: (deafened: boolean) => {
             set(state => {
-                const newMediaSettings: MediaSettings = {...state.mediaSettings, isDeafened: deafened}
+                const newMediaSettings: MediaSettings = {...state.mediaSettings, isDeafened: deafened, isMuted: deafened};
 
-                localStorage.setItem('media_settings', JSON.stringify(newMediaSettings))
-                return {mediaSettings: newMediaSettings}
+                localStorage.setItem('media_settings', JSON.stringify(newMediaSettings));
+                return {mediaSettings: newMediaSettings};
             })
         }
     };

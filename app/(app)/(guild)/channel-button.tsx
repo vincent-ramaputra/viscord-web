@@ -1,14 +1,10 @@
-import { useVoiceEvents } from "@/app/(auth)/hooks/socket-events";
-import { useAppSettingsStore } from "@/app/stores/app-settings-store";
-import { useChannelsStore } from "@/app/stores/channels-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useGuildsStore } from "@/app/stores/guilds-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
-import { useGetChannelVoiceStates, useVoiceStateStore } from "@/app/stores/voice-state-store";
+import { useGetChannelVoiceStates } from "@/app/stores/voice-state-store";
 import Tooltip from "@/components/tooltip/tooltip";
-import UserAvatar from "@/components/user-avatar/user-avatar";
 import { useContextMenu } from "@/contexts/context-menu.context";
 import { useModal } from "@/contexts/modal.context";
 import { ChannelType } from "@/enums/channel-type.enum";
@@ -16,15 +12,12 @@ import { ContextMenuType } from "@/enums/context-menu-type.enum";
 import { ModalType } from "@/enums/modal-type.enum";
 import { Permissions } from "@/enums/permissions.enum";
 import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
-import { VoiceEventType } from "@/enums/voice-event-type";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
+import { useVoice } from "@/hooks/use-voice";
 import { Channel } from "@/interfaces/channel";
-import { VoiceState } from "@/interfaces/voice-state";
-import { ringChannelRecipients } from "@/services/channels/channels.service";
 import { getImageURL } from "@/services/storage/storage.service";
-import { getCurrentUserData } from "@/services/users/users.service";
 import { usePathname, useRouter } from "next/navigation";
-import { Fragment, MouseEvent, MouseEventHandler, useEffect, useState } from "react";
+import { Fragment, MouseEvent, useEffect, useState } from "react";
 import { FaLock } from "react-icons/fa6";
 import { PiHash } from "react-icons/pi";
 import styled from "styled-components";
@@ -201,8 +194,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     const { openSettings } = useSettingsOverlay();
     const voiceStates = useGetChannelVoiceStates(channel.id);
     const { activeSpeakers } = useMediasoupStore();
-    const { emitVoiceEvent } = useVoiceEvents();
-    const { mediaSettings } = useAppSettingsStore();
+    const { join } = useVoice();
     const { user } = useCurrentUserStore();
     const { getUserProfile } = useUserProfileStore();
     const { getChannel, getGuild } = useGuildsStore();
@@ -221,10 +213,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     const hasUnread = channel.userChannelState.unreadCount > 0;
 
     async function handleJoinVoiceCall() {
-        emitVoiceEvent(channel.id, VoiceEventType.VOICE_JOIN, {
-            isMuted: mediaSettings.isMuted,
-            isDeafened: mediaSettings.isDeafened
-        } as VoiceState)
+        join(channel.id);
     }
 
     useEffect(() => {

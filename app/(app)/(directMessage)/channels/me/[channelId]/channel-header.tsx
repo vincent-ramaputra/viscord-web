@@ -1,6 +1,4 @@
 import ContentHeader from "@/app/(app)/content-header";
-import { useVoiceEvents } from "@/app/(auth)/hooks/socket-events";
-import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
@@ -9,8 +7,6 @@ import { useGetChannelVoiceRing } from "@/app/stores/voice-ring-state-store";
 import { useGetChannelVoiceStates } from "@/app/stores/voice-state-store";
 import Tooltip from "@/components/tooltip/tooltip";
 import UserAvatar from "@/components/user-avatar/user-avatar";
-import { ChannelType } from "@/enums/channel-type.enum";
-import { VoiceEventType } from "@/enums/voice-event-type";
 import { Channel } from "@/interfaces/channel";
 import { UserProfile } from "@/interfaces/user-profile";
 import { VoiceState } from "@/interfaces/voice-state";
@@ -27,6 +23,7 @@ import { ContentFooter } from "@/app/(app)/content-footer";
 import { ImPhoneHangUp } from "react-icons/im";
 import { VoiceRingState } from "@/interfaces/voice-ring-state";
 import ColorThief from "colorthief";
+import { useVoice } from "@/hooks/use-voice";
 
 
 const UserProfileHeader = styled.div`
@@ -249,20 +246,16 @@ function CallHeader({ channel }: { channel: Channel }) {
     const { getUserProfile } = useUserProfileStore();
     const voiceStates = useGetChannelVoiceStates(channel.id);
     const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
-    const { emitVoiceEvent } = useVoiceEvents();
-    const { mediaSettings } = useAppSettingsStore();
+    const { join, leave } = useVoice();
 
     async function handleJoinVoiceCall() {
         const voiceStates = useGetChannelVoiceStates(channel.id);
         if (voiceStates.length === 0) await ringChannelRecipients(channel.id);
-        emitVoiceEvent(channel.id, VoiceEventType.VOICE_JOIN, {
-            isMuted: mediaSettings.isMuted,
-            isDeafened: mediaSettings.isDeafened
-        } as VoiceState);
+        join(channel.id);
     }
 
     async function handleLeaveVoiceCall() {
-        emitVoiceEvent(channel.id, VoiceEventType.VOICE_LEAVE);
+        leave();
     }
 
     return (
@@ -424,27 +417,27 @@ function VideoView({
                 <div className="flex items-center justify-center relative bg-black" onClick={() => setFocusedTile(null)}>
                     {focusedTile}
                 </div>
-            :
-            tiles.map(tile => (
-                <CallTile
-                    key={getTileKey(tile)}
-                    tile={tile}
-                    isHovering={isHovering}
-                    activeSpeakers={activeSpeakers}
-                    voiceStates={voiceStates}
-                    onClick={() => setFocusedTile(
-                        <CallTile
-                            key={getTileKey(tile)}
-                            tile={tile}
-                            isHovering={isHovering}
-                            activeSpeakers={activeSpeakers}
-                            voiceStates={voiceStates}
-                            getUserProfile={getUserProfile}
-                        />
-                    )}
-                    getUserProfile={getUserProfile}
-                />
-            ))}
+                :
+                tiles.map(tile => (
+                    <CallTile
+                        key={getTileKey(tile)}
+                        tile={tile}
+                        isHovering={isHovering}
+                        activeSpeakers={activeSpeakers}
+                        voiceStates={voiceStates}
+                        onClick={() => setFocusedTile(
+                            <CallTile
+                                key={getTileKey(tile)}
+                                tile={tile}
+                                isHovering={isHovering}
+                                activeSpeakers={activeSpeakers}
+                                voiceStates={voiceStates}
+                                getUserProfile={getUserProfile}
+                            />
+                        )}
+                        getUserProfile={getUserProfile}
+                    />
+                ))}
         </div>
     );
 }
@@ -715,17 +708,16 @@ function CallFooterSimple({
 }
 
 function CallControls({ screenShareProducer }: { screenShareProducer?: Producer }) {
-    const { mediaSettings, setMuted } = useAppSettingsStore();
-    const { startScreenShare, stopScreenShare } = useMediasoupStore();
+    const { isMuted, isDeafened, toggleMute, startScreenShare, stopScreenShare} = useVoice();
 
     return (
         <CallActionsGroup>
             <CallActionButton
-                className={`${mediaSettings.isMuted ? 'bg-[var(--opacity-red-12)]' : ''}`}
-                onClick={() => setMuted(!mediaSettings.isMuted)}
+                className={`${isMuted ? 'bg-[var(--opacity-red-12)]' : ''}`}
+                onClick={toggleMute}
             >
                 <div className="h-[20px] w-[20px] flex items-center justify-center">
-                    {(mediaSettings.isMuted || mediaSettings.isDeafened) ?
+                    {(isMuted || isDeafened) ?
                         <BsMicMuteFill className="text-[var(--red-400)]" size={18} /> :
                         <BsMicFill size={18} />
                     }
@@ -798,15 +790,11 @@ export function DMChannelHeader({ channel }: { channel: Channel }) {
     const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const isTyping = useIsUserTyping(channel.id, recipient.id);
     const voiceStates = useGetChannelVoiceStates(channel.id);
-    const { emitVoiceEvent } = useVoiceEvents();
-    const { mediaSettings } = useAppSettingsStore();
+    const { join } = useVoice();
 
     async function handleJoinVoiceCall() {
         if (voiceStates.length === 0) await ringChannelRecipients(channel.id);
-        emitVoiceEvent(channel.id, VoiceEventType.VOICE_JOIN, {
-            isMuted: mediaSettings.isMuted,
-            isDeafened: mediaSettings.isDeafened
-        } as VoiceState)
+        join(channel.id);
     }
 
     if (voiceStates.length > 0) {
