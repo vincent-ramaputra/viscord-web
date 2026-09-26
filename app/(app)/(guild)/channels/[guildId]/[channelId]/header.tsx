@@ -735,7 +735,7 @@ function CallFooterSimple({
 }
 
 function CallControls({ screenShareProducer }: { screenShareProducer?: Producer }) {
-    const { isMuted, isDeafened, startScreenShare, stopScreenShare, toggleMute} = useVoice();
+    const { isMuted, isMicOff, startScreenShare, stopScreenShare, toggleMute} = useVoice();
 
     return (
         <CallActionsGroup>
@@ -744,7 +744,7 @@ function CallControls({ screenShareProducer }: { screenShareProducer?: Producer 
                 onClick={toggleMute}
             >
                 <div className="h-[20px] w-[20px] flex items-center justify-center">
-                    {(isMuted || isDeafened) ?
+                    {isMicOff ?
                         <BsMicMuteFill className="text-[var(--red-400)]" size={18} /> :
                         <BsMicFill size={18} />
                     }

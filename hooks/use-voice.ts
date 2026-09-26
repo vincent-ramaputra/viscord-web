@@ -9,13 +9,15 @@ export function useVoice() {
     const channelId = useMediasoupStore((s) => s.channelId);
     const isMuted = useAppSettingsStore(s => s.mediaSettings.isMuted)
     const isDeafened = useAppSettingsStore(s => s.mediaSettings.isDeafened)
+    // deafening also silences the mic without touching isMuted
+    const isMicOff = isMuted || isDeafened;
 
 
     function join(channelId: string) {
         const { isDeafened, isMuted } = useAppSettingsStore.getState().mediaSettings;
 
         emitVoiceEvent(channelId, VoiceEventType.VOICE_JOIN, {
-            isMuted,
+            isMuted: isMuted || isDeafened,
             isDeafened
         } as VoiceState);
     }
@@ -30,15 +32,14 @@ export function useVoice() {
     function toggleMute() {
         const { setMuted, mediaSettings } = useAppSettingsStore.getState();
 
-        setMuted(!mediaSettings.isMuted);
+        // flip what the user sees: clicking the mic while deafened turns it on (setMuted(false) also undeafens)
+        setMuted(!(mediaSettings.isMuted || mediaSettings.isDeafened));
     }
 
     function toggleDeafened() {
-        const { setDeafened, setMuted, mediaSettings } = useAppSettingsStore.getState();
+        const { setDeafened, mediaSettings } = useAppSettingsStore.getState();
 
         setDeafened(!mediaSettings.isDeafened);
-        if (mediaSettings.isDeafened) setMuted(true);
-        else setMuted(false);
     }
 
     async function startScreenShare() {
@@ -55,6 +56,7 @@ export function useVoice() {
         channelId,
         isMuted,
         isDeafened,
+        isMicOff,
         join,
         leave,
         toggleMute,
