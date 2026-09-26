@@ -106,7 +106,7 @@ export const useGuildsStore = create<GuildStoreState>((set, get) => ({
                 });
             }
             else {
-                updatedChannels = [...updatedChannels, channel];
+                updatedChannels = [...updatedChannels, { ...channel, userChannelState: channel.userChannelState ?? { unreadCount: 0 } }];
             }
 
             const updatedGuild: Guild = { ...guild, channels: updatedChannels };
