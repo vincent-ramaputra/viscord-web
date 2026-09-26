@@ -8,6 +8,7 @@ import { CreateInviteDto } from "@/interfaces/dto/create-invite.dto";
 import { Invite } from "@/interfaces/invite";
 import { PermissionOverwrite } from "@/interfaces/permission-ovewrite";
 import { updatePermissionOverwriteDTO } from "@/interfaces/dto/update-permission-overwrite.dto";
+import { CreateVoiceTicketResponseDTO } from "@/interfaces/dto/create-voice-ticket-response.dto";
 
 
 const GUILD_ENDPOINT = '/guilds'
@@ -327,4 +328,30 @@ export async function getChannelInvites(channelId: string): Promise<Response<Inv
         message: "An unknown error occurred."
     })
 
+}
+
+export async function createVoiceTicket(channelId: string): Promise<Response<CreateVoiceTicketResponseDTO>> {
+    try {
+        const response = await api.post(`${CHANNEL_ENDPOINT}/${channelId}/voice-ticket`, null, {
+            withCredentials: true,
+        });
+        if (response.status === HttpStatusCode.Ok) {
+            return Response.Success({
+                data: response.data.data,
+                message: response.data.message
+            });
+        }
+        return Response.Failed({
+            message: response.data.message
+        });
+    } catch (error) {
+        if (error instanceof AxiosError)
+            return Response.Failed({
+                message: error.response ? error.response.data.message as string : "An unknown Error occurred"
+            });
+    }
+
+    return Response.Failed({
+        message: "An unknown error occurred."
+    });
 }
