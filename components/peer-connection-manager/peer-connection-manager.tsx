@@ -8,7 +8,7 @@ import { useGetChannelVoiceStates, useVoiceStateStore } from "@/app/stores/voice
 import { CONNECT_TRANSPORT, CREATE_CONSUMER, CREATE_PRODUCER, CREATE_RTC_ANSWER, CREATE_RTC_OFFER, CREATE_SEND_TRANSPORT, CREATE_RECV_TRANSPORT, VOICE_UPDATE_EVENT, RESUME_CONSUMER, CLOSE_SFU_CLIENT, JOIN_ROOM, CREATE_TRANSPORT, GET_PRODUCERS, PRODUCER_JOINED, ACTIVE_SPEAKER_STATE, PAUSE_PRODUCER, RESUME_PRODUCER, PAUSE_CONSUMER, CLOSE_PRODUCER, CLOSE_CONSUMER } from "@/constants/events";
 import { useSocket } from "@/contexts/socket.context";
 import { VoiceEventType } from "@/enums/voice-event-type";
-import { ActiveSpeakerState } from "@/interfaces/active-speaker-state";
+import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
 import { ConsumerCreatedDTO } from "@/interfaces/dto/consumer-created.dto";
 import { CreateConsumerDTO } from "@/interfaces/dto/create-consumer.dto";
 import { CreateProducerDTO } from "@/interfaces/dto/create-producer.dto";
@@ -70,7 +70,7 @@ export function PeerConnectionManager() {
 
         if (isMicOff) {
             if (user) updateActiveSpeakers(user.id, false);
-            peerSocket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerState)
+            peerSocket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerStateDTO)
             socket?.emit(VOICE_UPDATE_EVENT, {
                 channelId, type: VoiceEventType.STATE_UPDATE, data: {
                     isMuted: true
@@ -103,7 +103,7 @@ export function PeerConnectionManager() {
 
         if (mediaSettings.isDeafened) {
             if (user) updateActiveSpeakers(user.id, false);
-            peerSocket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerState)
+            peerSocket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerStateDTO)
             peerSocket?.emit(PAUSE_CONSUMER);
             socket?.emit(VOICE_UPDATE_EVENT, {
                 channelId, type: VoiceEventType.STATE_UPDATE, data: {
@@ -172,13 +172,13 @@ export function PeerConnectionManager() {
                     // }, 3000);
 
                     updateActiveSpeakers(user!.id, true);
-                    socket?.emit(ACTIVE_SPEAKER_STATE, { speaking: true } as ActiveSpeakerState);
+                    socket?.emit(ACTIVE_SPEAKER_STATE, { speaking: true } as ActiveSpeakerStateDTO);
                 }
             } else {
                 if (speaking && now - lastSpokeTime > STOP_DELAY) {
                     speaking = false;
                     updateActiveSpeakers(user!.id, false);
-                    socket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerState);
+                    socket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerStateDTO);
                 }
             }
 
@@ -414,7 +414,7 @@ export function PeerConnectionManager() {
         closeClient();
     }, [socket]);
 
-    const onActiveSpeaker = (payload: ActiveSpeakerState) => {
+    const onActiveSpeaker = (payload: ActiveSpeakerStateDTO) => {
         updateActiveSpeakers(payload.userId, payload.speaking);
     }
 

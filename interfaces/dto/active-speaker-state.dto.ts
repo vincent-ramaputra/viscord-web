@@ -1,5 +1,5 @@
 
-export interface ActiveSpeakerState {
+export interface ActiveSpeakerStateDTO {
     speaking: boolean;
     userId: string;
 }
