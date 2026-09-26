@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import { Device } from "mediasoup-client";
 import { Consumer, Producer, Transport } from "mediasoup-client/types";
-import { Socket } from "socket.io-client";
 import { CLOSE_PRODUCER, PAUSE_CONSUMER, RESUME_CONSUMER } from "@/constants/events";
+import { SfuClient } from "@/lib/voice/sfu-client";
 
 interface MediasoupStoreState {
   ready: boolean;
-  socket?: Socket,
+  sfuClient?: SfuClient,
   device?: Device;
   channelId?: string;
   sendTransport?: Transport;
@@ -16,7 +16,7 @@ interface MediasoupStoreState {
   activeSpeakers: Map<string, boolean>;
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => void;
   setReady: (ready: boolean) => void;
-  setSocket: (socket: Socket) => void;
+  setSfuClient: (client: SfuClient) => void;
   setDevice: (device: Device, channelId: string) => void;
   setSendTransport: (transport: Transport) => void;
   setRecvTransport: (transport: Transport) => void;
@@ -33,7 +33,7 @@ interface MediasoupStoreState {
 
 export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
   ready: false,
-  socket: undefined,
+  sfuClient: undefined,
   device: undefined,
   channelId: undefined,
   sendTransport: undefined,
@@ -48,7 +48,7 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     set({ activeSpeakers: map });
   },
   setReady: (ready: boolean) => set({ ready }),
-  setSocket: (socket: Socket) => { set({ socket }) },
+  setSfuClient: (client: SfuClient) => { set({ sfuClient: client }) },
   setDevice: (device, channelId) => set({ device, channelId }),
   setSendTransport: (transport) => set({ sendTransport: transport }),
   setRecvTransport: (transport) => set({ recvTransport: transport }),
@@ -81,20 +81,24 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     set({ consumers: map });
   },
   pauseConsumer: (consumerId: string) => {
-    const {socket, consumers} = get();
+    const {sfuClient, consumers} = get();
     const consumer = consumers.get(consumerId);
-    if (!consumer || !socket) return;
-    socket.emit(PAUSE_CONSUMER, {consumerId: consumer.id}, () => consumer.pause());
+    if (!consumer || !sfuClient) return;
+
+    sfuClient.send(PAUSE_CONSUMER);
+    consumer.pause();
   },
   resumeConsumer: (consumerId: string) => {
-    const {socket, consumers} = get();
+    const {sfuClient, consumers} = get();
     const consumer = consumers.get(consumerId);
-    if (!consumer || !socket) return;
-    socket.emit(RESUME_CONSUMER, {consumerId: consumer.id}, () => consumer.resume());
+    if (!consumer || !sfuClient) return;
+
+    sfuClient.send(RESUME_CONSUMER);
+    consumer.resume();
   },
   startScreenShare: async () => {
-    const { sendTransport, addProducer, socket, stopScreenShare, channelId } = get();
-    if (!sendTransport || !socket || !channelId) return false;
+    const { sendTransport, addProducer, sfuClient, stopScreenShare, channelId } = get();
+    if (!sendTransport || !sfuClient || !channelId) return false;
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: {
         frameRate: 30,
@@ -117,11 +121,11 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     return true;
   },
   stopScreenShare: async () => {
-    const { producers, removeProducer, socket } = get();
+    const { producers, removeProducer, sfuClient } = get();
     const screenProducer = Array.from(producers.values()).find(p => p.appData?.mediaTag === 'screen');
     if (!screenProducer) return false;
 
-    socket?.emit(CLOSE_PRODUCER, { producerId: screenProducer.id });
+    sfuClient?.send(CLOSE_PRODUCER, { producerId: screenProducer.id });
 
     removeProducer(screenProducer.id);
     screenProducer.close();
@@ -134,9 +138,9 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     get().consumers.forEach((c) => c.close());
     get().sendTransport?.close();
     get().recvTransport?.close();
-    get().socket?.disconnect();
+    get().sfuClient?.close();
     set({
-      socket: undefined,
+      sfuClient: undefined,
       device: undefined,
       sendTransport: undefined,
       recvTransport: undefined,
@@ -144,6 +148,5 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
       consumers: new Map(),
       channelId: undefined
     });
-    console.log('peer socket is now undefined');
   },
 }));
