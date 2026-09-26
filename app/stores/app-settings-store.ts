@@ -71,18 +71,21 @@ export const useAppSettingsStore = create<AppSettings>((set) => {
         },
         setMuted: (muted: boolean) => {
             set(state => {
-                const newMediaSettings: MediaSettings = {...state.mediaSettings, isMuted: muted}
+                const newMediaSettings: MediaSettings = { ...state.mediaSettings, isMuted: muted }
                 if (!muted) newMediaSettings.isDeafened = false;
+
                 localStorage.setItem('media_settings', JSON.stringify(newMediaSettings))
-                return {mediaSettings: newMediaSettings}
+
+                return { mediaSettings: newMediaSettings }
             })
         },
         setDeafened: (deafened: boolean) => {
+            // isMuted is left untouched so undeafening restores it; the mic is off while isMuted || isDeafened
             set(state => {
-                const newMediaSettings: MediaSettings = {...state.mediaSettings, isDeafened: deafened, isMuted: deafened};
+                const newMediaSettings: MediaSettings = { ...state.mediaSettings, isDeafened: deafened };
 
                 localStorage.setItem('media_settings', JSON.stringify(newMediaSettings));
-                return {mediaSettings: newMediaSettings};
+                return { mediaSettings: newMediaSettings };
             })
         }
     };

@@ -188,7 +188,7 @@ export default function UserArea() {
     const [showProfileCard, setShowProfileCard] = useState(false);
     const profileCardRef = useRef<HTMLDivElement>(null!)
     const { getUserProfile } = useUserProfileStore();
-    const {isDeafened, isMuted, toggleDeafened, toggleMute} = useVoice();
+    const {isDeafened, isMuted, isMicOff, toggleDeafened, toggleMute} = useVoice();
     const { channelId } = useMediasoupStore();
     const { openSettings } = useSettingsOverlay();
 
@@ -228,12 +228,12 @@ export default function UserArea() {
                 <SettingsWrapper>
                     <TransparentButton
                         tooltipSize="14px"
-                        tooltip={isMuted || isDeafened ? "Turn On Microphone" : "Turn Off Microphone"}
+                        tooltip={isMicOff ? "Turn On Microphone" : "Turn Off Microphone"}
                         tooltipPosition="top"
                         onClick={toggleMute}
                     >
-                        <IconContainer className={`${(isMuted || isDeafened) && 'active'}`}>
-                            {isMuted || isDeafened ? <BsMicMuteFill size={18} /> : <BsMicFill size={18} />}
+                        <IconContainer className={`${isMicOff && 'active'}`}>
+                            {isMicOff ? <BsMicMuteFill size={18} /> : <BsMicFill size={18} />}
                         </IconContainer>
                     </TransparentButton>
                     <TransparentButton

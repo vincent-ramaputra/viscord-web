@@ -20,10 +20,17 @@ import { ConsumerOptions, RtpCapabilities, Transport } from "mediasoup-client/ty
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
+// reads the store directly so transport callbacks don't see a stale render's settings
+function isMicOffNow() {
+    const { isMuted, isDeafened } = useAppSettingsStore.getState().mediaSettings;
+    return isMuted || isDeafened;
+}
+
 export function PeerConnectionManager() {
     const { socket } = useSocket();
     const audioRef = useRef<HTMLAudioElement>(null);
     const { mediaSettings } = useAppSettingsStore();
+    const isMicOff = mediaSettings.isMuted || mediaSettings.isDeafened;
     const { socket: peerSocket, updateActiveSpeakers, setSocket, setDevice, setSendTransport, setRecvTransport, setReady, producers } = useMediasoupStore()
     const { user } = useCurrentUserStore();
     useEffect(() => {
@@ -47,7 +54,7 @@ export function PeerConnectionManager() {
         const { socket: peerSocket, producers, channelId } = useMediasoupStore.getState();
         for (const producer of Array.from(producers.values())) {
             if (producer.kind == 'audio') {
-                if (mediaSettings.isMuted) {
+                if (isMicOff) {
                     producer.pause();
                     peerSocket?.emit(PAUSE_PRODUCER, { producerId: producer.id }, () => {
                     })
@@ -60,7 +67,7 @@ export function PeerConnectionManager() {
             }
         }
 
-        if (mediaSettings.isMuted) {
+        if (isMicOff) {
             if (user) updateActiveSpeakers(user.id, false);
             peerSocket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerState)
             socket?.emit(VOICE_UPDATE_EVENT, {
@@ -78,7 +85,7 @@ export function PeerConnectionManager() {
 
         }
 
-    }, [mediaSettings.isMuted]);
+    }, [isMicOff]);
 
     useEffect(() => {
         const { socket: peerSocket, consumers, channelId } = useMediasoupStore.getState();
@@ -267,7 +274,7 @@ export function PeerConnectionManager() {
                 kind,
                 rtpParameters,
                 appData,
-                paused: kind === 'audio' && mediaSettings.isMuted
+                paused: kind === 'audio' && isMicOffNow()
             }
             try {
                 socket?.emit(CREATE_PRODUCER, payload, ({ id }: { id: string }) => {
