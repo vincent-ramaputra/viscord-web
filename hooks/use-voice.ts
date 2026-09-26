@@ -34,11 +34,9 @@ export function useVoice() {
     }
 
     function toggleDeafened() {
-        const { setDeafened, setMuted, mediaSettings } = useAppSettingsStore.getState();
+        const { setDeafened, mediaSettings } = useAppSettingsStore.getState();
 
         setDeafened(!mediaSettings.isDeafened);
-        if (mediaSettings.isDeafened) setMuted(true);
-        else setMuted(false);
     }
 
     async function startScreenShare() {
