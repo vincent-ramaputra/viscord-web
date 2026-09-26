@@ -5,7 +5,7 @@ import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { useSocketStore } from "@/app/stores/socket-store";
 import { useGetChannelVoiceStates, useVoiceStateStore } from "@/app/stores/voice-state-store";
-import { CONNECT_TRANSPORT, CREATE_CONSUMER, CREATE_PRODUCER, CREATE_RTC_ANSWER, CREATE_RTC_OFFER, CREATE_SEND_TRANSPORT, CREATE_RECV_TRANSPORT, VOICE_UPDATE_EVENT, RESUME_CONSUMER, CLOSE_SFU_CLIENT, JOIN_ROOM, CREATE_TRANSPORT, GET_PRODUCERS, PRODUCER_JOINED, ACTIVE_SPEAKER_STATE, PAUSE_PRODUCER, RESUME_PRODUCER, PAUSE_CONSUMER, CLOSE_PRODUCER, CLOSE_CONSUMER } from "@/constants/events";
+import { CONNECT_TRANSPORT, CREATE_CONSUMER, CREATE_PRODUCER, CREATE_RTC_ANSWER, CREATE_RTC_OFFER, CREATE_SEND_TRANSPORT, CREATE_RECV_TRANSPORT, VOICE_UPDATE_EVENT, RESUME_CONSUMER, JOIN_ROOM, CREATE_TRANSPORT, GET_PRODUCERS, PRODUCER_JOINED, ACTIVE_SPEAKER_STATE, PAUSE_PRODUCER, RESUME_PRODUCER, PAUSE_CONSUMER, CLOSE_PRODUCER, CLOSE_CONSUMER } from "@/constants/events";
 import { useSocket } from "@/contexts/socket.context";
 import { VoiceEventType } from "@/enums/voice-event-type";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
@@ -15,6 +15,7 @@ import { CreateProducerDTO } from "@/interfaces/dto/create-producer.dto";
 import { ProducerCreatedDTO } from "@/interfaces/dto/producer-created.dto";
 import { VoiceEventDTO } from "@/interfaces/dto/voice-event.dto";
 import { VoiceState } from "@/interfaces/voice-state";
+import { SfuClient } from "@/lib/voice/sfu-client";
 import { createVoiceTicket } from "@/services/channels/channels.service";
 import { Device } from "mediasoup-client";
 import { ConsumerOptions, RtpCapabilities, Transport } from "mediasoup-client/types";
@@ -32,7 +33,7 @@ export function PeerConnectionManager() {
     const audioRef = useRef<HTMLAudioElement>(null);
     const { mediaSettings } = useAppSettingsStore();
     const isMicOff = mediaSettings.isMuted || mediaSettings.isDeafened;
-    const { socket: peerSocket, updateActiveSpeakers, setSocket, setDevice, setSendTransport, setRecvTransport, setReady, producers } = useMediasoupStore()
+    const { sfuClient, updateActiveSpeakers, setSfuClient, setDevice, setSendTransport, setRecvTransport, setReady, cleanup } = useMediasoupStore()
     const { user } = useCurrentUserStore();
     useEffect(() => {
         if (audioRef.current) audioRef.current.volume = mediaSettings.outputVolume / 100;
@@ -52,25 +53,23 @@ export function PeerConnectionManager() {
     }, [mediaSettings.audioInputDeviceId]);
 
     useEffect(() => {
-        const { socket: peerSocket, producers, channelId } = useMediasoupStore.getState();
+        const { sfuClient: peerSocket, producers, channelId } = useMediasoupStore.getState();
         for (const producer of Array.from(producers.values())) {
             if (producer.kind == 'audio') {
                 if (isMicOff) {
                     producer.pause();
-                    peerSocket?.emit(PAUSE_PRODUCER, { producerId: producer.id }, () => {
-                    })
+                    peerSocket?.send(PAUSE_PRODUCER, { producerId: producer.id });
                 }
                 else {
                     producer.resume();
-                    peerSocket?.emit(RESUME_PRODUCER, { producerId: producer.id }, () => {
-                    })
+                    peerSocket?.send(RESUME_PRODUCER, { producerId: producer.id });
                 }
             }
         }
 
         if (isMicOff) {
             if (user) updateActiveSpeakers(user.id, false);
-            peerSocket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerStateDTO)
+            peerSocket?.send(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerStateDTO)
             socket?.emit(VOICE_UPDATE_EVENT, {
                 channelId, type: VoiceEventType.STATE_UPDATE, data: {
                     isMuted: true
@@ -89,7 +88,7 @@ export function PeerConnectionManager() {
     }, [isMicOff]);
 
     useEffect(() => {
-        const { socket: peerSocket, consumers, channelId } = useMediasoupStore.getState();
+        const { sfuClient: peerSocket, consumers, channelId } = useMediasoupStore.getState();
         for (const consumer of Array.from(consumers.values())) {
             if (consumer.kind == 'audio') {
                 if (mediaSettings.isDeafened) {
@@ -103,8 +102,8 @@ export function PeerConnectionManager() {
 
         if (mediaSettings.isDeafened) {
             if (user) updateActiveSpeakers(user.id, false);
-            peerSocket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerStateDTO)
-            peerSocket?.emit(PAUSE_CONSUMER);
+            peerSocket?.send(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerStateDTO)
+            peerSocket?.send(PAUSE_CONSUMER);
             socket?.emit(VOICE_UPDATE_EVENT, {
                 channelId, type: VoiceEventType.STATE_UPDATE, data: {
                     isDeafened: true
@@ -112,7 +111,7 @@ export function PeerConnectionManager() {
             } as VoiceEventDTO);
         }
         else {
-            peerSocket?.emit(RESUME_CONSUMER);
+            peerSocket?.send(RESUME_CONSUMER);
             socket?.emit(VOICE_UPDATE_EVENT, {
                 channelId, type: VoiceEventType.STATE_UPDATE, data: {
                     isDeafened: false
@@ -125,9 +124,9 @@ export function PeerConnectionManager() {
     async function startVAD() {
         const { user } = useCurrentUserStore.getState();
         const { mediaSettings } = useAppSettingsStore.getState();
-        const { socket } = useMediasoupStore.getState();
+        const { sfuClient: socket } = useMediasoupStore.getState();
         const stream = await navigator.mediaDevices.getUserMedia({
-            audio: { deviceId: { exact: mediaSettings.audioInputDeviceId } }
+            audio: { deviceId: { ideal: mediaSettings.audioInputDeviceId } }
         })
         const audioContext = new AudioContext();
         const analyser = audioContext.createAnalyser();
@@ -172,13 +171,13 @@ export function PeerConnectionManager() {
                     // }, 3000);
 
                     updateActiveSpeakers(user!.id, true);
-                    socket?.emit(ACTIVE_SPEAKER_STATE, { speaking: true } as ActiveSpeakerStateDTO);
+                    socket?.send(ACTIVE_SPEAKER_STATE, { speaking: true } as ActiveSpeakerStateDTO);
                 }
             } else {
                 if (speaking && now - lastSpokeTime > STOP_DELAY) {
                     speaking = false;
                     updateActiveSpeakers(user!.id, false);
-                    socket?.emit(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerStateDTO);
+                    socket?.send(ACTIVE_SPEAKER_STATE, { speaking: false } as ActiveSpeakerStateDTO);
                 }
             }
 
@@ -191,39 +190,42 @@ export function PeerConnectionManager() {
 
 
     const setupJoinCall = async (channelId: string) => {
-        if (peerSocket) return;
+        if (sfuClient) return;
 
         const ticketResponse = await createVoiceTicket(channelId);
         if (!ticketResponse.success || !ticketResponse.data) return;
 
-        const socket = io(ticketResponse.data.sfuUrl, {
-            auth: { ticket: ticketResponse.data.ticket }
-        });
-        const user = useCurrentUserStore.getState().user;
-        setSocket(socket);
-        console.log('creating socket', socket);
+        const sfu = new SfuClient(ticketResponse.data.sfuUrl, ticketResponse.data.ticket);
+        setSfuClient(sfu);
 
-        const onRoomJoined = async ({ rtpCapabilities }: { rtpCapabilities: RtpCapabilities }) => {
-            console.log('setting device', channelId);
+        try {
+            await sfu.connect();
+
+            const { rtpCapabilities } = await sfu.request(JOIN_ROOM);
             startVAD();
+
             const device = new Device();
             await device.load({ routerRtpCapabilities: rtpCapabilities });
             setDevice(device, channelId);
 
-            socket.emit(CREATE_TRANSPORT, onCreateSendTransport);
-            socket.emit(CREATE_TRANSPORT, onCreateRecvTransport);
-        };
+            const [sendParams, recvParams] = await Promise.all([
+                sfu.request(CREATE_TRANSPORT),
+                sfu.request(CREATE_TRANSPORT)
+            ]);
 
-        socket.on('connect_error', (e) => console.log('connect error', e));
-        socket.on('connect', () => {
-            console.log('peer socket connected')
-            socket.emit(JOIN_ROOM, onRoomJoined);
-        });
-    }
+            const recvTransport = device.createRecvTransport(recvParams);
+            const sendTransport = device.createSendTransport(sendParams);
 
-    const onGetChannelProducers = ({ producers }: { producers: { userId: string, producerId: string }[] }) => {
-        for (const producer of producers) {
-            createConsumer({ producerId: producer.producerId, userId: producer.userId });
+            setSendTransport(sendTransport);
+            setRecvTransport(recvTransport);
+
+            await Promise.all([
+                setupSendTransport(channelId, sendTransport, sfu),
+                setupRecvTransport(recvTransport, sfu)
+            ]);
+        } catch (error) {
+            console.error('Failed connecting to SFU Server', error);
+            await cleanup();
         }
     }
 
@@ -258,40 +260,45 @@ export function PeerConnectionManager() {
         }
     }
 
-    const onCreateSendTransport = async (payload: any) => {
-        const { socket, device, addProducer, channelId } = useMediasoupStore.getState();
-        const { mediaSettings } = useAppSettingsStore.getState();
-        if (!device) return;
-        const transport = device.createSendTransport(payload);
-        transport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+    const setupSendTransport = async (channelId: string, sendTransport: Transport, sfuClient: SfuClient) => {
+        sendTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
             try {
-                socket?.emit(CONNECT_TRANSPORT, {
-                    transportId: transport.id,
-                    dtlsParameters
-                }, callback);
-            } catch (err) {
-                console.log(err)
-            }
-        });
-        transport.on('produce', async ({ kind, rtpParameters, appData }, callback, errback) => {
-            const payload: CreateProducerDTO = {
-                transportId: transport.id,
-                channelId: channelId!,
-                kind,
-                rtpParameters,
-                appData,
-                paused: kind === 'audio' && isMicOffNow()
-            }
-            try {
-                socket?.emit(CREATE_PRODUCER, payload, ({ id }: { id: string }) => {
-                    callback({ id });
+                const success = await sfuClient.request(CONNECT_TRANSPORT, {
+                    dtlsParameters,
+                    transportId: sendTransport.id
                 });
-            } catch (err) {
-                console.log(err);
+
+                callback();
+            } catch (error) {
+                console.error('Failed creating send transport', error);
+                errback(error instanceof Error ? error : new Error(String(error)));
             }
         });
-        setSendTransport(transport);
 
+        sendTransport.on('produce', async ({ kind, rtpParameters, appData }, callback, errback) => {
+            try {
+                const producer = await sfuClient.request(CREATE_PRODUCER, {
+                    kind,
+                    rtpParameters,
+                    appData,
+                    channelId: channelId,
+                    paused: kind === 'audio' && isMicOffNow(),
+                    transportId: sendTransport.id
+                });
+
+                callback(producer);
+            } catch (error) {
+                console.error('Failed creating audio producer', error);
+                if (error instanceof Error) {
+                    errback(error);
+                }
+                else {
+                    errback(new Error());
+                }
+            }
+        });
+
+        const { addProducer } = useMediasoupStore.getState();
         try {
             const inputId = useAppSettingsStore.getState().mediaSettings.audioInputDeviceId;
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -307,58 +314,51 @@ export function PeerConnectionManager() {
             if (!track) {
                 throw new Error('No audio track found in stream');
             }
-            const producer = await transport.produce({ track: track });
+            const producer = await sendTransport.produce({ track: track });
 
             addProducer(producer.id, producer);
         }
         catch (error) {
             console.error('Error creating producer:', error);
         }
+
     }
 
-    const onCreateRecvTransport = (payload: any) => {
-        const { socket, device, channelId } = useMediasoupStore.getState();
-        if (!device) return;
-        const transport = device.createRecvTransport(payload);
-        transport.on('connect', async ({ dtlsParameters }, callback) => {
+    const setupRecvTransport = async (recvTransport: Transport, sfuClient: SfuClient) => {
+        recvTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
             try {
-                socket?.emit(CONNECT_TRANSPORT, {
-                    transportId: transport.id,
+                await sfuClient.request(CONNECT_TRANSPORT, {
+                    transportId: recvTransport.id,
                     dtlsParameters
-                }, callback);
-            } catch (err) {
-                console.log(err)
+                });
+
+                callback();
+            } catch (error) {
+                console.log('Failed connecting recv transport', error)
+                errback(error instanceof Error ? error : new Error(String(error)));
             }
         });
-        setRecvTransport(transport);
 
-        if (channelId) {
-            socket?.emit(GET_PRODUCERS, onGetChannelProducers);
+        const { producers } = await sfuClient.request(GET_PRODUCERS);
+        for (const producer of producers) {
+            createConsumer({ producerId: producer.producerId, userId: producer.userId });
         }
     }
 
 
-    const createConsumer = async (payload: ProducerCreatedDTO) => {
-        const { socket, device, recvTransport } = useMediasoupStore.getState();
+    const createConsumer = async (producerDTO: ProducerCreatedDTO) => {
+        const { sfuClient: sfuClient, device, recvTransport, addConsumer } = useMediasoupStore.getState();
         const user = useCurrentUserStore.getState().user;
-        if (!device || !recvTransport) return;
-        if (payload.userId !== user?.id) {
-            socket?.emit(CREATE_CONSUMER, {
-                transportId: recvTransport.id,
-                producerId: payload.producerId,
-                rtpCapabilities: device.rtpCapabilities
-            } as CreateConsumerDTO, onConsumerCreated);
-        }
-    }
-
-    const onConsumerCreated = async (payload: ConsumerCreatedDTO) => {
-        const { socket, recvTransport, addConsumer } = useMediasoupStore.getState();
-        if (!recvTransport) {
-            console.error('No receive transport available for consumer creation');
-            return;
-        }
+        if (!device || !recvTransport || !sfuClient) return;
+        if (producerDTO.userId === user?.id) return;
 
         try {
+            const payload = await sfuClient.request(CREATE_CONSUMER, {
+                transportId: recvTransport.id,
+                producerId: producerDTO.producerId,
+                rtpCapabilities: device.rtpCapabilities
+            } as CreateConsumerDTO);
+
             const consumer = await recvTransport.consume({
                 producerId: payload.producerId,
                 id: payload.id,
@@ -377,9 +377,8 @@ export function PeerConnectionManager() {
             //     console.error('Audio element not found');
             // }
             if (consumer.appData?.mediaTag !== 'screen') {
-                socket?.emit(RESUME_CONSUMER, { consumerId: consumer.id }, () => {
-                    consumer.resume();
-                });
+                sfuClient.send(RESUME_CONSUMER);
+                consumer.resume();
             }
 
 
@@ -391,24 +390,23 @@ export function PeerConnectionManager() {
     }
 
     const closeClient = async () => {
-        const { socket, cleanup } = useMediasoupStore.getState();
+        const { cleanup } = useMediasoupStore.getState();
 
-        socket?.emit(CLOSE_SFU_CLIENT);
         await cleanup();
     }
 
     const handleCloseProducer = ({ producerId }: { producerId: string }) => {
-        const { consumers, removeConsumer, socket } = useMediasoupStore.getState();
+        const { consumers, removeConsumer, sfuClient } = useMediasoupStore.getState();
         const consumer = Array.from(consumers.values()).find(c => c.producerId === producerId);
-        if (!consumer) return;
+        if (!consumer || !sfuClient) return;
         removeConsumer(consumer.id);
-        socket?.emit(CLOSE_CONSUMER, { consumerId: consumer.id });
+        sfuClient.send(CLOSE_CONSUMER, { consumerId: consumer.id });
     }
 
 
     const handleBeforeUnload = useCallback(() => {
         const socket = useSocketStore.getState().socket;
-        const { socket: peerSocket, channelId } = useMediasoupStore.getState();
+        const { channelId } = useMediasoupStore.getState();
         socket?.emit(VOICE_UPDATE_EVENT, { channelId, type: VoiceEventType.VOICE_LEAVE });
 
         closeClient();
@@ -429,17 +427,17 @@ export function PeerConnectionManager() {
     }, [socket]);
 
     useEffect(() => {
-        if (!peerSocket) return;
-        peerSocket.on(PRODUCER_JOINED, createConsumer);
-        peerSocket.on(ACTIVE_SPEAKER_STATE, onActiveSpeaker);
-        peerSocket?.on(CLOSE_PRODUCER, handleCloseProducer);
+        if (!sfuClient) return;
+        const unsubscribeCallbacks = [
+            sfuClient.on(PRODUCER_JOINED, createConsumer),
+            sfuClient.on(ACTIVE_SPEAKER_STATE, onActiveSpeaker),
+            sfuClient.on(CLOSE_PRODUCER, handleCloseProducer)
+        ];
 
         return () => {
-            peerSocket.removeListener(CLOSE_PRODUCER, handleCloseProducer)
-            peerSocket.removeListener(PRODUCER_JOINED, createConsumer);
-            peerSocket.removeListener(ACTIVE_SPEAKER_STATE, onActiveSpeaker);
+            unsubscribeCallbacks.forEach(callback => callback());
         }
-    }, [peerSocket])
+    }, [sfuClient])
 
 
 
