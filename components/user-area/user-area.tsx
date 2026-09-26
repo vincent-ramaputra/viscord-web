@@ -1,24 +1,14 @@
-import styles from "./styles.module.css"
-import { UserData } from "@/interfaces/user-data";
-import { UserStatus, UserStatusString } from "@/enums/user-status.enum";
-import { MdCircle, MdDoNotDisturbOn, MdOutlineCircle } from "react-icons/md";
+import {  UserStatusString } from "@/enums/user-status.enum";
 import { BsMicFill, BsMicMuteFill } from "react-icons/bs";
 import { LuHeadphoneOff, LuHeadphones } from "react-icons/lu";
 import { FaGear } from "react-icons/fa6";
 import TransparentButton from "../transparent-button/transparent-button";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { PiMoonFill } from "react-icons/pi";
 import UserAvatar from "../user-avatar/user-avatar";
-import { FaCircle } from "react-icons/fa";
 import { CurrentUserProfileCard } from "../user-profile-card/user-profile-card";
-import Modal from "../modals/modal";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
-import { useCurrentUserQuery } from "@/hooks/queries";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useAppSettingsStore } from "@/app/stores/app-settings-store";
-import { useModal } from "@/contexts/modal.context";
-import { ModalType } from "@/enums/modal-type.enum";
-import { useVoiceStateStore } from "@/app/stores/voice-state-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import styled from "styled-components";
 import { useGetChannel } from "@/app/stores/channels-store";
@@ -26,12 +16,10 @@ import { Channel } from "@/interfaces/channel";
 import { ImPhoneHangUp } from "react-icons/im";
 import { useRouter } from "next/navigation";
 import { ChannelType } from "@/enums/channel-type.enum";
-import { useVoiceEvents } from "@/app/(auth)/hooks/socket-events";
-import { VoiceEventType } from "@/enums/voice-event-type";
 import { useGetGuildChannel } from "@/app/stores/guilds-store";
-import { channel } from "diagnostics_channel";
 import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
+import { useVoice } from "@/hooks/use-voice";
 
 const Container = styled.div`
   width: 100%;
@@ -171,7 +159,7 @@ function Voice() {
     const { channelId } = useMediasoupStore();
     const channel: Channel = (useGetChannel(channelId!) ?? useGetGuildChannel(channelId!))!;
     const router = useRouter();
-    const { emitVoiceEvent } = useVoiceEvents();
+    const { leave } = useVoice();
 
     function navigateToChannel() {
         if (channel.type === ChannelType.DM) router.push(`/channels/me/${channelId}`);
@@ -179,8 +167,7 @@ function Voice() {
     }
 
     async function handleLeaveVoiceCall() {
-        console.log('voice', channel);
-        emitVoiceEvent(channelId!, VoiceEventType.VOICE_LEAVE);
+        leave();
     }
     return (
         <VoiceContainer>
@@ -201,7 +188,7 @@ export default function UserArea() {
     const [showProfileCard, setShowProfileCard] = useState(false);
     const profileCardRef = useRef<HTMLDivElement>(null!)
     const { getUserProfile } = useUserProfileStore();
-    const { mediaSettings, setMuted, setDeafened } = useAppSettingsStore();
+    const {isDeafened, isMuted, toggleDeafened, toggleMute} = useVoice();
     const { channelId } = useMediasoupStore();
     const { openSettings } = useSettingsOverlay();
 
@@ -241,22 +228,22 @@ export default function UserArea() {
                 <SettingsWrapper>
                     <TransparentButton
                         tooltipSize="14px"
-                        tooltip={mediaSettings.isMuted || mediaSettings.isDeafened ? "Turn On Microphone" : "Turn Off Microphone"}
+                        tooltip={isMuted || isDeafened ? "Turn On Microphone" : "Turn Off Microphone"}
                         tooltipPosition="top"
-                        onClick={() => setMuted(!mediaSettings.isMuted)}
+                        onClick={toggleMute}
                     >
-                        <IconContainer className={`${(mediaSettings.isMuted || mediaSettings.isDeafened) && 'active'}`}>
-                            {mediaSettings.isMuted || mediaSettings.isDeafened ? <BsMicMuteFill size={18} /> : <BsMicFill size={18} />}
+                        <IconContainer className={`${(isMuted || isDeafened) && 'active'}`}>
+                            {isMuted || isDeafened ? <BsMicMuteFill size={18} /> : <BsMicFill size={18} />}
                         </IconContainer>
                     </TransparentButton>
                     <TransparentButton
                         tooltipSize="14px"
-                        tooltip={mediaSettings.isDeafened ? "Undeafen" : "Deafen"}
+                        tooltip={isDeafened ? "Undeafen" : "Deafen"}
                         tooltipPosition="top"
-                        onClick={() => setDeafened(!mediaSettings.isDeafened)}
+                        onClick={toggleDeafened}
                     >
-                        <IconContainer className={`${mediaSettings.isDeafened && 'active'}`}>
-                            {mediaSettings.isDeafened ? <LuHeadphoneOff size={18} /> : <LuHeadphones size={18} />}
+                        <IconContainer className={`${isDeafened && 'active'}`}>
+                            {isDeafened ? <LuHeadphoneOff size={18} /> : <LuHeadphones size={18} />}
                         </IconContainer>
                     </TransparentButton>
                     <TransparentButton
