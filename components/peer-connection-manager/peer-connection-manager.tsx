@@ -4,7 +4,7 @@ import { usePlaySound } from "@/app/stores/audio-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { useSocketStore } from "@/app/stores/socket-store";
-import { useGetChannelVoiceStates, useVoiceStateStore } from "@/app/stores/voice-state-store";
+import { getChannelVoiceStates, useVoiceStateStore } from "@/app/stores/voice-state-store";
 import { CONNECT_TRANSPORT, CREATE_CONSUMER, CREATE_PRODUCER, CREATE_RTC_ANSWER, CREATE_RTC_OFFER, CREATE_SEND_TRANSPORT, CREATE_RECV_TRANSPORT, VOICE_UPDATE_EVENT, RESUME_CONSUMER, JOIN_ROOM, CREATE_TRANSPORT, GET_PRODUCERS, PRODUCER_JOINED, ACTIVE_SPEAKER_STATE, PAUSE_PRODUCER, RESUME_PRODUCER, PAUSE_CONSUMER, CLOSE_PRODUCER, CLOSE_CONSUMER } from "@/constants/events";
 import { useSocket } from "@/contexts/socket.context";
 import { VoiceEventType } from "@/enums/voice-event-type";
@@ -239,7 +239,7 @@ export function PeerConnectionManager() {
 
 
     const handleVoiceStateUpdate = async (event: VoiceEventDTO) => {
-        const voiceStates = useGetChannelVoiceStates(event.channelId);
+        const voiceStates = getChannelVoiceStates(event.channelId);
         const user = useCurrentUserStore.getState().user;
         const { channelId: currentChannelId } = useMediasoupStore.getState();
 

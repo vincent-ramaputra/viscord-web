@@ -3,7 +3,7 @@ import { useGuildsStore } from "@/app/stores/guilds-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
-import { useGetChannelVoiceStates } from "@/app/stores/voice-state-store";
+import { useChannelVoiceStates } from "@/app/stores/voice-state-store";
 import Tooltip from "@/components/tooltip/tooltip";
 import { useContextMenu } from "@/contexts/context-menu.context";
 import { useModal } from "@/contexts/modal.context";
@@ -192,7 +192,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     const [active, setActive] = useState(false);
     const { openModal } = useModal();
     const { openSettings } = useSettingsOverlay();
-    const voiceStates = useGetChannelVoiceStates(channel.id);
+    const voiceStates = useChannelVoiceStates(channel.id);
     const { activeSpeakers } = useMediasoupStore();
     const { join } = useVoice();
     const { user } = useCurrentUserStore();
