@@ -1,11 +1,8 @@
-import { useVoiceEvents } from "@/app/(auth)/hooks/socket-events";
 import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store"
-import { VoiceEventType } from "@/enums/voice-event-type";
-import { VoiceState } from "@/interfaces/voice-state";
+import { voiceSession } from "@/lib/voice/voice-session";
 
 export function useVoice() {
-    const { emitVoiceEvent } = useVoiceEvents();
     const channelId = useMediasoupStore((s) => s.channelId);
     const isMuted = useAppSettingsStore(s => s.mediaSettings.isMuted)
     const isDeafened = useAppSettingsStore(s => s.mediaSettings.isDeafened)
@@ -14,19 +11,14 @@ export function useVoice() {
 
 
     function join(channelId: string) {
-        const { isDeafened, isMuted } = useAppSettingsStore.getState().mediaSettings;
+        voiceSession.join(channelId).catch((error) => {
+            console.error('Failed joining voice', error);
+        });
 
-        emitVoiceEvent(channelId, VoiceEventType.VOICE_JOIN, {
-            isMuted: isMuted || isDeafened,
-            isDeafened
-        } as VoiceState);
     }
 
     function leave() {
-        const { channelId } = useMediasoupStore.getState();
-        if (!channelId) return;
-
-        emitVoiceEvent(channelId, VoiceEventType.VOICE_LEAVE);
+        voiceSession.leave();
     }
 
     function toggleMute() {

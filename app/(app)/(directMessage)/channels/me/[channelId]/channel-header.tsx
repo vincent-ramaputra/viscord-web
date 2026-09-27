@@ -792,8 +792,6 @@ export function DMChannelHeader({ channel }: { channel: Channel }) {
     const voiceStates = useChannelVoiceStates(channel.id);
     const { join } = useVoice();
 
-    console.log('voice state', voiceStates  )
-
     async function handleJoinVoiceCall() {
         if (voiceStates.length === 0) await ringChannelRecipients(channel.id);
         join(channel.id);
