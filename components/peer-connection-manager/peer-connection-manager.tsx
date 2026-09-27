@@ -1,22 +1,15 @@
-import { useVoiceEvents } from "@/app/(auth)/hooks/socket-events";
 import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { usePlaySound } from "@/app/stores/audio-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
-import { useSocketStore } from "@/app/stores/socket-store";
-import { useChannelVoiceStates, useVoiceStateStore } from "@/app/stores/voice-state-store";
-import { CONNECT_TRANSPORT, CREATE_CONSUMER, CREATE_PRODUCER, CREATE_RTC_ANSWER, CREATE_RTC_OFFER, CREATE_SEND_TRANSPORT, CREATE_RECV_TRANSPORT, VOICE_UPDATE_EVENT, RESUME_CONSUMER, JOIN_ROOM, CREATE_TRANSPORT, GET_PRODUCERS, PRODUCER_JOINED, ACTIVE_SPEAKER_STATE, PAUSE_PRODUCER, RESUME_PRODUCER, PAUSE_CONSUMER, CLOSE_PRODUCER, CLOSE_CONSUMER } from "@/constants/events";
+import { VOICE_UPDATE_EVENT, RESUME_CONSUMER, ACTIVE_SPEAKER_STATE, PAUSE_PRODUCER, RESUME_PRODUCER, PAUSE_CONSUMER } from "@/constants/events";
 import { useSocket } from "@/contexts/socket.context";
 import { VoiceEventType } from "@/enums/voice-event-type";
-import { useVoice } from "@/hooks/use-voice";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
-import { ProducerCreatedDTO } from "@/interfaces/dto/producer-created.dto";
 import { VoiceEventDTO } from "@/interfaces/dto/voice-event.dto";
 import { VoiceState } from "@/interfaces/voice-state";
 import { voiceSession } from "@/lib/voice/voice-session";
-import { createVoiceTicket } from "@/services/channels/channels.service";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
+import {useEffect, useRef } from "react";
 
 // reads the store directly so transport callbacks don't see a stale render's settings
 function isMicOffNow() {

@@ -1,7 +1,6 @@
 import { create } from "zustand";
-import { Device } from "mediasoup-client";
-import { Consumer, Producer, Transport } from "mediasoup-client/types";
-import { CLOSE_PRODUCER, PAUSE_CONSUMER, RESUME_CONSUMER } from "@/constants/events";
+import { Consumer, Producer } from "mediasoup-client/types";
+import { PAUSE_CONSUMER, RESUME_CONSUMER } from "@/constants/events";
 import type { SfuClient } from "@/lib/voice/sfu-client";
 import type { MediaSession } from "@/lib/voice/media-session";
 import type { VoiceSessionStatus } from "@/lib/voice/voice-session";
