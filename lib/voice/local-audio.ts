@@ -1,5 +1,5 @@
 
-interface LocalAudioDeps {
+export interface LocalAudioDeps {
     onSpeakingChange: (speaking: boolean) => void;
     isMicOff(): boolean;
 }
@@ -55,7 +55,7 @@ export class LocalAudio {
         }
     }
 
-    async switchDevice(deviceId: string) {
+    async switchDevice(deviceId?: string) {
         if (this.stopped) throw new Error('LocalAudio stopped');
 
         const stream = await navigator.mediaDevices.getUserMedia({

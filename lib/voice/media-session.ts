@@ -1,9 +1,8 @@
-import { CLOSE_CONSUMER, CLOSE_PRODUCER, CONNECT_TRANSPORT, CREATE_CONSUMER, CREATE_PRODUCER, CREATE_TRANSPORT, GET_PRODUCERS, JOIN_ROOM, PRODUCER_JOINED, RESUME_CONSUMER } from "@/constants/events";
+import { CLOSE_CONSUMER, CLOSE_PRODUCER, CONNECT_TRANSPORT, CREATE_CONSUMER, CREATE_PRODUCER, CREATE_TRANSPORT, GET_PRODUCERS, JOIN_ROOM, PAUSE_CONSUMER, PAUSE_PRODUCER, PRODUCER_JOINED, RESUME_CONSUMER, RESUME_PRODUCER } from "@/constants/events";
 import { SfuClient } from "./sfu-client";
 import { Device } from "mediasoup-client";
 import { Consumer, Producer, Transport } from "mediasoup-client/types";
 import { ProducerCreatedDTO } from "@/interfaces/dto/producer-created.dto";
-import { CreateConsumerDTO } from "@/interfaces/dto/create-consumer.dto";
 
 export interface MediaSessionEvents {
     onConsumerAdded(consumer: Consumer): void;
@@ -23,21 +22,25 @@ export class MediaSession {
     private consumedProducerIds: Set<string> = new Set();
     private producers: Map<string, Producer> = new Map();
     private consumers: Map<string, Consumer> = new Map();
+    private audioConsumerPaused: boolean;
+    private audioProducerPaused: boolean;
 
     private events: MediaSessionEvents;
     private unsubscribes: Array<() => void> = [];
 
     private closed: boolean = false;
 
-    private constructor(sfuClient: SfuClient, userId: string, channelId: string, events: MediaSessionEvents) {
+    private constructor(sfuClient: SfuClient, userId: string, channelId: string, events: MediaSessionEvents, audioConsumerPaused: boolean, audioProducerPaused: boolean) {
         this.sfuClient = sfuClient;
         this.userId = userId;
         this.channelId = channelId;
         this.events = events;
+        this.audioConsumerPaused = audioConsumerPaused;
+        this.audioProducerPaused = audioProducerPaused;
     }
 
-    static async start(sfuClient: SfuClient, { userId, channelId }: { userId: string, channelId: string }, events: MediaSessionEvents) {
-        const session = new MediaSession(sfuClient, userId, channelId, events);
+    static async start(sfuClient: SfuClient, { userId, channelId, audioConsumerPaused, audioProducerPaused}: { userId: string, channelId: string, audioConsumerPaused: boolean, audioProducerPaused: boolean}, events: MediaSessionEvents) {
+        const session = new MediaSession(sfuClient, userId, channelId, events, audioConsumerPaused, audioProducerPaused);
         try {
             const { rtpCapabilities } = await sfuClient.request(JOIN_ROOM);
             if (session.closed) throw new Error("Session closed");
@@ -100,7 +103,7 @@ export class MediaSession {
                     rtpParameters,
                     appData,
                     channelId: this.channelId,
-                    paused: appData.paused === true,
+                    paused: this.audioProducerPaused,
                     transportId: this.sendTransport!.id
                 });
 
@@ -167,7 +170,7 @@ export class MediaSession {
             });
             if (this.closed) return;
 
-            if (consumer.appData?.mediaTag !== 'screen') {
+            if (consumer.appData?.mediaTag !== 'screen' && !this.audioConsumerPaused) {
                 this.sfuClient.send(RESUME_CONSUMER);
                 consumer.resume();
             }
@@ -193,14 +196,15 @@ export class MediaSession {
         this.events.onConsumerRemoved(consumer.id);
     }
 
-    async produceMic(track: MediaStreamTrack, { paused }: { paused: boolean }) {
+    async produceMic(track: MediaStreamTrack) {
         if (!this.sendTransport) throw new Error(`sendTransport is ${typeof this.sendTransport}`)
 
-        const producer = await this.sendTransport.produce({ track, appData: { mediaTag: 'mic', paused } });
+        const producer = await this.sendTransport.produce({ track, stopTracks: false, appData: { mediaTag: 'mic'} });
         if (this.closed) throw new Error("Session closed");
-        
+
         this.producers.set(producer.id, producer);
         this.events.onProducerAdded(producer);
+        if (this.audioProducerPaused) producer.pause();
     }
 
     async produceScreen(track: MediaStreamTrack) {
@@ -222,6 +226,63 @@ export class MediaSession {
 
         this.producers.delete(producer.id);
         this.events.onProducerRemoved(producer.id);
+    }
+
+    setMicPaused(paused: boolean) {
+        this.audioProducerPaused = paused;
+        const producer = Array.from(this.producers.values()).find(p => p.appData?.mediaTag === 'mic');
+        if (!producer) return;
+
+        if (paused) {
+            this.pauseProducer(producer.id);
+        }
+        else {
+            this.resumeProducer(producer.id);
+        }
+    }
+
+    setAudioConsumerPaused(paused: boolean) {
+        this.audioConsumerPaused = paused;
+        for (const consumer of Array.from(this.consumers.values())) {
+            if (consumer.kind == 'audio') {
+                if (paused) {
+                    consumer.pause();
+                }
+                else {
+                    consumer.resume();
+                }
+            }
+        }
+
+        if (paused) {
+            this.sfuClient.send(PAUSE_CONSUMER);
+        }
+        else {
+            this.sfuClient.send(RESUME_CONSUMER);
+        }
+    }
+
+    async replaceMicTrack(track: MediaStreamTrack) {
+        const producer = Array.from(this.producers.values()).find(p => p.appData?.mediaTag === 'mic');
+        if (!producer) throw new Error('Mic producer not found');
+
+        await producer.replaceTrack({ track });
+    }
+
+    private pauseProducer(producerId: string) {
+        const producer = this.producers.get(producerId);
+        if (!producer) return;
+
+        this.sfuClient.send(PAUSE_PRODUCER, { producerId });
+        producer.pause();
+    }
+
+    private resumeProducer(producerId: string) {
+        const producer = this.producers.get(producerId);
+        if (!producer) return;
+
+        this.sfuClient.send(RESUME_PRODUCER, { producerId });
+        producer.resume();
     }
 
     close() {

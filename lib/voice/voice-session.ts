@@ -5,10 +5,13 @@ import { VoiceEventType } from "@/enums/voice-event-type";
 import { Consumer, Producer } from "mediasoup-client/types";
 import { createVoiceTicket } from "@/services/channels/channels.service";
 import { useSocketStore } from "@/app/stores/socket-store";
-import { VOICE_UPDATE_EVENT } from "@/constants/events";
+import { ACTIVE_SPEAKER_STATE, VOICE_UPDATE_EVENT } from "@/constants/events";
 import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
+import { LocalAudio, LocalAudioDeps } from "./local-audio";
+import { VoiceState } from "@/interfaces/voice-state";
+import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
 
 export type VoiceSessionStatus = 'none' | 'connecting' | 'connected';
 
@@ -16,18 +19,22 @@ interface VoiceSessionDeps {
     getUserId(): string | undefined;
     createTicket(channelId: string): Promise<{ ticket: string, sfuUrl: string }>;
     createSfuClient(sfuUrl: string, ticket: string): SfuClient;
+    startLocalAudio(deviceId: string | undefined, deps: LocalAudioDeps): Promise<LocalAudio>;
     emitGateway(event: Omit<VoiceEventDTO, 'userId'>): void;
-    getMicTrack(): Promise<MediaStreamTrack>;
-    getMediaSettings(): { isMuted: boolean, isDeafened: boolean };
+    getMediaSettings(): { isMuted: boolean, isDeafened: boolean, audioInputDeviceId: string | undefined };
+    onInputDeviceChange: (listener: (deviceId: string | undefined) => void) => () => void;
+    onMicOffChange: (listener: (micOff: boolean) => void) => () => void;
+    onSetDeafened: (listener: (deafened: boolean) => void) => () => void;
     store: {
         addConsumer(consumer: Consumer): void;
         removeConsumer(consumerId: string): void;
         addProducer(producer: Producer): void;
         removeProducer(producerId: string): void;
-        setSfuClient(sfuClient?: SfuClient): void
+        setSfuClient(sfuClient?: SfuClient): void;
         setMediaSession(mediaSession?: MediaSession): void;
         setVoice: (status: VoiceSessionStatus, channelId?: string) => void;
         resetMedia: () => void;
+        setActiveSpeaker(userId: string, speaking: boolean): void;
     };
 }
 
@@ -35,9 +42,13 @@ export class VoiceSession {
     private channelId?: string;
     private sfuClient?: SfuClient;
     private mediaSession?: MediaSession;
+    private localAudio?: LocalAudio;
 
     private attempt = 0;
     private status: VoiceSessionStatus = 'none';
+
+    private callUnsubscribes: Array<() => void> = [];
+    private connectionUnsubscribes: Array<() => void> = [];
 
     constructor(private readonly deps: VoiceSessionDeps) {
 
@@ -69,7 +80,8 @@ export class VoiceSession {
             const userId = this.deps.getUserId();
             if (!userId) throw new Error('Not logged in');
 
-            const mediaSession = await MediaSession.start(sfu, { userId, channelId }, {
+            let mediaSettings = this.deps.getMediaSettings();
+            const mediaSession = await MediaSession.start(sfu, { userId, channelId, audioProducerPaused: mediaSettings.isDeafened || mediaSettings.isMuted, audioConsumerPaused: mediaSettings.isDeafened }, {
                 onConsumerAdded: (consumer) => this.deps.store.addConsumer(consumer),
                 onConsumerRemoved: (consumerId) => this.deps.store.removeConsumer(consumerId),
                 onProducerAdded: (producer) => this.deps.store.addProducer(producer),
@@ -83,24 +95,43 @@ export class VoiceSession {
             this.mediaSession = mediaSession;
             this.deps.store.setMediaSession(mediaSession);
 
-            const mediaSettings = this.deps.getMediaSettings();
-            let track: MediaStreamTrack | undefined;
+            this.callUnsubscribes.push(
+                this.deps.onInputDeviceChange(this.switchInputDevice),
+                this.deps.onMicOffChange(this.onMicOffChange),
+                this.deps.onSetDeafened(this.onDeafenedChange)
+            );
+
+            this.connectionUnsubscribes.push(
+                sfu.on(ACTIVE_SPEAKER_STATE, this.onActiveSpeaker)
+            );
+
+            mediaSettings = this.deps.getMediaSettings();
+            mediaSession.setAudioConsumerPaused(mediaSettings.isDeafened);
+            mediaSession.setMicPaused(mediaSettings.isMuted || mediaSettings.isDeafened);
+
+            let localAudio: LocalAudio | undefined;
             try {
-                track = await this.deps.getMicTrack();
+                localAudio = await this.deps.startLocalAudio(mediaSettings.audioInputDeviceId, {
+                    isMicOff: () => { const s = this.deps.getMediaSettings(); return s.isMuted || s.isDeafened; },
+                    onSpeakingChange: this.onSpeakingChange,
+                })
                 if (attemptNumber !== this.attempt) {
-                    track.stop();
+                    localAudio.stop();
                     return;
                 }
-                await mediaSession.produceMic(track, { paused: mediaSettings.isMuted || mediaSettings.isDeafened });
 
-                // await startVAD();
+                this.localAudio = localAudio;
+
+                await mediaSession.produceMic(this.localAudio.track);
+
             } catch (error) {
-                track?.stop();
+                localAudio?.stop();
                 if (attemptNumber !== this.attempt) return;
+                if (this.localAudio === localAudio) localAudio = undefined;
                 console.error("Failed getting audio input", error);
-
             }
 
+            mediaSettings = this.deps.getMediaSettings();
             this.deps.emitGateway({
                 type: VoiceEventType.VOICE_JOIN,
                 channelId,
@@ -135,16 +166,74 @@ export class VoiceSession {
         this.teardown();
     }
 
+    private switchInputDevice = async (deviceId?: string) => {
+        if (!this.localAudio) return;
+        try {
+            const track = await this.localAudio.switchDevice(deviceId);
+            await this.mediaSession?.replaceMicTrack(track);
+        } catch (error) {
+            console.error('Error switching input device', error)
+        }
+    }
+
+    private onSpeakingChange = (speaking: boolean) => {
+        const userId = this.deps.getUserId();
+        if (!userId) return;
+
+        this.deps.store.setActiveSpeaker(userId, speaking);
+        this.sfuClient?.send(ACTIVE_SPEAKER_STATE, { speaking });
+    }
+
+    private onMicOffChange = (micOff: boolean) => {
+        const channelId = this.channelId;
+        if (!channelId) return;
+
+        this.mediaSession?.setMicPaused(micOff);
+        this.deps.emitGateway({
+            type: VoiceEventType.STATE_UPDATE,
+            channelId,
+            data: {
+                isMuted: micOff
+            } as VoiceState
+        });
+    }
+
+    private onDeafenedChange = (deafened: boolean) => {
+        const channelId = this.channelId;
+        if (!channelId) return;
+
+        this.mediaSession?.setAudioConsumerPaused(deafened);
+        this.deps.emitGateway({
+            type: VoiceEventType.STATE_UPDATE,
+            channelId,
+            data: {
+                isDeafened: deafened
+            } as VoiceState
+        });
+    }
+
+    private onActiveSpeaker = (dto: ActiveSpeakerStateDTO) => {
+        this.deps.store.setActiveSpeaker(dto.userId, dto.speaking);
+    }
+
     private teardown() {
+        this.localAudio?.stop();
         this.mediaSession?.close();
         this.sfuClient?.close();
+        this.callUnsubscribes.forEach(fn => fn());
+        this.connectionUnsubscribes.forEach(fn => fn());
+
+        this.localAudio = undefined;
         this.channelId = undefined;
         this.sfuClient = undefined;
         this.mediaSession = undefined;
+        this.callUnsubscribes = [];
+        this.connectionUnsubscribes = [];
 
         this.deps.store.setMediaSession(undefined)
         this.deps.store.setSfuClient(undefined)
         this.deps.store.resetMedia();
+
 
         this.setStatus('none');
     }
@@ -166,37 +255,47 @@ export const voiceSession = new VoiceSession({
 
         return response.data;
     },
+    startLocalAudio: async (deviceId, deps) => {
+        return await LocalAudio.start(deviceId, deps);
+    },
     emitGateway: (event) => {
         const socket = useSocketStore.getState().socket;
 
         socket?.emit(VOICE_UPDATE_EVENT, event);
     },
     getMediaSettings: () => {
-        const { isMuted, isDeafened } = useAppSettingsStore.getState().mediaSettings;
-        return { isMuted, isDeafened };
-    },
-    getMicTrack: async () => {
-        const inputId = useAppSettingsStore.getState().mediaSettings.audioInputDeviceId;
-        const stream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-                deviceId: inputId ? { ideal: inputId } : undefined,
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-            }
-        });
-
-        const [track] = stream.getAudioTracks();
-        if (!track) {
-            throw new Error('No audio track found in stream');
-        }
-
-        return track;
+        const { isMuted, isDeafened, audioInputDeviceId } = useAppSettingsStore.getState().mediaSettings;
+        return { isMuted, isDeafened, audioInputDeviceId };
     },
     getUserId: () => {
         const { user } = useCurrentUserStore.getState();
 
         return user?.id;
+    },
+    onInputDeviceChange: (listener) => {
+        const unsubscribe = useAppSettingsStore.subscribe((state, prev) => {
+            const id = state.mediaSettings.audioInputDeviceId;
+
+            if (id !== prev.mediaSettings.audioInputDeviceId) listener(id);
+        });
+        return unsubscribe;
+    },
+    onMicOffChange: (listener) => {
+        const unsubscribe = useAppSettingsStore.subscribe((state, prev) => {
+            const micOff = state.mediaSettings.isMuted || state.mediaSettings.isDeafened;
+            const prevMicOff = prev.mediaSettings.isMuted || prev.mediaSettings.isDeafened;
+
+            if (micOff !== prevMicOff) listener(micOff);
+        });
+        return unsubscribe;
+    },
+    onSetDeafened: (listener) => {
+        const unsubscribe = useAppSettingsStore.subscribe((state, prev) => {
+            const deafened = state.mediaSettings.isDeafened;
+
+            if (deafened !== prev.mediaSettings.isDeafened) listener(deafened);
+        });
+        return unsubscribe;
     },
     store: {
         addConsumer: (consumer) => {
@@ -230,6 +329,10 @@ export const voiceSession = new VoiceSession({
         resetMedia: () => {
             const { resetMedia } = useMediasoupStore.getState();
             resetMedia();
+        },
+        setActiveSpeaker: (userId, speaking) => {
+            const { updateActiveSpeakers } = useMediasoupStore.getState();
+            updateActiveSpeakers(userId, speaking);
         }
     }
 })
