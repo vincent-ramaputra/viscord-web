@@ -216,8 +216,9 @@ export class VoiceSession {
     startScreenShare = async (): Promise<boolean> => {
         const media = this.mediaSession
         if (!media) return false;
+        let videoTrack: MediaStreamTrack | undefined;
         try {
-            const videoTrack = await this.deps.getScreenTrack();
+            videoTrack = await this.deps.getScreenTrack();
             if (this.mediaSession !== media) {
                 videoTrack.stop();
                 return false;
