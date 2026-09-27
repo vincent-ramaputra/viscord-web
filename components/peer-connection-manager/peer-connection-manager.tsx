@@ -9,12 +9,10 @@ import { CONNECT_TRANSPORT, CREATE_CONSUMER, CREATE_PRODUCER, CREATE_RTC_ANSWER,
 import { useSocket } from "@/contexts/socket.context";
 import { VoiceEventType } from "@/enums/voice-event-type";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
-import { ConsumerCreatedDTO } from "@/interfaces/dto/consumer-created.dto";
-import { CreateConsumerDTO } from "@/interfaces/dto/create-consumer.dto";
-import { CreateProducerDTO } from "@/interfaces/dto/create-producer.dto";
 import { ProducerCreatedDTO } from "@/interfaces/dto/producer-created.dto";
 import { VoiceEventDTO } from "@/interfaces/dto/voice-event.dto";
 import { VoiceState } from "@/interfaces/voice-state";
+import { MediaSession } from "@/lib/voice/media-session";
 import { SfuClient } from "@/lib/voice/sfu-client";
 import { createVoiceTicket } from "@/services/channels/channels.service";
 import { Device } from "mediasoup-client";
@@ -31,9 +29,9 @@ function isMicOffNow() {
 export function PeerConnectionManager() {
     const { socket } = useSocket();
     const audioRef = useRef<HTMLAudioElement>(null);
-    const { mediaSettings } = useAppSettingsStore();
+    const mediaSettings = useAppSettingsStore(s => s.mediaSettings);
+    const { sfuClient, updateActiveSpeakers, setSfuClient, mediaSession, setMediaSession, addConsumer, addProducer, removeConsumer, removeProducer, setReady, cleanup } = useMediasoupStore()
     const isMicOff = mediaSettings.isMuted || mediaSettings.isDeafened;
-    const { sfuClient, updateActiveSpeakers, setSfuClient, setDevice, setSendTransport, setRecvTransport, setReady, cleanup } = useMediasoupStore()
     const { user } = useCurrentUserStore();
     useEffect(() => {
         if (audioRef.current) audioRef.current.volume = mediaSettings.outputVolume / 100;
@@ -191,41 +189,51 @@ export function PeerConnectionManager() {
 
     const setupJoinCall = async (channelId: string) => {
         if (sfuClient) return;
-
+        const { user } = useCurrentUserStore.getState();
         const ticketResponse = await createVoiceTicket(channelId);
         if (!ticketResponse.success || !ticketResponse.data) return;
 
         const sfu = new SfuClient(ticketResponse.data.sfuUrl, ticketResponse.data.ticket);
         setSfuClient(sfu);
 
+        let mediaSession: MediaSession | undefined;
+
         try {
             await sfu.connect();
+            mediaSession = await MediaSession.start(sfu, { userId: user!.id, channelId }, {
+                onConsumerAdded: (consumer) => addConsumer(consumer.id, consumer),
+                onConsumerRemoved: (consumerId) => removeConsumer(consumerId),
+                onProducerAdded: (producer) => addProducer(producer.id, producer),
+                onProducerRemoved: (producerId) => removeProducer(producerId)
+            });
+            setMediaSession(mediaSession, channelId);
 
-            const { rtpCapabilities } = await sfu.request(JOIN_ROOM);
-            startVAD();
-
-            const device = new Device();
-            await device.load({ routerRtpCapabilities: rtpCapabilities });
-            setDevice(device, channelId);
-
-            const [sendParams, recvParams] = await Promise.all([
-                sfu.request(CREATE_TRANSPORT),
-                sfu.request(CREATE_TRANSPORT)
-            ]);
-
-            const recvTransport = device.createRecvTransport(recvParams);
-            const sendTransport = device.createSendTransport(sendParams);
-
-            setSendTransport(sendTransport);
-            setRecvTransport(recvTransport);
-
-            await Promise.all([
-                setupSendTransport(channelId, sendTransport, sfu),
-                setupRecvTransport(recvTransport, sfu)
-            ]);
         } catch (error) {
             console.error('Failed connecting to SFU Server', error);
             await cleanup();
+            return;
+        }
+
+        try {
+            const inputId = useAppSettingsStore.getState().mediaSettings.audioInputDeviceId;
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    deviceId: inputId ? { ideal: inputId } : undefined,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            });
+
+            const [track] = stream.getAudioTracks();
+            if (!track) {
+                throw new Error('No audio track found in stream');
+            }
+            await mediaSession.produceMic(track, { paused: isMicOffNow() });
+
+            await startVAD();
+        } catch (error) {
+            console.error("Failed getting audio input", error);
         }
     }
 
@@ -260,147 +268,11 @@ export function PeerConnectionManager() {
         }
     }
 
-    const setupSendTransport = async (channelId: string, sendTransport: Transport, sfuClient: SfuClient) => {
-        sendTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-            try {
-                const success = await sfuClient.request(CONNECT_TRANSPORT, {
-                    dtlsParameters,
-                    transportId: sendTransport.id
-                });
-
-                callback();
-            } catch (error) {
-                console.error('Failed creating send transport', error);
-                errback(error instanceof Error ? error : new Error(String(error)));
-            }
-        });
-
-        sendTransport.on('produce', async ({ kind, rtpParameters, appData }, callback, errback) => {
-            try {
-                const producer = await sfuClient.request(CREATE_PRODUCER, {
-                    kind,
-                    rtpParameters,
-                    appData,
-                    channelId: channelId,
-                    paused: kind === 'audio' && isMicOffNow(),
-                    transportId: sendTransport.id
-                });
-
-                callback(producer);
-            } catch (error) {
-                console.error('Failed creating audio producer', error);
-                if (error instanceof Error) {
-                    errback(error);
-                }
-                else {
-                    errback(new Error());
-                }
-            }
-        });
-
-        const { addProducer } = useMediasoupStore.getState();
-        try {
-            const inputId = useAppSettingsStore.getState().mediaSettings.audioInputDeviceId;
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    deviceId: inputId ? { exact: inputId } : undefined,
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                }
-            });
-
-            const [track] = stream.getAudioTracks();
-            if (!track) {
-                throw new Error('No audio track found in stream');
-            }
-            const producer = await sendTransport.produce({ track: track });
-
-            addProducer(producer.id, producer);
-        }
-        catch (error) {
-            console.error('Error creating producer:', error);
-        }
-
-    }
-
-    const setupRecvTransport = async (recvTransport: Transport, sfuClient: SfuClient) => {
-        recvTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
-            try {
-                await sfuClient.request(CONNECT_TRANSPORT, {
-                    transportId: recvTransport.id,
-                    dtlsParameters
-                });
-
-                callback();
-            } catch (error) {
-                console.log('Failed connecting recv transport', error)
-                errback(error instanceof Error ? error : new Error(String(error)));
-            }
-        });
-
-        const { producers } = await sfuClient.request(GET_PRODUCERS);
-        for (const producer of producers) {
-            createConsumer({ producerId: producer.producerId, userId: producer.userId });
-        }
-    }
-
-
-    const createConsumer = async (producerDTO: ProducerCreatedDTO) => {
-        const { sfuClient: sfuClient, device, recvTransport, addConsumer } = useMediasoupStore.getState();
-        const user = useCurrentUserStore.getState().user;
-        if (!device || !recvTransport || !sfuClient) return;
-        if (producerDTO.userId === user?.id) return;
-
-        try {
-            const payload = await sfuClient.request(CREATE_CONSUMER, {
-                transportId: recvTransport.id,
-                producerId: producerDTO.producerId,
-                rtpCapabilities: device.rtpCapabilities
-            } as CreateConsumerDTO);
-
-            const consumer = await recvTransport.consume({
-                producerId: payload.producerId,
-                id: payload.id,
-                kind: payload.kind,
-                rtpParameters: payload.rtpParameters,
-                appData: payload.appData
-            });
-            // if (audioRef.current) {
-            //     const stream = new MediaStream([consumer.track]);
-            //     audioRef.current.srcObject = stream;
-            //     audioRef.current.autoplay = true;
-            //     audioRef.current.muted = false;
-
-            // } else {
-            // console.log('b', consumer.kind)
-            //     console.error('Audio element not found');
-            // }
-            if (consumer.appData?.mediaTag !== 'screen') {
-                sfuClient.send(RESUME_CONSUMER);
-                consumer.resume();
-            }
-
-
-            addConsumer(consumer.id, consumer);
-
-        } catch (error) {
-            console.error('Error creating consumer:', error);
-        }
-    }
 
     const closeClient = async () => {
         const { cleanup } = useMediasoupStore.getState();
 
         await cleanup();
-    }
-
-    const handleCloseProducer = ({ producerId }: { producerId: string }) => {
-        const { consumers, removeConsumer, sfuClient } = useMediasoupStore.getState();
-        const consumer = Array.from(consumers.values()).find(c => c.producerId === producerId);
-        if (!consumer || !sfuClient) return;
-        removeConsumer(consumer.id);
-        sfuClient.send(CLOSE_CONSUMER, { consumerId: consumer.id });
     }
 
 
@@ -429,9 +301,7 @@ export function PeerConnectionManager() {
     useEffect(() => {
         if (!sfuClient) return;
         const unsubscribeCallbacks = [
-            sfuClient.on(PRODUCER_JOINED, createConsumer),
             sfuClient.on(ACTIVE_SPEAKER_STATE, onActiveSpeaker),
-            sfuClient.on(CLOSE_PRODUCER, handleCloseProducer)
         ];
 
         return () => {

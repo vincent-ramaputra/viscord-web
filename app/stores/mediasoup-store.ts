@@ -3,25 +3,22 @@ import { Device } from "mediasoup-client";
 import { Consumer, Producer, Transport } from "mediasoup-client/types";
 import { CLOSE_PRODUCER, PAUSE_CONSUMER, RESUME_CONSUMER } from "@/constants/events";
 import { SfuClient } from "@/lib/voice/sfu-client";
+import { MediaSession } from "@/lib/voice/media-session";
 
 interface MediasoupStoreState {
   ready: boolean;
   sfuClient?: SfuClient,
-  device?: Device;
+  mediaSession?: MediaSession;
   channelId?: string;
-  sendTransport?: Transport;
-  recvTransport?: Transport;
   producers: Map<string, Producer>;
   consumers: Map<string, Consumer>;
   activeSpeakers: Map<string, boolean>;
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => void;
   setReady: (ready: boolean) => void;
   setSfuClient: (client: SfuClient) => void;
-  setDevice: (device: Device, channelId: string) => void;
-  setSendTransport: (transport: Transport) => void;
-  setRecvTransport: (transport: Transport) => void;
+  setMediaSession: (session: MediaSession, channelId: string) => void;
   addProducer: (id: string, producer: Producer) => void;
-  removeProducer: (consumerId: string) => void;
+  removeProducer: (producerId: string) => void;
   addConsumer: (consumerId: string, consumer: Consumer) => void;
   removeConsumer: (consumerId: string) => void;
   startScreenShare: () => Promise<boolean>;
@@ -41,6 +38,7 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
   producers: new Map(),
   consumers: new Map(),
   activeSpeakers: new Map(),
+  mediaSession: undefined,
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => {
     const map = new Map(get().activeSpeakers);
     if (isSpeaking) map.set(userId, true);
@@ -49,9 +47,7 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
   },
   setReady: (ready: boolean) => set({ ready }),
   setSfuClient: (client: SfuClient) => { set({ sfuClient: client }) },
-  setDevice: (device, channelId) => set({ device, channelId }),
-  setSendTransport: (transport) => set({ sendTransport: transport }),
-  setRecvTransport: (transport) => set({ recvTransport: transport }),
+  setMediaSession: (session: MediaSession, channelId: string) => { set({ mediaSession: session, channelId }) },
   addProducer: (id, producer) => {
     const map = new Map(get().producers);
     map.set(id, producer);
@@ -61,7 +57,6 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     const map = new Map(get().producers);
     const producer = map.get(id);
     if (producer) {
-      producer.close();
       map.delete(id);
     }
     set({ producers: map });
@@ -81,7 +76,7 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     set({ consumers: map });
   },
   pauseConsumer: (consumerId: string) => {
-    const {sfuClient, consumers} = get();
+    const { sfuClient, consumers } = get();
     const consumer = consumers.get(consumerId);
     if (!consumer || !sfuClient) return;
 
@@ -89,7 +84,7 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     consumer.pause();
   },
   resumeConsumer: (consumerId: string) => {
-    const {sfuClient, consumers} = get();
+    const { sfuClient, consumers } = get();
     const consumer = consumers.get(consumerId);
     if (!consumer || !sfuClient) return;
 
@@ -97,8 +92,8 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     consumer.resume();
   },
   startScreenShare: async () => {
-    const { sendTransport, addProducer, sfuClient, stopScreenShare, channelId } = get();
-    if (!sendTransport || !sfuClient || !channelId) return false;
+    const { mediaSession, sfuClient, stopScreenShare, channelId } = get();
+    if (!mediaSession || !sfuClient || !channelId) return false;
     const stream = await navigator.mediaDevices.getDisplayMedia({
       video: {
         frameRate: 30,
@@ -109,41 +104,31 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     });
 
     const videoTrack = stream.getVideoTracks()[0];
-    const producer = await sendTransport.produce({
-      track: videoTrack,
-      appData: {
-        mediaTag: "screen"
-      }
-    });
-    addProducer(producer.id, producer);
+
+    await mediaSession.produceScreen(videoTrack);
 
     videoTrack.onended = () => { stopScreenShare(); };
     return true;
   },
   stopScreenShare: async () => {
-    const { producers, removeProducer, sfuClient } = get();
+    const { producers, removeProducer, mediaSession } = get();
     const screenProducer = Array.from(producers.values()).find(p => p.appData?.mediaTag === 'screen');
-    if (!screenProducer) return false;
+    if (!screenProducer || !mediaSession) return false;
 
-    sfuClient?.send(CLOSE_PRODUCER, { producerId: screenProducer.id });
-
-    removeProducer(screenProducer.id);
-    screenProducer.close();
+    mediaSession.closeProducer(screenProducer.id);
 
     return true;
   },
   cleanup: async () => {
-    await get().stopScreenShare();
-    get().producers.forEach((p) => p.close());
-    get().consumers.forEach((c) => c.close());
-    get().sendTransport?.close();
-    get().recvTransport?.close();
-    get().sfuClient?.close();
+    const { stopScreenShare, sfuClient, mediaSession } = get();
+
+    await stopScreenShare();
+    mediaSession?.close();
+    sfuClient?.close();
+
     set({
       sfuClient: undefined,
-      device: undefined,
-      sendTransport: undefined,
-      recvTransport: undefined,
+      mediaSession: undefined,
       producers: new Map(),
       consumers: new Map(),
       channelId: undefined
