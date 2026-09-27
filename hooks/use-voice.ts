@@ -35,13 +35,15 @@ export function useVoice() {
     }
 
     async function startScreenShare() {
-        const { startScreenShare } = useMediasoupStore.getState();
-        return await startScreenShare();
+        return voiceSession.startScreenShare();
     }
 
-    async function stopScreenShare() {
-        const { stopScreenShare } = useMediasoupStore.getState();
-        return await stopScreenShare();
+    function stopScreenShare() {
+        return voiceSession.stopScreenShare();
+    }
+
+    function resumeConsumer(consumerId: string) {
+        return voiceSession.resumeConsumer(consumerId);
     }
 
     return {
@@ -54,6 +56,7 @@ export function useVoice() {
         toggleMute,
         toggleDeafened,
         startScreenShare,
-        stopScreenShare
+        stopScreenShare,
+        resumeConsumer
     };
 }

@@ -524,7 +524,7 @@ function CallTile({
     const [activeStream, setActiveStream] = useState<Consumer | undefined>();
     const activeStreamVideoRef = useRef<HTMLVideoElement>(null!);
     const producerVideoRef = useRef<HTMLVideoElement>(null!);
-    const { consumers, resumeConsumer } = useMediasoupStore();
+    const { resumeConsumer } = useVoice();
 
     useEffect(() => {
         if (tile instanceof Consumer && tile.appData.mediaTag === 'screen') {
@@ -708,7 +708,7 @@ function CallFooterSimple({
 }
 
 function CallControls({ screenShareProducer }: { screenShareProducer?: Producer }) {
-    const { isMuted, isMicOff, toggleMute, startScreenShare, stopScreenShare} = useVoice();
+    const { isMuted, isMicOff, toggleMute, startScreenShare, stopScreenShare } = useVoice();
 
     return (
         <CallActionsGroup>

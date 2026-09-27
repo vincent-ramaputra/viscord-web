@@ -8,7 +8,6 @@ import { MESSAGES_CACHE, RELATIONSHIPS_CACHE } from "@/constants/query-keys";
 import { Message } from "@/interfaces/message";
 import { HttpStatusCode } from "axios";
 import { refreshToken } from "@/services/auth/auth.service";
-import { UserStatus } from "@/enums/user-status.enum";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { useUserTypingStore } from "@/app/stores/user-typing-store";
 import { VoiceState } from "@/interfaces/voice-state";
@@ -26,6 +25,9 @@ import { Channel } from "@/interfaces/channel";
 import { GuildMember } from "@/interfaces/guild-member";
 import { UserProfile } from "@/interfaces/user-profile";
 import { UserPresenceUpdateDTO } from "@/interfaces/dto/user-presence-update.dto";
+import { usePlaySound } from "@/app/stores/audio-store";
+import { useCurrentUserStore } from "@/app/stores/current-user-store";
+import { voiceSession } from "@/lib/voice/voice-session";
 
 export interface SocketContextType {
     socket: Socket | undefined;
@@ -41,14 +43,12 @@ export function useSocket() {
 export default function SocketProvider({ children }: { children: ReactNode }) {
     const { socket, initializeSocket, removeSocket } = useSocketStore();
     const [isConnected, setIsConnected] = useState(false);
-    const [isReady, setIsReady] = useState(false);
 
     const queryClient = useQueryClient();
     const { presenceMap, updatePresence } = useUserPresenceStore();
     const { userProfiles, upsertUserProfile } = useUserProfileStore();
     const { handleTypingStart, handleTypingStop } = useUserTypingStore();
     const { updateVoiceState, removeVoiceState, setVoiceStates } = useVoiceStateStore();
-    const { ready: mediaSoupReady } = useMediasoupStore();
 
 
     function handleFriendReceived(payload: Relationship) {;
@@ -121,12 +121,18 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     };
 
     const handleVoiceStateUpdate = useCallback(async (event: VoiceEventDTO) => {
+        const user = useCurrentUserStore.getState().user;
+        const { channelId } = useMediasoupStore.getState();
         if (event.type === VoiceEventType.VOICE_LEAVE) {
             removeVoiceState(event.channelId, event.userId);
+            usePlaySound('voice-leave');
         }
         else {
             console.log('updating voice state');
             updateVoiceState(event.data);
+            if (event.type === VoiceEventType.VOICE_JOIN && (event.userId === user?.id || event.channelId === channelId)) {
+                usePlaySound('voice-join');
+            }
         }
     }, [removeVoiceState, updateVoiceState]);
 
@@ -176,7 +182,6 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         const handleDisconnect = () => {
             // console.log('Socket disconnected');
             setIsConnected(false);
-            setIsReady(false);
         };
 
         const handleConnectError = (error: any) => {
@@ -202,7 +207,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
 
         socket.connect();
         const handleBeforeUnload = () => {
-            console.log('before unload');
+            voiceSession.leave();
             socket?.disconnect();
         };
 
@@ -214,19 +219,9 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         };
     }, []);
 
-    useEffect(() => {
-        const { socket } = useSocketStore.getState();
-        const socketAndMediasoupReady = socket ? socket.connected : false && mediaSoupReady;
-        console.log('socket is ready?', isConnected, mediaSoupReady, socket?.connected);
-        console.log('test', socketAndMediasoupReady, isReady)
-        if (socketAndMediasoupReady !== isReady) {
-            console.log('ready!');
-            setIsReady(socketAndMediasoupReady);
-        }
-    }, [socket?.connected, mediaSoupReady]);
 
     return (
-        <SocketContext.Provider value={{ socket, isReady }}>
+        <SocketContext.Provider value={{ socket, isReady: isConnected }}>
             {children}
         </SocketContext.Provider>
     );

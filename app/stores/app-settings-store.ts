@@ -1,14 +1,12 @@
 import { MAX_VOLUME, MIN_VOLUME } from "@/constants/app-config"
 import { create } from "zustand"
 import { usePlaySound } from "./audio-store"
-import { output } from "framer-motion/client"
-import { setItem } from "@/services/local-storage/local-storage.service"
 
 interface MediaSettings {
     isMuted: boolean
     isDeafened: boolean
-    audioInputDeviceId: string
-    audioOutputDeviceId: string
+    audioInputDeviceId: string | undefined
+    audioOutputDeviceId: string | undefined
     inputVolume: number
     outputVolume: number
 }
@@ -26,8 +24,8 @@ interface AppSettings {
 const defaultMediaSettings: MediaSettings = {
     isMuted: false,
     isDeafened: false,
-    audioInputDeviceId: "",
-    audioOutputDeviceId: "",
+    audioInputDeviceId: undefined,
+    audioOutputDeviceId: undefined,
     inputVolume: MAX_VOLUME,
     outputVolume: MAX_VOLUME
 };
