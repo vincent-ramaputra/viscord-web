@@ -199,7 +199,8 @@ export class MediaSession {
     async produceMic(track: MediaStreamTrack) {
         if (!this.sendTransport) throw new Error(`sendTransport is ${typeof this.sendTransport}`)
 
-        const producer = await this.sendTransport.produce({ track, stopTracks: false, appData: { mediaTag: 'mic'} });
+        // zeroRtpOnPause: send no RTP at all while muted instead of silent packets
+        const producer = await this.sendTransport.produce({ track, stopTracks: false, zeroRtpOnPause: true, appData: { mediaTag: 'mic'} });
         if (this.closed) throw new Error("Session closed");
 
         this.producers.set(producer.id, producer);
