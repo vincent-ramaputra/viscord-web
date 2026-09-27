@@ -3,14 +3,12 @@ import { Consumer, Producer } from "mediasoup-client/types";
 import type { VoiceSessionStatus } from "@/lib/voice/voice-session";
 
 interface MediasoupStoreState {
-  ready: boolean;
   channelId?: string;
   producers: Map<string, Producer>;
   consumers: Map<string, Consumer>;
   activeSpeakers: Map<string, boolean>;
   voiceStatus: VoiceSessionStatus,
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => void;
-  setReady: (ready: boolean) => void;
   setVoiceStatus: (status: VoiceSessionStatus, channelId?: string) => void;
   addProducer: (id: string, producer: Producer) => void;
   removeProducer: (producerId: string) => void;
@@ -33,7 +31,6 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     else map.delete(userId);
     set({ activeSpeakers: map });
   },
-  setReady: (ready: boolean) => set({ ready }),
   addProducer: (id, producer) => {
     const map = new Map(get().producers);
     map.set(id, producer);

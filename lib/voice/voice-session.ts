@@ -95,7 +95,7 @@ export class VoiceSession {
             this.callUnsubscribes.push(
                 this.deps.onInputDeviceChange(this.switchInputDevice),
                 this.deps.onMicOffChange(this.onMicOffChange),
-                this.deps.onSetDeafened(this.onDeafenedChange)
+                this.deps.onSetDeafened(this.onDeafenedChange),
             );
 
             this.connectionUnsubscribes.push(
@@ -229,6 +229,7 @@ export class VoiceSession {
             videoTrack.onended = () => { this.stopScreenShare(); };
             return true;
         } catch (error) {
+            videoTrack?.stop();
             console.error(error);
             return false;
         }

@@ -24,7 +24,7 @@ import { useGetUserProfile, useUserProfileStore } from "../stores/user-profiles-
 import { useChannelsStore, useGetDMChannels } from "../stores/channels-store";
 import { Channel } from "@/interfaces/channel";
 import UserAvatar from "@/components/user-avatar/user-avatar";
-import { PeerConnectionManager } from "@/components/peer-connection-manager/peer-connection-manager";
+import { VoiceAudioRenderer } from "@/components/voice-audio-renderer/voice-audio-renderer";
 import { VoiceRingManager } from "@/components/voice-ring-manager/voice-ring-manager";
 import { ClientReadyResponseDTO } from "@/interfaces/dto/client-ready-response.dto";
 import { useAuth } from "@/contexts/auth.context";
@@ -443,7 +443,7 @@ export default function HomeLayout({ children, sidebar }: HomeLayoutProps) {
                     </ContextMenuProvider>
                 </ModalProvider>
             </AppInitializer>
-            <PeerConnectionManager />
+            <VoiceAudioRenderer />
         </SocketProvider >
         // {/* </UserPresenceProvider> */ }
         // </AppStateProvider>
