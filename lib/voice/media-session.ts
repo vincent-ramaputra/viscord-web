@@ -217,6 +217,13 @@ export class MediaSession {
         this.events.onProducerAdded(producer);
     }
 
+    stopScreenProducer() {
+        const screenProducer = Array.from(this.producers.values()).find(p => p.appData?.mediaTag === 'screen');
+        if (!screenProducer) return;
+
+        this.closeProducer(screenProducer.id);
+    }
+
     closeProducer(producerId: string) {
         const producer = this.producers.get(producerId);
         if (!producer) return;
@@ -262,6 +269,7 @@ export class MediaSession {
         }
     }
 
+
     async replaceMicTrack(track: MediaStreamTrack) {
         const producer = Array.from(this.producers.values()).find(p => p.appData?.mediaTag === 'mic');
         if (!producer) throw new Error('Mic producer not found');
@@ -283,6 +291,14 @@ export class MediaSession {
 
         this.sfuClient.send(RESUME_PRODUCER, { producerId });
         producer.resume();
+    }
+
+    resumeConsumer(consumerId: string) {
+        const consumer = this.consumers.get(consumerId);
+        if (!consumer) return;
+
+        this.sfuClient.send(RESUME_CONSUMER);
+        consumer.resume();
     }
 
     close() {

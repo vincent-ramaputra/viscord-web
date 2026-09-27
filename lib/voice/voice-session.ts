@@ -25,13 +25,12 @@ interface VoiceSessionDeps {
     onInputDeviceChange: (listener: (deviceId: string | undefined) => void) => () => void;
     onMicOffChange: (listener: (micOff: boolean) => void) => () => void;
     onSetDeafened: (listener: (deafened: boolean) => void) => () => void;
+    getScreenTrack(): Promise<MediaStreamTrack>;
     store: {
         addConsumer(consumer: Consumer): void;
         removeConsumer(consumerId: string): void;
         addProducer(producer: Producer): void;
         removeProducer(producerId: string): void;
-        setSfuClient(sfuClient?: SfuClient): void;
-        setMediaSession(mediaSession?: MediaSession): void;
         setVoice: (status: VoiceSessionStatus, channelId?: string) => void;
         resetMedia: () => void;
         setActiveSpeaker(userId: string, speaking: boolean): void;
@@ -75,7 +74,6 @@ export class VoiceSession {
             }
 
             this.sfuClient = sfu;
-            this.deps.store.setSfuClient(sfu);
 
             const userId = this.deps.getUserId();
             if (!userId) throw new Error('Not logged in');
@@ -93,7 +91,6 @@ export class VoiceSession {
                 return;
             }
             this.mediaSession = mediaSession;
-            this.deps.store.setMediaSession(mediaSession);
 
             this.callUnsubscribes.push(
                 this.deps.onInputDeviceChange(this.switchInputDevice),
@@ -216,6 +213,34 @@ export class VoiceSession {
         this.deps.store.setActiveSpeaker(dto.userId, dto.speaking);
     }
 
+    startScreenShare = async (): Promise<boolean> => {
+        const media = this.mediaSession
+        if (!media) return false;
+        try {
+            const videoTrack = await this.deps.getScreenTrack();
+            if (this.mediaSession !== media) {
+                videoTrack.stop();
+                return false;
+            }
+
+            await this.mediaSession.produceScreen(videoTrack);
+
+            videoTrack.onended = () => { this.stopScreenShare(); };
+            return true;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
+    }
+
+    stopScreenShare = () => {
+        this.mediaSession?.stopScreenProducer();
+    }
+
+    resumeConsumer = (consumerId: string) => {
+        this.mediaSession?.resumeConsumer(consumerId);
+    }
+
     private teardown() {
         this.localAudio?.stop();
         this.mediaSession?.close();
@@ -230,8 +255,6 @@ export class VoiceSession {
         this.callUnsubscribes = [];
         this.connectionUnsubscribes = [];
 
-        this.deps.store.setMediaSession(undefined)
-        this.deps.store.setSfuClient(undefined)
         this.deps.store.resetMedia();
 
 
@@ -297,6 +320,17 @@ export const voiceSession = new VoiceSession({
         });
         return unsubscribe;
     },
+    getScreenTrack: async () => {
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                frameRate: 30,
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            },
+            audio: true
+        });
+        return stream.getVideoTracks()[0];
+    },
     store: {
         addConsumer: (consumer) => {
             const { addConsumer } = useMediasoupStore.getState();
@@ -313,14 +347,6 @@ export const voiceSession = new VoiceSession({
         removeProducer: (producerId) => {
             const { removeProducer } = useMediasoupStore.getState();
             removeProducer(producerId);
-        },
-        setMediaSession: (session) => {
-            const { setMediaSession } = useMediasoupStore.getState();
-            setMediaSession(session)
-        },
-        setSfuClient: (sfu) => {
-            const { setSfuClient } = useMediasoupStore.getState();
-            setSfuClient(sfu);
         },
         setVoice: (status, channelId) => {
             const { setVoiceStatus } = useMediasoupStore.getState();

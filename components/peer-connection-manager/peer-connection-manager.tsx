@@ -14,7 +14,7 @@ export function PeerConnectionManager() {
     const { socket } = useSocket();
     const audioRef = useRef<HTMLAudioElement>(null);
     const mediaSettings = useAppSettingsStore(s => s.mediaSettings);
-    const { sfuClient, updateActiveSpeakers, setReady, voiceStatus } = useMediasoupStore()
+    const { setReady } = useMediasoupStore()
     useEffect(() => {
         if (audioRef.current) audioRef.current.volume = mediaSettings.outputVolume / 100;
     }, [mediaSettings.outputVolume])
