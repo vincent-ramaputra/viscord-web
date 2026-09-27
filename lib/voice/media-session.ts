@@ -170,7 +170,13 @@ export class MediaSession {
             });
             if (this.closed) return;
 
-            if (consumer.appData?.mediaTag !== 'screen' && !this.audioConsumerPaused) {
+            // new consumers start unpaused client-side and the SFU creates them unpaused,
+            // so a deafened client has to pause audio itself. Only locally: PAUSE_CONSUMER
+            // pauses every consumer on the server, screen video included (#5).
+            if (consumer.kind === 'audio' && this.audioConsumerPaused) {
+                consumer.pause();
+            }
+            else if (consumer.appData?.mediaTag !== 'screen') {
                 this.sfuClient.send(RESUME_CONSUMER);
                 consumer.resume();
             }
