@@ -1,7 +1,6 @@
 import { VoiceState } from "@/interfaces/voice-state";
-import { kMaxLength } from "buffer";
+import { useMemo } from "react";
 import { create } from "zustand";
-import { useShallow } from "zustand/shallow";
 
 type VoiceStateMap = Map<string, VoiceState>
 
@@ -67,10 +66,14 @@ export function getVoiceStateKey(channelId: string, userId: string) {
     return `${channelId}:${userId}`
 }
 
-export function useGetChannelVoiceStates(channelId: string): VoiceState[] {
-    const voiceStates = useVoiceStateStore.getState().voiceStates;
+export function useChannelVoiceStates(channelId: string): VoiceState[] {
+    const voiceStates = useVoiceStateStore(s => s.voiceStates);
+    return useMemo(() => Array.from(voiceStates.values())
+        .filter(vs => vs.channelId === channelId),
+        [voiceStates, channelId])
+}
 
-    return Array.from(voiceStates.entries())
-        .filter(([key]) => key.startsWith(channelId))
-        .map(([, state]) => state);
+export function getChannelVoiceStates(channelId: string): VoiceState[] {
+    return Array.from(useVoiceStateStore.getState().voiceStates.values())
+        .filter(vs => vs.channelId === channelId);
 }

@@ -1,9 +1,9 @@
 import { create } from "zustand";
-import { Device } from "mediasoup-client";
-import { Consumer, Producer, Transport } from "mediasoup-client/types";
-import { CLOSE_PRODUCER, PAUSE_CONSUMER, RESUME_CONSUMER } from "@/constants/events";
-import { SfuClient } from "@/lib/voice/sfu-client";
-import { MediaSession } from "@/lib/voice/media-session";
+import { Consumer, Producer } from "mediasoup-client/types";
+import { PAUSE_CONSUMER, RESUME_CONSUMER } from "@/constants/events";
+import type { SfuClient } from "@/lib/voice/sfu-client";
+import type { MediaSession } from "@/lib/voice/media-session";
+import type { VoiceSessionStatus } from "@/lib/voice/voice-session";
 
 interface MediasoupStoreState {
   ready: boolean;
@@ -13,10 +13,12 @@ interface MediasoupStoreState {
   producers: Map<string, Producer>;
   consumers: Map<string, Consumer>;
   activeSpeakers: Map<string, boolean>;
+  voiceStatus: VoiceSessionStatus,
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => void;
   setReady: (ready: boolean) => void;
-  setSfuClient: (client: SfuClient) => void;
-  setMediaSession: (session: MediaSession, channelId: string) => void;
+  setSfuClient: (client?: SfuClient) => void;
+  setVoiceStatus: (status: VoiceSessionStatus, channelId?: string) => void;
+  setMediaSession: (session?: MediaSession) => void;
   addProducer: (id: string, producer: Producer) => void;
   removeProducer: (producerId: string) => void;
   addConsumer: (consumerId: string, consumer: Consumer) => void;
@@ -25,7 +27,7 @@ interface MediasoupStoreState {
   stopScreenShare: () => Promise<boolean>;
   resumeConsumer: (consumerId: string) => void;
   pauseConsumer: (consumerId: string) => void;
-  cleanup: () => Promise<void>;
+  resetMedia: () => void;
 }
 
 export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
@@ -39,6 +41,8 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
   consumers: new Map(),
   activeSpeakers: new Map(),
   mediaSession: undefined,
+  voiceStatus: 'none',
+  setVoiceStatus: (status, channelId) => { set({ voiceStatus: status, channelId }) },
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => {
     const map = new Map(get().activeSpeakers);
     if (isSpeaking) map.set(userId, true);
@@ -46,8 +50,8 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     set({ activeSpeakers: map });
   },
   setReady: (ready: boolean) => set({ ready }),
-  setSfuClient: (client: SfuClient) => { set({ sfuClient: client }) },
-  setMediaSession: (session: MediaSession, channelId: string) => { set({ mediaSession: session, channelId }) },
+  setSfuClient: (client?: SfuClient) => { set({ sfuClient: client }) },
+  setMediaSession: (session?: MediaSession) => { set({ mediaSession: session }) },
   addProducer: (id, producer) => {
     const map = new Map(get().producers);
     map.set(id, producer);
@@ -119,19 +123,7 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
 
     return true;
   },
-  cleanup: async () => {
-    const { stopScreenShare, sfuClient, mediaSession } = get();
-
-    await stopScreenShare();
-    mediaSession?.close();
-    sfuClient?.close();
-
-    set({
-      sfuClient: undefined,
-      mediaSession: undefined,
-      producers: new Map(),
-      consumers: new Map(),
-      channelId: undefined
-    });
+  resetMedia: () => {
+    set({producers: new Map(), consumers: new Map()});
   },
 }));

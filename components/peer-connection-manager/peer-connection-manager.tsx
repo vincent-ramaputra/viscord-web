@@ -1,24 +1,15 @@
-import { useVoiceEvents } from "@/app/(auth)/hooks/socket-events";
 import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { usePlaySound } from "@/app/stores/audio-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
-import { useSocketStore } from "@/app/stores/socket-store";
-import { useGetChannelVoiceStates, useVoiceStateStore } from "@/app/stores/voice-state-store";
-import { CONNECT_TRANSPORT, CREATE_CONSUMER, CREATE_PRODUCER, CREATE_RTC_ANSWER, CREATE_RTC_OFFER, CREATE_SEND_TRANSPORT, CREATE_RECV_TRANSPORT, VOICE_UPDATE_EVENT, RESUME_CONSUMER, JOIN_ROOM, CREATE_TRANSPORT, GET_PRODUCERS, PRODUCER_JOINED, ACTIVE_SPEAKER_STATE, PAUSE_PRODUCER, RESUME_PRODUCER, PAUSE_CONSUMER, CLOSE_PRODUCER, CLOSE_CONSUMER } from "@/constants/events";
+import { VOICE_UPDATE_EVENT, RESUME_CONSUMER, ACTIVE_SPEAKER_STATE, PAUSE_PRODUCER, RESUME_PRODUCER, PAUSE_CONSUMER } from "@/constants/events";
 import { useSocket } from "@/contexts/socket.context";
 import { VoiceEventType } from "@/enums/voice-event-type";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
-import { ProducerCreatedDTO } from "@/interfaces/dto/producer-created.dto";
 import { VoiceEventDTO } from "@/interfaces/dto/voice-event.dto";
 import { VoiceState } from "@/interfaces/voice-state";
-import { MediaSession } from "@/lib/voice/media-session";
-import { SfuClient } from "@/lib/voice/sfu-client";
-import { createVoiceTicket } from "@/services/channels/channels.service";
-import { Device } from "mediasoup-client";
-import { ConsumerOptions, RtpCapabilities, Transport } from "mediasoup-client/types";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
+import { voiceSession } from "@/lib/voice/voice-session";
+import {useEffect, useRef } from "react";
 
 // reads the store directly so transport callbacks don't see a stale render's settings
 function isMicOffNow() {
@@ -30,7 +21,7 @@ export function PeerConnectionManager() {
     const { socket } = useSocket();
     const audioRef = useRef<HTMLAudioElement>(null);
     const mediaSettings = useAppSettingsStore(s => s.mediaSettings);
-    const { sfuClient, updateActiveSpeakers, setSfuClient, mediaSession, setMediaSession, addConsumer, addProducer, removeConsumer, removeProducer, setReady, cleanup } = useMediasoupStore()
+    const { sfuClient, updateActiveSpeakers, setReady, voiceStatus } = useMediasoupStore()
     const isMicOff = mediaSettings.isMuted || mediaSettings.isDeafened;
     const { user } = useCurrentUserStore();
     useEffect(() => {
@@ -116,7 +107,12 @@ export function PeerConnectionManager() {
                 } as VoiceState
             } as VoiceEventDTO);
         }
-    }, [mediaSettings.isDeafened])
+    }, [mediaSettings.isDeafened]);
+
+    useEffect(() => {
+        if (voiceStatus === 'connected') startVAD();
+
+    }, [voiceStatus])
 
 
     async function startVAD() {
@@ -186,104 +182,24 @@ export function PeerConnectionManager() {
     }
 
 
-
-    const setupJoinCall = async (channelId: string) => {
-        if (sfuClient) return;
-        const { user } = useCurrentUserStore.getState();
-        const ticketResponse = await createVoiceTicket(channelId);
-        if (!ticketResponse.success || !ticketResponse.data) return;
-
-        const sfu = new SfuClient(ticketResponse.data.sfuUrl, ticketResponse.data.ticket);
-        setSfuClient(sfu);
-
-        let mediaSession: MediaSession | undefined;
-
-        try {
-            await sfu.connect();
-            mediaSession = await MediaSession.start(sfu, { userId: user!.id, channelId }, {
-                onConsumerAdded: (consumer) => addConsumer(consumer.id, consumer),
-                onConsumerRemoved: (consumerId) => removeConsumer(consumerId),
-                onProducerAdded: (producer) => addProducer(producer.id, producer),
-                onProducerRemoved: (producerId) => removeProducer(producerId)
-            });
-            setMediaSession(mediaSession, channelId);
-
-        } catch (error) {
-            console.error('Failed connecting to SFU Server', error);
-            await cleanup();
-            return;
-        }
-
-        try {
-            const inputId = useAppSettingsStore.getState().mediaSettings.audioInputDeviceId;
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    deviceId: inputId ? { ideal: inputId } : undefined,
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                }
-            });
-
-            const [track] = stream.getAudioTracks();
-            if (!track) {
-                throw new Error('No audio track found in stream');
-            }
-            await mediaSession.produceMic(track, { paused: isMicOffNow() });
-
-            await startVAD();
-        } catch (error) {
-            console.error("Failed getting audio input", error);
-        }
-    }
-
-
     const handleVoiceStateUpdate = async (event: VoiceEventDTO) => {
-        const voiceStates = useGetChannelVoiceStates(event.channelId);
         const user = useCurrentUserStore.getState().user;
-        const { channelId: currentChannelId } = useMediasoupStore.getState();
+        const { channelId } = useMediasoupStore.getState();
 
         if (event.type == VoiceEventType.VOICE_LEAVE) {
-            if (event.userId === user?.id && event.channelId === currentChannelId) {
-                closeClient();
-            }
             usePlaySound('voice-leave');
         }
         else if (event.type === VoiceEventType.VOICE_JOIN) {
-            if (event.userId === user?.id) {
-                if (currentChannelId && currentChannelId != event.channelId) {
-                    const socket = useSocketStore.getState().socket;
-                    socket?.emit(VOICE_UPDATE_EVENT, {
-                        channelId: currentChannelId,
-                        type: VoiceEventType.VOICE_LEAVE
-                    } as VoiceEventDTO)
-                    await closeClient();
-                }
-                setupJoinCall(event.channelId);
-            }
-
-            if (event.userId === user?.id || event.channelId === voiceStates.find(vs => vs.userId === user?.id)?.channelId) {
+            if (event.userId === user?.id || event.channelId === channelId) {
                 usePlaySound('voice-join');
             }
         }
     }
 
 
-    const closeClient = async () => {
-        const { cleanup } = useMediasoupStore.getState();
-
-        await cleanup();
-    }
 
 
-    const handleBeforeUnload = useCallback(() => {
-        const socket = useSocketStore.getState().socket;
-        const { channelId } = useMediasoupStore.getState();
-        socket?.emit(VOICE_UPDATE_EVENT, { channelId, type: VoiceEventType.VOICE_LEAVE });
-
-        closeClient();
-    }, [socket]);
-
+    const handleBeforeUnload = () => { voiceSession.leave() };
     const onActiveSpeaker = (payload: ActiveSpeakerStateDTO) => {
         updateActiveSpeakers(payload.userId, payload.speaking);
     }

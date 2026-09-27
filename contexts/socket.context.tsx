@@ -12,7 +12,7 @@ import { UserStatus } from "@/enums/user-status.enum";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { useUserTypingStore } from "@/app/stores/user-typing-store";
 import { VoiceState } from "@/interfaces/voice-state";
-import { getVoiceStateKey, useGetChannelVoiceStates, useVoiceStateStore } from "@/app/stores/voice-state-store";
+import { getVoiceStateKey,  useVoiceStateStore } from "@/app/stores/voice-state-store";
 import { VoiceEventDTO } from "@/interfaces/dto/voice-event.dto";
 import { VoiceEventType } from "@/enums/voice-event-type";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
@@ -125,6 +125,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
             removeVoiceState(event.channelId, event.userId);
         }
         else {
+            console.log('updating voice state');
             updateVoiceState(event.data);
         }
     }, [removeVoiceState, updateVoiceState]);

@@ -4,7 +4,7 @@ import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { useIsUserTyping } from "@/app/stores/user-typing-store";
 import { useGetChannelVoiceRing } from "@/app/stores/voice-ring-state-store";
-import { useGetChannelVoiceStates } from "@/app/stores/voice-state-store";
+import { getChannelVoiceStates, useChannelVoiceStates } from "@/app/stores/voice-state-store";
 import Tooltip from "@/components/tooltip/tooltip";
 import UserAvatar from "@/components/user-avatar/user-avatar";
 import { Channel } from "@/interfaces/channel";
@@ -244,12 +244,12 @@ function CallHeader({ channel }: { channel: Channel }) {
     const [isHovering, setIsHovering] = useState(false);
     const { user } = useCurrentUserStore();
     const { getUserProfile } = useUserProfileStore();
-    const voiceStates = useGetChannelVoiceStates(channel.id);
+    const voiceStates = useChannelVoiceStates(channel.id);
     const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const { join, leave } = useVoice();
 
     async function handleJoinVoiceCall() {
-        const voiceStates = useGetChannelVoiceStates(channel.id);
+        const voiceStates = getChannelVoiceStates(channel.id);
         if (voiceStates.length === 0) await ringChannelRecipients(channel.id);
         join(channel.id);
     }
@@ -397,7 +397,7 @@ function VideoView({
     const { consumers, producers, activeSpeakers } = useMediasoupStore();
     const { getUserProfile } = useUserProfileStore();
     const voiceRings = useGetChannelVoiceRing(channel.id);
-    const voiceStates = useGetChannelVoiceStates(channel.id);
+    const voiceStates = useChannelVoiceStates(channel.id);
 
     const screenShareConsumers = Array.from(consumers.values()).filter(c => c.appData.mediaTag === 'screen');
     const screenShareProducer = Array.from(producers.values()).find(c => c.appData.mediaTag === 'screen');
@@ -453,7 +453,7 @@ function VoiceOnlyView({
     const { getUserProfile } = useUserProfileStore();
     const { activeSpeakers } = useMediasoupStore();
     const voiceRings = useGetChannelVoiceRing(channel.id);
-    const voiceStates = useGetChannelVoiceStates(channel.id);
+    const voiceStates = useChannelVoiceStates(channel.id);
 
     return (
         <AnimatePresence>
@@ -620,7 +620,7 @@ function CallFooter({
     onLeaveCall: () => void;
 }) {
     const { consumers, producers } = useMediasoupStore();
-    const voiceStates = useGetChannelVoiceStates(channel.id);
+    const voiceStates = useChannelVoiceStates(channel.id);
     const screenShareConsumers = Array.from(consumers.values()).filter(c => c.appData.mediaTag === 'screen');
     const screenShareProducer = Array.from(producers.values()).find(c => c.appData.mediaTag === 'screen');
     const hasActiveStream = screenShareConsumers.length > 0 || screenShareProducer;
@@ -789,7 +789,7 @@ export function DMChannelHeader({ channel }: { channel: Channel }) {
     const { getUserProfile } = useUserProfileStore();
     const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const isTyping = useIsUserTyping(channel.id, recipient.id);
-    const voiceStates = useGetChannelVoiceStates(channel.id);
+    const voiceStates = useChannelVoiceStates(channel.id);
     const { join } = useVoice();
 
     async function handleJoinVoiceCall() {
