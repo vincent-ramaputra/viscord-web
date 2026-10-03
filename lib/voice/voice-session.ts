@@ -13,7 +13,11 @@ import { LocalAudio, LocalAudioDeps } from "./local-audio";
 import { VoiceState } from "@/interfaces/voice-state";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
 
-export type VoiceSessionStatus = 'none' | 'connecting' | 'connected';
+export type VoiceSessionStatus = 'none' | 'connecting' | 'reconnecting' | 'connected';
+
+const RETRY_BASE_DELAY = 2000;
+const MAX_DELAY = 8000;
+const MAX_RETRIES = 5;
 
 interface VoiceSessionDeps {
     getUserId(): string | undefined;
@@ -26,6 +30,8 @@ interface VoiceSessionDeps {
     onMicOffChange: (listener: (micOff: boolean) => void) => () => void;
     onSetDeafened: (listener: (deafened: boolean) => void) => () => void;
     getScreenTrack(): Promise<MediaStreamTrack>;
+    random(): number;
+    sleep(ms: number): Promise<void>;
     store: {
         addConsumer(consumer: Consumer): void;
         removeConsumer(consumerId: string): void;
@@ -145,7 +151,7 @@ export class VoiceSession {
             this.mediaSession = mediaSession;
 
             this.connectionUnsubscribes.push(
-                sfu.on(ACTIVE_SPEAKER_STATE, this.onActiveSpeaker)
+                sfu.on(ACTIVE_SPEAKER_STATE, this.onActiveSpeaker),
             );
 
             mediaSettings = this.deps.getMediaSettings();
@@ -160,6 +166,13 @@ export class VoiceSession {
                     console.error("Mic unavailable", error);
                 }
             }
+
+            this.connectionUnsubscribes.push(
+                sfu.onDisconnect((reason) => {
+                    if (reason === 'io client disconnect') return;
+                    this.reconnect();
+                })
+            );
         } catch (error) {
             sfu?.close();
             throw error;
@@ -167,10 +180,40 @@ export class VoiceSession {
 
     }
 
+    private async reconnect() {
+        if (!this.channelId) return;
+        const attempt = ++this.attempt;
+        this.setStatus('reconnecting');
+
+
+        for (let retryCount = 0; retryCount < MAX_RETRIES; ++retryCount) {
+            this.resetConnection();
+
+            const waitTime = Math.min(RETRY_BASE_DELAY * 2 ** retryCount, MAX_DELAY);
+            const jitter = waitTime * 0.3 * this.deps.random();
+
+            await this.deps.sleep(waitTime + jitter);
+            if (attempt !== this.attempt) return;
+
+            try {
+                await this.connect(this.channelId, attempt);
+                if (attempt !== this.attempt) return;
+
+                this.setStatus('connected');
+                return;
+            } catch (error) {
+                if (attempt !== this.attempt) return;
+                console.error(`Voice reconnection attempt ${retryCount + 1}/${MAX_RETRIES} failed`, error);
+            }
+        }
+
+        await this.leave();
+    }
+
     async leave() {
         ++this.attempt;
 
-        if (this.status == 'connected' && this.channelId) {
+        if ((this.status === 'connected' || this.status === 'reconnecting') && this.channelId) {
             this.deps.emitGateway({
                 type: VoiceEventType.VOICE_LEAVE,
                 channelId: this.channelId,
@@ -354,6 +397,10 @@ export const voiceSession = new VoiceSession({
             audio: true
         });
         return stream.getVideoTracks()[0];
+    },
+    random: () => Math.random(),
+    sleep: async (ms: number) => {
+        return await new Promise(resolve => setTimeout(resolve, ms));
     },
     store: {
         addConsumer: (consumer) => {
