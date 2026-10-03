@@ -1,4 +1,4 @@
-import {  UserStatusString } from "@/enums/user-status.enum";
+import { UserStatusString } from "@/enums/user-status.enum";
 import { BsMicFill, BsMicMuteFill } from "react-icons/bs";
 import { LuHeadphoneOff, LuHeadphones } from "react-icons/lu";
 import { FaGear } from "react-icons/fa6";
@@ -20,6 +20,7 @@ import { useGetGuildChannel } from "@/app/stores/guilds-store";
 import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
 import { useVoice } from "@/hooks/use-voice";
+import { VoiceSessionStatus } from "@/lib/voice/voice-session";
 
 const Container = styled.div`
   width: 100%;
@@ -143,7 +144,13 @@ const VoiceContainer = styled.div`
 `
 
 const VoiceStatus = styled.h2`
-    color: var(--text-positive);
+    &.positive {
+        color: var(--text-positive);
+    }
+
+    &.warning {
+        color: var(--text-warning);
+    }
 `
 
 const VoiceChannelInfo = styled.p`
@@ -155,11 +162,19 @@ const VoiceChannelInfo = styled.p`
     }
 `
 
+const STATUS_DISPLAY: Record<VoiceSessionStatus, { label: string, type: string }> = {
+    none: { label: '', type: '' },
+    connecting: { label: 'Connecting', type: 'warning' },
+    connected: { label: 'Voice Connected', type: 'positive' },
+    reconnecting: { label: 'Reconnecting', type: 'warning' }
+};
+
 function Voice() {
     const { channelId } = useMediasoupStore();
     const channel: Channel = (useGetChannel(channelId!) ?? useGetGuildChannel(channelId!))!;
     const router = useRouter();
-    const { leave } = useVoice();
+    const { status, leave } = useVoice();
+    const statusDisplay = STATUS_DISPLAY[status];
 
     function navigateToChannel() {
         if (channel.type === ChannelType.DM) router.push(`/channels/me/${channelId}`);
@@ -173,7 +188,7 @@ function Voice() {
         <VoiceContainer>
             <div className="flex">
                 <div className="flex flex-col flex-1">
-                    <VoiceStatus>Voice Connected</VoiceStatus>
+                    <VoiceStatus className={statusDisplay.type}>{statusDisplay.label}</VoiceStatus>
                     <VoiceChannelInfo onClick={navigateToChannel}>VR</VoiceChannelInfo>
                 </div>
                 <IconContainer onClick={handleLeaveVoiceCall}><ImPhoneHangUp /></IconContainer>
@@ -188,7 +203,7 @@ export default function UserArea() {
     const [showProfileCard, setShowProfileCard] = useState(false);
     const profileCardRef = useRef<HTMLDivElement>(null!)
     const { getUserProfile } = useUserProfileStore();
-    const {isDeafened, isMuted, isMicOff, toggleDeafened, toggleMute} = useVoice();
+    const { isDeafened, isMuted, isMicOff, toggleDeafened, toggleMute } = useVoice();
     const { channelId } = useMediasoupStore();
     const { openSettings } = useSettingsOverlay();
 

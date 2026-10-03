@@ -13,7 +13,11 @@ import { LocalAudio, LocalAudioDeps } from "./local-audio";
 import { VoiceState } from "@/interfaces/voice-state";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
 
-export type VoiceSessionStatus = 'none' | 'connecting' | 'connected';
+export type VoiceSessionStatus = 'none' | 'connecting' | 'reconnecting' | 'connected';
+
+const RETRY_BASE_DELAY = 2000;
+const MAX_DELAY = 8000;
+const MAX_RETRIES = 5;
 
 interface VoiceSessionDeps {
     getUserId(): string | undefined;
@@ -26,6 +30,8 @@ interface VoiceSessionDeps {
     onMicOffChange: (listener: (micOff: boolean) => void) => () => void;
     onSetDeafened: (listener: (deafened: boolean) => void) => () => void;
     getScreenTrack(): Promise<MediaStreamTrack>;
+    random(): number;
+    sleep(ms: number): Promise<void>;
     store: {
         addConsumer(consumer: Consumer): void;
         removeConsumer(consumerId: string): void;
@@ -59,18 +65,70 @@ export class VoiceSession {
 
         this.channelId = channelId;
         this.setStatus('connecting');
-        const attemptNumber = ++this.attempt;
 
+        const attemptNumber = ++this.attempt;
+        let localAudio: LocalAudio | undefined;
+        try {
+            const mediaSettings = this.deps.getMediaSettings();
+            localAudio = await this.deps.startLocalAudio(mediaSettings.audioInputDeviceId, {
+                isMicOff: () => { const s = this.deps.getMediaSettings(); return s.isMuted || s.isDeafened; },
+                onSpeakingChange: this.onSpeakingChange,
+            })
+            if (attemptNumber !== this.attempt) {
+                localAudio.stop();
+                return;
+            }
+
+            this.localAudio = localAudio;
+        } catch (error) {
+            localAudio?.stop();
+            if (attemptNumber !== this.attempt) return;
+            console.error("Failed getting audio input", error);
+        }
+
+        try {
+            await this.connect(channelId, attemptNumber);
+
+            this.callUnsubscribes.push(
+                this.deps.onInputDeviceChange(this.switchInputDevice),
+                this.deps.onMicOffChange(this.onMicOffChange),
+                this.deps.onSetDeafened(this.onDeafenedChange),
+            );
+
+            this.setStatus('connected');
+
+            const mediaSettings = this.deps.getMediaSettings();
+            this.deps.emitGateway({
+                type: VoiceEventType.VOICE_JOIN,
+                channelId,
+                data: {
+                    isMuted: mediaSettings.isMuted || mediaSettings.isDeafened,
+                    isDeafened: mediaSettings.isDeafened
+                }
+            });
+
+        } catch (error) {
+            if (attemptNumber !== this.attempt) return;
+            console.error('Failed connecting to SFU Server', error);
+
+            this.teardown();
+
+            throw error;
+        }
+    }
+
+    private async connect(channelId: string, attempt: number) {
         let sfu: SfuClient | undefined;
+
         try {
             const ticketResponse = await this.deps.createTicket(channelId);
-            if (attemptNumber !== this.attempt) return;
+            if (attempt !== this.attempt) throw new Error("Connection closed");
 
             sfu = this.deps.createSfuClient(ticketResponse.sfuUrl, ticketResponse.ticket);
             await sfu.connect();
-            if (attemptNumber !== this.attempt) {
+            if (attempt !== this.attempt) {
                 sfu.close();
-                return;
+                throw new Error("Connection closed");
             }
 
             this.sfuClient = sfu;
@@ -85,75 +143,77 @@ export class VoiceSession {
                 onProducerAdded: (producer) => this.deps.store.addProducer(producer),
                 onProducerRemoved: (producerId) => this.deps.store.removeProducer(producerId)
             });
-            if (attemptNumber !== this.attempt) {
+            if (attempt !== this.attempt) {
                 mediaSession.close();
                 sfu.close();
-                return;
+                throw new Error("Connection closed");
             }
             this.mediaSession = mediaSession;
 
-            this.callUnsubscribes.push(
-                this.deps.onInputDeviceChange(this.switchInputDevice),
-                this.deps.onMicOffChange(this.onMicOffChange),
-                this.deps.onSetDeafened(this.onDeafenedChange),
-            );
-
             this.connectionUnsubscribes.push(
-                sfu.on(ACTIVE_SPEAKER_STATE, this.onActiveSpeaker)
+                sfu.on(ACTIVE_SPEAKER_STATE, this.onActiveSpeaker),
             );
 
             mediaSettings = this.deps.getMediaSettings();
             mediaSession.setAudioConsumerPaused(mediaSettings.isDeafened);
             mediaSession.setMicPaused(mediaSettings.isMuted || mediaSettings.isDeafened);
 
-            let localAudio: LocalAudio | undefined;
-            try {
-                localAudio = await this.deps.startLocalAudio(mediaSettings.audioInputDeviceId, {
-                    isMicOff: () => { const s = this.deps.getMediaSettings(); return s.isMuted || s.isDeafened; },
-                    onSpeakingChange: this.onSpeakingChange,
-                })
-                if (attemptNumber !== this.attempt) {
-                    localAudio.stop();
-                    return;
+            if (this.localAudio) {
+                try {
+                    await mediaSession.produceMic(this.localAudio.track);
+                } catch (error) {
+                    if (this.attempt !== attempt) throw new Error("Connection closed");
+                    console.error("Mic unavailable", error);
                 }
-
-                this.localAudio = localAudio;
-
-                await mediaSession.produceMic(this.localAudio.track);
-
-            } catch (error) {
-                localAudio?.stop();
-                if (attemptNumber !== this.attempt) return;
-                if (this.localAudio === localAudio) localAudio = undefined;
-                console.error("Failed getting audio input", error);
             }
 
-            mediaSettings = this.deps.getMediaSettings();
-            this.deps.emitGateway({
-                type: VoiceEventType.VOICE_JOIN,
-                channelId,
-                data: {
-                    isMuted: mediaSettings.isMuted || mediaSettings.isDeafened,
-                    isDeafened: mediaSettings.isDeafened
-                }
-            });
-            this.setStatus('connected');
-
+            this.connectionUnsubscribes.push(
+                sfu.onDisconnect((reason) => {
+                    if (reason === 'io client disconnect') return;
+                    this.reconnect();
+                })
+            );
         } catch (error) {
             sfu?.close();
-            if (attemptNumber !== this.attempt) return;
-            console.error('Failed connecting to SFU Server', error);
-
-            this.teardown();
-
             throw error;
         }
+
+    }
+
+    private async reconnect() {
+        if (!this.channelId) return;
+        const attempt = ++this.attempt;
+        this.setStatus('reconnecting');
+
+
+        for (let retryCount = 0; retryCount < MAX_RETRIES; ++retryCount) {
+            this.resetConnection();
+
+            const waitTime = Math.min(RETRY_BASE_DELAY * 2 ** retryCount, MAX_DELAY);
+            const jitter = waitTime * 0.3 * this.deps.random();
+
+            await this.deps.sleep(waitTime + jitter);
+            if (attempt !== this.attempt) return;
+
+            try {
+                await this.connect(this.channelId, attempt);
+                if (attempt !== this.attempt) return;
+
+                this.setStatus('connected');
+                return;
+            } catch (error) {
+                if (attempt !== this.attempt) return;
+                console.error(`Voice reconnection attempt ${retryCount + 1}/${MAX_RETRIES} failed`, error);
+            }
+        }
+
+        await this.leave();
     }
 
     async leave() {
         ++this.attempt;
 
-        if (this.status == 'connected' && this.channelId) {
+        if ((this.status === 'connected' || this.status === 'reconnecting') && this.channelId) {
             this.deps.emitGateway({
                 type: VoiceEventType.VOICE_LEAVE,
                 channelId: this.channelId,
@@ -243,21 +303,26 @@ export class VoiceSession {
         this.mediaSession?.resumeConsumer(consumerId);
     }
 
-    private teardown() {
-        this.localAudio?.stop();
+    private resetConnection() {
+        this.connectionUnsubscribes.forEach(fn => fn());
         this.mediaSession?.close();
         this.sfuClient?.close();
-        this.callUnsubscribes.forEach(fn => fn());
-        this.connectionUnsubscribes.forEach(fn => fn());
 
-        this.localAudio = undefined;
-        this.channelId = undefined;
         this.sfuClient = undefined;
         this.mediaSession = undefined;
-        this.callUnsubscribes = [];
         this.connectionUnsubscribes = [];
 
         this.deps.store.resetMedia();
+    }
+
+    private teardown() {
+        this.resetConnection();
+
+        this.localAudio?.stop();
+        this.callUnsubscribes.forEach(fn => fn());
+
+        this.localAudio = undefined;
+        this.channelId = undefined;
 
 
         this.setStatus('none');
@@ -332,6 +397,10 @@ export const voiceSession = new VoiceSession({
             audio: true
         });
         return stream.getVideoTracks()[0];
+    },
+    random: () => Math.random(),
+    sleep: async (ms: number) => {
+        return await new Promise(resolve => setTimeout(resolve, ms));
     },
     store: {
         addConsumer: (consumer) => {
