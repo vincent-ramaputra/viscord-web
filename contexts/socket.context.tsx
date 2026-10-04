@@ -124,6 +124,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         const user = useCurrentUserStore.getState().user;
         const { channelId } = useMediasoupStore.getState();
         if (event.type === VoiceEventType.VOICE_LEAVE) {
+            if (event.userId === user?.id) voiceSession.handleServerLeave(event.channelId);
             removeVoiceState(event.channelId, event.userId);
             usePlaySound('voice-leave');
         }

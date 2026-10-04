@@ -96,17 +96,6 @@ export class VoiceSession {
             );
 
             this.setStatus('connected');
-
-            const mediaSettings = this.deps.getMediaSettings();
-            this.deps.emitGateway({
-                type: VoiceEventType.VOICE_JOIN,
-                channelId,
-                data: {
-                    isMuted: mediaSettings.isMuted || mediaSettings.isDeafened,
-                    isDeafened: mediaSettings.isDeafened
-                }
-            });
-
         } catch (error) {
             if (attemptNumber !== this.attempt) return;
             console.error('Failed connecting to SFU Server', error);
@@ -212,14 +201,6 @@ export class VoiceSession {
 
     async leave() {
         ++this.attempt;
-
-        if ((this.status === 'connected' || this.status === 'reconnecting') && this.channelId) {
-            this.deps.emitGateway({
-                type: VoiceEventType.VOICE_LEAVE,
-                channelId: this.channelId,
-            });
-        }
-
         this.teardown();
     }
 
@@ -301,6 +282,14 @@ export class VoiceSession {
 
     resumeConsumer = (consumerId: string) => {
         this.mediaSession?.resumeConsumer(consumerId);
+    }
+
+    handleServerLeave(channelId: string) {
+        if (channelId !== this.channelId) return;
+        if (this.status !== 'connected' && this.status !== 'reconnecting') return; 
+
+        ++this.attempt;
+        this.teardown();
     }
 
     private resetConnection() {
