@@ -360,11 +360,16 @@ function CallHeaderActions({
     onJoinCall: () => void;
     channel: Channel;
 }) {
+    const { channelId } = useVoice();
+    const isInCall = channelId === channel.id;
+
     return (
         <div className="flex items-center text-[var(--interactive-normal)] gap-[8px]">
-            <HeaderActionButton tooltipText="Join Voice Call" onClick={onJoinCall}>
-                <PiPhoneCallFill size={20} />
-            </HeaderActionButton>
+            {!isInCall && (
+                <HeaderActionButton tooltipText="Join Voice Call" onClick={onJoinCall}>
+                    <PiPhoneCallFill size={20} />
+                </HeaderActionButton>
+            )}
             <HeaderActionButton tooltipText="Start Video Call">
                 <PiVideoCameraFill size={20} />
             </HeaderActionButton>
@@ -648,6 +653,7 @@ function CallFooter({
 }) {
     const { consumers, producers } = useMediasoupStore();
     const voiceStates = useChannelVoiceStates(channel.id);
+    const { channelId } = useVoice();
     const screenShareConsumers = Array.from(consumers.values()).filter(c => c.appData.mediaTag === 'screen');
     const screenShareProducer = Array.from(producers.values()).find(c => c.appData.mediaTag === 'screen');
     const hasActiveStream = screenShareConsumers.length > 0 || screenShareProducer;
@@ -656,6 +662,7 @@ function CallFooter({
         return (
             <CallFooterWithGradient
                 show={show}
+                isInCall={channelId === channel.id}
                 voiceStates={voiceStates}
                 user={user}
                 onJoinCall={onJoinCall}
@@ -668,6 +675,7 @@ function CallFooter({
     return (
         <CallFooterSimple
             show={true}
+            isInCall={channelId === channel.id}
             voiceStates={voiceStates}
             user={user}
             onJoinCall={onJoinCall}
@@ -678,6 +686,7 @@ function CallFooter({
 
 function CallFooterWithGradient({
     show,
+    isInCall,
     voiceStates,
     user,
     onJoinCall,
@@ -685,6 +694,7 @@ function CallFooterWithGradient({
     screenShareProducer,
 }: {
     show: boolean;
+    isInCall: boolean;
     voiceStates: VoiceState[];
     user: any;
     onJoinCall: () => void;
@@ -694,11 +704,11 @@ function CallFooterWithGradient({
     return (
         <HeaderBottomGradient className={`${show ? 'active' : ''}`}>
             <ContentFooter hide={false}>
-                {voiceStates.find(vs => vs.userId === user.id) && (
+                {isInCall && (
                     <CallControls screenShareProducer={screenShareProducer} />
                 )}
                 <CallJoinLeaveButton
-                    isInCall={!!voiceStates.find(vs => vs.userId === user?.id)}
+                    isInCall={isInCall}
                     onJoin={onJoinCall}
                     onLeave={onLeaveCall}
                 />
@@ -709,12 +719,14 @@ function CallFooterWithGradient({
 
 function CallFooterSimple({
     show,
+    isInCall,
     voiceStates,
     user,
     onJoinCall,
     onLeaveCall
 }: {
     show: boolean;
+    isInCall: boolean;
     voiceStates: VoiceState[];
     user: any;
     onJoinCall: () => void;
@@ -722,11 +734,11 @@ function CallFooterSimple({
 }) {
     return (
         <ContentFooter hide={!show}>
-            {voiceStates.find(vs => vs.userId === user.id) && (
+            {isInCall && (
                 <CallControls />
             )}
             <CallJoinLeaveButton
-                isInCall={!!voiceStates.find(vs => vs.userId === user?.id)}
+                isInCall={isInCall}
                 onJoin={onJoinCall}
                 onLeave={onLeaveCall}
             />

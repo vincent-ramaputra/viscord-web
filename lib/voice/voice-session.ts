@@ -10,8 +10,8 @@ import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { LocalAudio, LocalAudioDeps } from "./local-audio";
-import { VoiceState } from "@/interfaces/voice-state";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
+import { VoiceStatePatch } from "@/app/stores/voice-state-store";
 
 export type VoiceSessionStatus = 'none' | 'connecting' | 'reconnecting' | 'connected';
 
@@ -96,17 +96,6 @@ export class VoiceSession {
             );
 
             this.setStatus('connected');
-
-            const mediaSettings = this.deps.getMediaSettings();
-            this.deps.emitGateway({
-                type: VoiceEventType.VOICE_JOIN,
-                channelId,
-                data: {
-                    isMuted: mediaSettings.isMuted || mediaSettings.isDeafened,
-                    isDeafened: mediaSettings.isDeafened
-                }
-            });
-
         } catch (error) {
             if (attemptNumber !== this.attempt) return;
             console.error('Failed connecting to SFU Server', error);
@@ -212,14 +201,6 @@ export class VoiceSession {
 
     async leave() {
         ++this.attempt;
-
-        if ((this.status === 'connected' || this.status === 'reconnecting') && this.channelId) {
-            this.deps.emitGateway({
-                type: VoiceEventType.VOICE_LEAVE,
-                channelId: this.channelId,
-            });
-        }
-
         this.teardown();
     }
 
@@ -250,8 +231,8 @@ export class VoiceSession {
             type: VoiceEventType.STATE_UPDATE,
             channelId,
             data: {
-                isMuted: micOff
-            } as VoiceState
+                isMuted: micOff,
+            } satisfies VoiceStatePatch
         });
     }
 
@@ -265,7 +246,7 @@ export class VoiceSession {
             channelId,
             data: {
                 isDeafened: deafened
-            } as VoiceState
+            } satisfies VoiceStatePatch
         });
     }
 
@@ -301,6 +282,14 @@ export class VoiceSession {
 
     resumeConsumer = (consumerId: string) => {
         this.mediaSession?.resumeConsumer(consumerId);
+    }
+
+    handleServerLeave(channelId: string) {
+        if (channelId !== this.channelId) return;
+        if (this.status !== 'connected' && this.status !== 'reconnecting') return; 
+
+        ++this.attempt;
+        this.teardown();
     }
 
     private resetConnection() {

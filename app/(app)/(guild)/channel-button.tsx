@@ -194,8 +194,11 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     const { openSettings } = useSettingsOverlay();
     const voiceStates = useChannelVoiceStates(channel.id);
     const { activeSpeakers } = useMediasoupStore();
-    const { join } = useVoice();
+    const { join, channelId: voiceChannelId } = useVoice();
     const { user } = useCurrentUserStore();
+    const isInThisCall = voiceChannelId === channel.id;
+    // Read before the voice state map below, which shadows `user` with each participant's profile.
+    const currentUserId = user?.id;
     const { getUserProfile } = useUserProfileStore();
     const { getChannel, getGuild } = useGuildsStore();
     const guild = getGuild(channel.guildId)!;
@@ -225,6 +228,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
             router.push(`/channels/${channel.guildId}/${channel.id}`)
         }
         else if (channel.type === ChannelType.Voice) {
+            if (isInThisCall) return;
             handleJoinVoiceCall();
         }
     }
@@ -295,12 +299,14 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
 
             </ButtonContainer>
             {voiceStates.map(vs => {
+                // Our own state while this tab isn't in the call: we're connected from another tab or device.
+                const isOwnElsewhere = vs.userId === currentUserId && !isInThisCall;
                 const user = getUserProfile(vs.userId);
                 const isSpeaking = (voiceStates.find(vs => vs.userId === vs.userId) && activeSpeakers.has(vs.userId)) ?? false;
                 const avatarURL = user ? (user.avatarURL ? getImageURL('avatars', user?.avatarURL) : getImageURL('assets', user?.defaultAvatarURL)) : '';
 
                 return (
-                    <VoiceStateContainer key={vs.userId}>
+                    <VoiceStateContainer key={vs.userId} className={isOwnElsewhere ? 'opacity-50' : ''}>
                         <VoiceStateInfo>
                             {user && <AvatarImage crossOrigin="anonymous" src={avatarURL} className={`${isSpeaking ? 'ring-2 ring-green-500 shadow-lg shadow-green-500/30' : ''}`} />}
                             <VoiceStateDisplayName className={`${isSpeaking && 'active'}`}>{user?.displayName}</VoiceStateDisplayName>
