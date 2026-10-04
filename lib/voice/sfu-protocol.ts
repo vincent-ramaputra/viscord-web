@@ -13,7 +13,8 @@ import {
     PAUSE_PRODUCER,
     PRODUCER_JOINED,
     RESUME_CONSUMER,
-    RESUME_PRODUCER
+    RESUME_PRODUCER,
+    SESSION_REPLACED
 } from "@/constants/events";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
 import { ConnectTransportDTO } from "@/interfaces/dto/connect-transport.dto";
@@ -50,4 +51,5 @@ export interface ServerToClientEvents {
     [PRODUCER_JOINED]: (dto: ProducerCreatedDTO) => void;
     [ACTIVE_SPEAKER_STATE]: (dto: ActiveSpeakerStateDTO) => void;
     [CLOSE_PRODUCER]: (dto: { producerId: string }) => void;
+    [SESSION_REPLACED]: () => void;
 }
