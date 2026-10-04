@@ -20,12 +20,13 @@ import { ConnectTransportDTO } from "@/interfaces/dto/connect-transport.dto";
 import { ConsumerCreatedDTO } from "@/interfaces/dto/consumer-created.dto";
 import { CreateConsumerDTO } from "@/interfaces/dto/create-consumer.dto";
 import { CreateProducerDTO } from "@/interfaces/dto/create-producer.dto";
+import { JoinRoomDTO } from "@/interfaces/dto/join-room.dto";
 import { ProducerCreatedDTO } from "@/interfaces/dto/producer-created.dto";
 import { RtpCapabilities, TransportOptions } from "mediasoup-client/types";
 
 
 export interface ClientToServerEvents {
-    [JOIN_ROOM]: (ack: (res: { rtpCapabilities: RtpCapabilities } | null) => void) => void;
+    [JOIN_ROOM]: (dto: JoinRoomDTO, ack: (res: { rtpCapabilities: RtpCapabilities } | null) => void) => void;
     [CREATE_TRANSPORT]: (ack: (res: Pick<TransportOptions, 'id' | 'iceParameters' | 'iceCandidates' | 'dtlsParameters'> | null) => void) => void;
     [CONNECT_TRANSPORT]: (dto: ConnectTransportDTO, ack: (res: true | null) => void) => void;
     [CREATE_PRODUCER]: (dto: CreateProducerDTO, ack: (res: { id: string } | null) => void) => void;
