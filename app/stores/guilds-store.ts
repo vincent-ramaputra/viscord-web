@@ -9,6 +9,16 @@ import { create } from "zustand";
 
 type GuildMap = Map<string, Guild>;
 
+// Backend omits userChannelState on some responses (e.g. create/join guild), but the UI reads it unguarded.
+// Default it here, at the store boundary, so every channel in the store satisfies the Channel type.
+function normalizeChannel(channel: Channel): Channel {
+    return { ...channel, userChannelState: channel.userChannelState ?? { unreadCount: 0, mentionCount: 0 } };
+}
+
+function normalizeGuild(guild: Guild): Guild {
+    return guild.channels ? { ...guild, channels: guild.channels.map(normalizeChannel) } : guild;
+}
+
 interface GuildStoreState {
     guilds: Map<string, Guild>;
     setGuilds: (guilds: GuildMap) => void;
@@ -27,8 +37,9 @@ interface GuildStoreState {
 
 export const useGuildsStore = create<GuildStoreState>((set, get) => ({
     guilds: new Map(),
-    setGuilds: (guilds) => set({ guilds }),
-    upsertGuild: (guild) => set((state) => {
+    setGuilds: (guilds) => set({ guilds: new Map([...guilds].map(([id, guild]) => [id, normalizeGuild(guild)])) }),
+    upsertGuild: (incoming) => set((state) => {
+        const guild = normalizeGuild(incoming);
         const newGuilds = new Map(state.guilds);
         const existing = newGuilds.get(guild.id);
         if (!existing) {
@@ -106,7 +117,7 @@ export const useGuildsStore = create<GuildStoreState>((set, get) => ({
                 });
             }
             else {
-                updatedChannels = [...updatedChannels, { ...channel, userChannelState: channel.userChannelState ?? { unreadCount: 0 } }];
+                updatedChannels = [...updatedChannels, normalizeChannel(channel)];
             }
 
             const updatedGuild: Guild = { ...guild, channels: updatedChannels };
