@@ -42,7 +42,7 @@ export class MediaSession {
     static async start(sfuClient: SfuClient, { userId, channelId, audioConsumerPaused, audioProducerPaused}: { userId: string, channelId: string, audioConsumerPaused: boolean, audioProducerPaused: boolean}, events: MediaSessionEvents) {
         const session = new MediaSession(sfuClient, userId, channelId, events, audioConsumerPaused, audioProducerPaused);
         try {
-            const { rtpCapabilities } = await sfuClient.request(JOIN_ROOM);
+            const { rtpCapabilities } = await sfuClient.request(JOIN_ROOM, {isMuted: audioProducerPaused, isDeafened: audioConsumerPaused});
             if (session.closed) throw new Error("Session closed");
 
             const device = new Device();
