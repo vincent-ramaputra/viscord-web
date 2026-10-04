@@ -10,8 +10,8 @@ import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { LocalAudio, LocalAudioDeps } from "./local-audio";
-import { VoiceState } from "@/interfaces/voice-state";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
+import { VoiceStatePatch } from "@/app/stores/voice-state-store";
 
 export type VoiceSessionStatus = 'none' | 'connecting' | 'reconnecting' | 'connected';
 
@@ -231,8 +231,8 @@ export class VoiceSession {
             type: VoiceEventType.STATE_UPDATE,
             channelId,
             data: {
-                isMuted: micOff
-            } as VoiceState
+                isMuted: micOff,
+            } satisfies VoiceStatePatch
         });
     }
 
@@ -246,7 +246,7 @@ export class VoiceSession {
             channelId,
             data: {
                 isDeafened: deafened
-            } as VoiceState
+            } satisfies VoiceStatePatch
         });
     }
 

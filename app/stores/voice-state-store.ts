@@ -4,6 +4,8 @@ import { create } from "zustand";
 
 type VoiceStateMap = Map<string, VoiceState>
 
+export type VoiceStatePatch = Partial<Pick<VoiceState, 'isMuted' | 'isDeafened'>>;
+
 interface VoiceStateStoreState {
     voiceStates: Map<string, VoiceState>;
     setVoiceStates: (voiceStates: VoiceStateMap) => void;
