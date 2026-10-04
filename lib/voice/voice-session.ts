@@ -5,7 +5,7 @@ import { VoiceEventType } from "@/enums/voice-event-type";
 import { Consumer, Producer } from "mediasoup-client/types";
 import { createVoiceTicket } from "@/services/channels/channels.service";
 import { useSocketStore } from "@/app/stores/socket-store";
-import { ACTIVE_SPEAKER_STATE, VOICE_UPDATE_EVENT } from "@/constants/events";
+import { ACTIVE_SPEAKER_STATE, SESSION_REPLACED, VOICE_UPDATE_EVENT } from "@/constants/events";
 import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
@@ -140,6 +140,7 @@ export class VoiceSession {
             this.mediaSession = mediaSession;
 
             this.connectionUnsubscribes.push(
+                sfu.on(SESSION_REPLACED, this.onSessionReplaced),
                 sfu.on(ACTIVE_SPEAKER_STATE, this.onActiveSpeaker),
             );
 
@@ -197,6 +198,11 @@ export class VoiceSession {
         }
 
         await this.leave();
+    }
+
+    private onSessionReplaced = () => {
+        ++this.attempt;
+        this.teardown();
     }
 
     async leave() {
