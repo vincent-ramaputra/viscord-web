@@ -171,18 +171,14 @@ export class MediaSession {
             });
             if (this.closed) return;
 
-            // new consumers start unpaused client-side and the SFU creates them unpaused,
-            // so a deafened client has to pause audio itself. Only locally: PAUSE_CONSUMER
-            // pauses every consumer on the server, screen video included (#5).
+            this.consumers.set(consumer.id, consumer);
+
+            // new consumers start unpaused on both sides, so a deafened client has to pause
+            // new audio itself (on the SFU too, so it stops forwarding audio we'd discard)
             if (consumer.kind === 'audio' && this.audioConsumerPaused) {
-                consumer.pause();
-            }
-            else if (consumer.appData?.mediaTag !== 'screen') {
-                this.sfuClient.send(RESUME_CONSUMER);
-                consumer.resume();
+                this.pauseConsumer(consumer.id);
             }
 
-            this.consumers.set(consumer.id, consumer);
             this.events.onConsumerAdded(consumer);
         } catch (error) {
             console.error('Error creating consumer:', error);
@@ -261,19 +257,12 @@ export class MediaSession {
         for (const consumer of Array.from(this.consumers.values())) {
             if (consumer.kind == 'audio') {
                 if (paused) {
-                    consumer.pause();
+                    this.pauseConsumer(consumer.id);
                 }
                 else {
-                    consumer.resume();
+                    this.resumeConsumer(consumer.id);
                 }
             }
-        }
-
-        if (paused) {
-            this.sfuClient.send(PAUSE_CONSUMER);
-        }
-        else {
-            this.sfuClient.send(RESUME_CONSUMER);
         }
     }
 
@@ -305,8 +294,16 @@ export class MediaSession {
         const consumer = this.consumers.get(consumerId);
         if (!consumer) return;
 
-        this.sfuClient.send(RESUME_CONSUMER);
+        this.sfuClient.send(RESUME_CONSUMER, { consumerId });
         consumer.resume();
+    }
+
+    private pauseConsumer(consumerId: string) {
+        const consumer = this.consumers.get(consumerId);
+        if (!consumer) return;
+
+        this.sfuClient.send(PAUSE_CONSUMER, { consumerId });
+        consumer.pause();
     }
 
     close() {
