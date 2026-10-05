@@ -2,6 +2,7 @@
 import { useMessagesQuery } from "@/hooks/queries";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useChannelReadState } from "@/hooks/use-channel-read-state";
 import styled from "styled-components";
 import { GuildChannelHeader } from "./header";
 import { CreateMessageDto } from "@/interfaces/dto/create-message.dto";
@@ -252,10 +253,10 @@ export default function Page() {
     const { getGuild, getChannel } = useGuildsStore();
     const guild = getGuild(guildId as string);
     const channel = guild?.channels.find(ch => ch.id == channelId);
-    const hasDismounted = useRef(false)
     const { data: messages } = useMessagesQuery(channelId! as string);
     const { mutateAsync: sendMessage } = useSendMessageGuildMutation(guildId as string);
     const { mutateAsync: acknowledgeMessage } = useAcknowledgeGuildMessageMutation(guildId as string);
+    const { dividerAfterId } = useChannelReadState(channel, acknowledgeMessage);
     const groupedMessages = messages?.reduce((groups, message) => {
         const key = message.createdAt.toLocaleDateString();
 
@@ -304,26 +305,6 @@ export default function Page() {
         return groups;
     }, [allowedMembers, guild]);
 
-    useEffect(() => {
-        return () => {
-            if (process.env.NODE_ENV === 'development' && !hasDismounted.current) {
-                console.log('discmounted')
-                hasDismounted.current = true;
-                return;
-            }
-            const channel = getChannel(channelId as string);
-            console.log(channel);
-            if (channel) {
-                const lastMessageId = channel.lastMessageId;
-                console.log(lastMessageId, channel.userChannelState);
-                if (lastMessageId && lastMessageId !== channel.userChannelState.lastReadId){
-                    console.log('acknowledign', acknowledgeMessage);
-                    acknowledgeMessage({ channelId: channel!.id, messageId: lastMessageId });
-                }
-
-            }
-        }
-    }, []);
 
 
     if (!channel) {
@@ -354,7 +335,7 @@ export default function Page() {
                                         const isSubsequent = index !== 0 && (message.createdAt.getMinutes() - prev!.createdAt.getMinutes()) < 5 && message.senderId === prev!.senderId;
                                         return (
                                             <Fragment key={message.id}>
-                                                {message.id === channel.userChannelState.lastReadId && index !== messages.length - 1 && <LastReadDivider />}
+                                                {message.id === dividerAfterId && <LastReadDivider />}
                                                 <MessageItem
                                                     message={{ ...message }}
                                                     isSubsequent={isSubsequent}
