@@ -103,7 +103,8 @@ export class MediaSession {
                     rtpParameters,
                     appData,
                     channelId: this.channelId,
-                    paused: this.audioProducerPaused,
+                    // this handler runs for every producer; only the mic follows the mute state
+                    paused: appData?.mediaTag === 'mic' && this.audioProducerPaused,
                     transportId: this.sendTransport!.id
                 });
 
