@@ -10,8 +10,22 @@ import { useRelationshipsQuery } from "@/hooks/queries";
 import { useContextMenu } from "@/contexts/context-menu.context";
 import { ContextMenuType } from "@/enums/context-menu-type.enum";
 import { useUserPresence } from "@/contexts/user-presence.context";
-import { LoadingIndicator } from "../loading-indicator/loading-indicator";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
+
+// Discord-style typing pill: twice as wide as the status dot, same height,
+// so it scales with the avatar instead of using the fixed-size button spinner.
+function TypingIndicator({ color, size }: { color: string, size: number }) {
+    const dotSize = Math.max(2, Math.round(size / 4));
+    return (
+        <div
+            className={styles["typing-pill"]}
+            style={{ backgroundColor: color, height: size, width: size * 2, gap: dotSize / 2 }}>
+            {[0, 1, 2].map(i => (
+                <span key={i} className={styles["typing-dot"]} style={{ width: dotSize, height: dotSize }} />
+            ))}
+        </div>
+    );
+}
 
 export function UserStatusIcon({ status, size = 12, isTyping }: { status: UserStatus, size?: number, isTyping?: boolean }) {
     return (
@@ -19,9 +33,7 @@ export function UserStatusIcon({ status, size = 12, isTyping }: { status: UserSt
             {
                 status === UserStatus.Online && (
                     isTyping ?
-                        <div className="bg-[#44a25b] rounded-full">
-                            <LoadingIndicator />
-                        </div>
+                        <TypingIndicator color="#44a25b" size={size} />
                         :
                         <MdCircle className={""} fill="#44a25b" size={size} />)
 
@@ -29,9 +41,7 @@ export function UserStatusIcon({ status, size = 12, isTyping }: { status: UserSt
             {
                 status === UserStatus.DoNotDisturb && (
                     isTyping ?
-                        <div className="bg-[#f23f43] rounded-full">
-                            <LoadingIndicator />
-                        </div>
+                        <TypingIndicator color="#f23f43" size={size} />
                         :
                         <MdDoNotDisturbOn fill="#f23f43" size={size} />
                 )
@@ -39,9 +49,7 @@ export function UserStatusIcon({ status, size = 12, isTyping }: { status: UserSt
             {
                 status === UserStatus.Idle && (
                     isTyping ?
-                        <div className="bg-[#f0b232] rounded-full">
-                            <LoadingIndicator />
-                        </div>
+                        <TypingIndicator color="#f0b232" size={size} />
                         :
                         <PiMoonFill fill="#f0b232" className={styles["idle-icon"]} size={size} />
                 )
@@ -59,6 +67,7 @@ export function UserStatusIcon({ status, size = 12, isTyping }: { status: UserSt
 export default function UserAvatar({ user, showStatus = true, size, isTyping }: { user: UserProfile, showStatus?: boolean, size?: string, isTyping?: boolean }) {
     const { isUserOnline } = useUserPresenceStore();
     const iconSize = size ? parseInt(size) / 2.6 > 16 ? 16 : parseInt(size) / 2.6 : 12;
+    const showTyping = !!isTyping && isUserOnline(user.id) && user.status !== UserStatus.Invisible;
     return (
         <div className={styles["pfp-wrapper"]} >
             <div
@@ -68,8 +77,12 @@ export default function UserAvatar({ user, showStatus = true, size, isTyping }: 
             </div>
             {showStatus &&
                 <Fragment>
-                    <FaCircle className={styles["mask"]} fill="transparent" size={size ? parseInt(size) / 2 > 24 ? 24 : parseInt(size) / 2 : 16} />
-                    <div className={styles["status-container"]}>
+                    {/* The pill brings its own cutout (status-container-typing), so skip the round mask. */}
+                    {!showTyping && <FaCircle className={styles["mask"]} fill="transparent" size={size ? parseInt(size) / 2 > 24 ? 24 : parseInt(size) / 2 : 16} />}
+                    <div
+                        className={`${styles["status-container"]} ${showTyping ? styles["status-container-typing"] : ""}`}
+                        // Keep the right edge where the round dot sits so the pill grows leftward over the avatar.
+                        style={showTyping ? { transform: `translate(${(iconSize + 4) / 4}px, 25%)` } : undefined}>
                         {isUserOnline(user.id) ? (
                             <UserStatusIcon status={user.status} size={iconSize} isTyping={isTyping} />
                         ) : (
