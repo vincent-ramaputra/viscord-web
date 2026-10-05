@@ -4,6 +4,8 @@ import { Message } from "@/interfaces/message";
 import { Response } from "@/interfaces/response";
 import { CreateMessageDto } from "@/interfaces/dto/create-message.dto";
 
+// message-service returns the message(s) directly, not wrapped in the
+// { status, message, data } envelope the NestJS services use.
 const messagePath = (channelId: string, ...segments: string[]) => {
     return `/channels/${channelId}/messages${segments.length ? '/' + segments.join('/') : ''}`;
 }
@@ -15,8 +17,8 @@ export async function getMessages(channelId: string): Promise<Response<Message[]
         });
         if (response.status === HttpStatusCode.Ok) {
             return Response.Success<Message[]>({
-                data: response.data.data,
-                message: response.data.message
+                data: response.data,
+                message: ''
             });
         }
         return Response.Failed<Message[]>({
@@ -36,9 +38,13 @@ export async function getMessages(channelId: string): Promise<Response<Message[]
 
 export async function sendMessage(dto: CreateMessageDto): Promise<Response<Message>> {
     const formData = new FormData()
-    formData.append('data', JSON.stringify(dto));
+    // Files go in their own 'attachments' parts; File objects would serialize to {} here anyway.
+    const { attachments, ...data } = dto;
+    // A plain string part has no Content-Type, so Spring treats it as application/octet-stream
+    // and can't bind it to CreateMessageRequest. A Blob lets us mark it as JSON.
+    formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
 
-    for (const att of dto.attachments) {
+    for (const att of attachments) {
         formData.append('attachments', att);
     }
 
@@ -48,8 +54,8 @@ export async function sendMessage(dto: CreateMessageDto): Promise<Response<Messa
         });
         if (response.status === HttpStatusCode.Created) {
             return Response.Success<Message>({
-                data: response.data.data,
-                message: response.data.message
+                data: response.data,
+                message: ''
             });
         }
         return Response.Failed<Message>({
