@@ -34,3 +34,40 @@
   background-color: var(--background-secondary);
   border-radius: 100%;
 }
+
+.status-container-typing {
+  background-color: var(--background-secondary);
+  display: flex;
+}
+
+.typing-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+}
+
+.typing-dot {
+  border-radius: 50%;
+  background-color: white;
+  animation: typing-pulse 1.2s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-pulse {
+  0%, 60%, 100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
