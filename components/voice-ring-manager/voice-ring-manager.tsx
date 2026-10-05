@@ -190,7 +190,7 @@ export function VoiceRingManager() {
         return () => {
             socket?.removeListener(GET_VOICE_RINGS_EVENT, handleGetVoiceRingStates);
             socket?.removeListener(VOICE_RING_EVENT, onVoiceRing);
-            socket?.removeListener(VOICE_RING_DISMISS_EVENT, handleVoiceRingDismiss);
+            socket?.removeListener(VOICE_RING_DISMISS_EVENT, onVoiceRingDismiss);
         }
     }, [socket])
 
