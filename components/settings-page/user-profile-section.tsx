@@ -13,7 +13,6 @@ import { useCurrentUserStore } from "@/app/stores/current-user-store"
 import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store"
 import ButtonSecondary from "../buttons/button-secondary"
 import { UserProfile } from "@/interfaces/user-profile"
-import { getImageURL } from "@/services/storage/storage.service"
 import ColorThief from "colorthief"
 
 
@@ -158,7 +157,7 @@ const AvatarImage = styled.img`
 function Banner({ user }: { user: UserProfile }) {
     const imgRef = useRef<HTMLImageElement>(null!);
     const [bannerColor, setBannerColor] = useState<string | null>();
-    const avatarURL = user.avatarURL ? getImageURL('avatars', user.avatarURL) : getImageURL('assets', user.defaultAvatarURL);
+    const avatarURL = user.avatarURL ?? user.defaultAvatarURL;
     async function getBannerColor() {
         const img = imgRef.current;
         if (!img) return;
@@ -192,7 +191,7 @@ function Banner({ user }: { user: UserProfile }) {
                             <div
                                 className="rounded-full self-center overflow-hidden z-0"
                                 style={{ height: "80px", width: "80px" }}>
-                                <AvatarImage className="" src={user.avatarURL ? getImageURL('avatars', user.avatarURL) : getImageURL('assets', user.defaultAvatarURL)} />
+                                <AvatarImage className="" src={avatarURL} />
                             </div>
                         </div>
                     </div>

@@ -2,7 +2,6 @@ import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profil
 import { getVoiceRingKey, useVoiceRingStateStore } from "@/app/stores/voice-ring-state-store";
 import { UserProfile } from "@/interfaces/user-profile";
 import { VoiceRingState } from "@/interfaces/voice-ring-state";
-import { getImageURL } from "@/services/storage/storage.service";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
@@ -110,7 +109,7 @@ function VoiceRingPopupCard({ user, onAccept, onDismiss, initPos }: { user: User
             style={{ top: pos.y, left: pos.x, position: 'absolute' }}
         >
             <div className="my-[16px]">
-                <AvatarImage src={user.avatarURL ? getImageURL('avatars', user.avatarURL) : getImageURL('assets', user.defaultAvatarURL)} />
+                <AvatarImage src={user.avatarURL ?? user.defaultAvatarURL} />
             </div>
             <div className="flex gap-[4px] flex-col items-center mb-[24px]">
                 <h3 className="font-bold text-[20px]">{user.displayName}</h3>

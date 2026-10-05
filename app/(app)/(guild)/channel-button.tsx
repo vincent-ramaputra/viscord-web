@@ -15,7 +15,6 @@ import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
 import { useVoice } from "@/hooks/use-voice";
 import { Channel } from "@/interfaces/channel";
-import { getImageURL } from "@/services/storage/storage.service";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, MouseEvent, useEffect, useState } from "react";
 import { FaLock } from "react-icons/fa6";
@@ -303,7 +302,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
                 const isOwnElsewhere = vs.userId === currentUserId && !isInThisCall;
                 const user = getUserProfile(vs.userId);
                 const isSpeaking = (voiceStates.find(vs => vs.userId === vs.userId) && activeSpeakers.has(vs.userId)) ?? false;
-                const avatarURL = user ? (user.avatarURL ? getImageURL('avatars', user?.avatarURL) : getImageURL('assets', user?.defaultAvatarURL)) : '';
+                const avatarURL = user ? (user.avatarURL ?? user.defaultAvatarURL) : '';
 
                 return (
                     <VoiceStateContainer key={vs.userId} className={isOwnElsewhere ? 'opacity-50' : ''}>

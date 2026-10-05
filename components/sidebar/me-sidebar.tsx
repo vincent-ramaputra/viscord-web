@@ -9,7 +9,6 @@ import { DM_CHANNELS_CACHE } from "@/constants/query-keys";
 import { ChannelType } from "@/enums/channel-type.enum";
 import { getDMChannels } from "@/services/channels/channels.service";
 import { getRelationships } from "@/services/relationships/relationships.service";
-import { getImageURL } from "@/services/storage/storage.service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";

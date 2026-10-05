@@ -12,7 +12,6 @@ import Tooltip from "@/components/tooltip/tooltip";
 import styled from "styled-components";
 import { usePathname, useRouter } from "next/navigation";
 import { GuildSummary } from "@/interfaces/guild-summary";
-import { getImageURL } from "@/services/storage/storage.service";
 import { ContextMenuProvider } from "@/contexts/context-menu.context";
 import AppStateProvider, { useAppState } from "@/contexts/app-state.context";
 import SocketProvider, { useSocket } from "@/contexts/socket.context";

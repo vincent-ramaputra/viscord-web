@@ -1,6 +1,5 @@
 import { UserData } from "@/interfaces/user-data";
 import styles from "./styles.module.css"
-import { getImageURL } from "@/services/storage/storage.service";
 import { FaCircle } from "react-icons/fa";
 import { UserStatus } from "@/enums/user-status.enum";
 import { MdCircle, MdDoNotDisturbOn, MdOutlineCircle } from "react-icons/md";
