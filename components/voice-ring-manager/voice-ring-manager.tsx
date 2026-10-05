@@ -3,7 +3,7 @@ import { getVoiceRingKey, useVoiceRingStateStore } from "@/app/stores/voice-ring
 import { UserProfile } from "@/interfaces/user-profile";
 import { VoiceRingState } from "@/interfaces/voice-ring-state";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { PiPhoneCallFill } from "react-icons/pi";
 import styled from "styled-components";
@@ -69,47 +69,40 @@ function PopupActionButton({ onClick, tooltipText, type }: { onClick: () => void
 
 function VoiceRingPopupCard({ user, onAccept, onDismiss, initPos }: { user: UserProfile, onAccept: () => void, onDismiss: () => void, initPos: Pos }) {
     const [pos, setPos] = useState<Pos>(initPos);
-    const [dragging, setDragging] = useState(false);
-    const [offset, setOffset] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
+    // Where inside the card the pointer grabbed it; null when not dragging.
+    // A ref, not state: it changes nothing on screen, so it shouldn't cause re-renders.
+    const grabOffset = useRef<Pos | null>(null);
 
-    const onMouseDown = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('.popup-draggable')) {
-            setDragging(true);
-            setOffset({
-                x: e.clientX - pos.x,
-                y: e.clientY - pos.y,
-            });
-        }
+    // Listeners live on this card only, so dragging one popup can't move the others.
+    const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        // Presses on the buttons are clicks, not drags.
+        if ((e.target as HTMLElement).closest('button')) return;
+
+        grabOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+        // Keep receiving pointermove/up even if the pointer leaves the card mid-drag.
+        e.currentTarget.setPointerCapture(e.pointerId);
     };
 
-    const onMouseMove = (e: MouseEvent) => {
-        if (!dragging) return;
-        setPos({
-            x: e.clientX - offset.x,
-            y: e.clientY - offset.y,
-        });
+    const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        const offset = grabOffset.current;
+        if (!offset) return;
+        setPos({ x: e.clientX - offset.x, y: e.clientY - offset.y });
     };
 
-    const onMouseUp = () => {
-        setDragging(false);
+    const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+        grabOffset.current = null;
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
     };
-
-    useEffect(() => {
-        document.addEventListener('mousedown', onMouseDown);
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-        return () => {
-            document.removeEventListener('mousedown', onMouseDown);
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        };
-    }, [dragging, pos, offset]);
 
     return (
         <PopupContainer
-            className="shadow-xl popup-draggable"
-            style={{ top: pos.y, left: pos.x, position: 'absolute' }}
+            className="shadow-xl"
+            // touch-action: none stops touch drags from scrolling the page; user-select: none stops drags selecting the name.
+            style={{ top: pos.y, left: pos.x, position: 'absolute', touchAction: 'none', userSelect: 'none', cursor: 'grab' }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
         >
             <div className="my-[16px]">
                 <AvatarImage src={user.avatarURL ?? user.defaultAvatarURL} />
@@ -119,8 +112,8 @@ function VoiceRingPopupCard({ user, onAccept, onDismiss, initPos }: { user: User
                 <p>Incoming Call...</p>
             </div>
             <div className="flex gap-[8px]">
-                <PopupActionButton onClick={() => !dragging && onDismiss()} tooltipText="Dismiss" type="danger" />
-                <PopupActionButton onClick={() => !dragging && onAccept()} tooltipText="Join Call" type="positive" />
+                <PopupActionButton onClick={onDismiss} tooltipText="Dismiss" type="danger" />
+                <PopupActionButton onClick={onAccept} tooltipText="Join Call" type="positive" />
             </div>
         </PopupContainer>
     );
