@@ -2,7 +2,7 @@ import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profil
 import { getVoiceRingKey, useVoiceRingStateStore } from "@/app/stores/voice-ring-state-store";
 import { UserProfile } from "@/interfaces/user-profile";
 import { VoiceRingState } from "@/interfaces/voice-ring-state";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IoMdClose } from "react-icons/io";
 import { PiPhoneCallFill } from "react-icons/pi";
@@ -13,6 +13,9 @@ import { useSocket } from "@/contexts/socket.context";
 import { GET_VOICE_RINGS_EVENT, VOICE_RING_DISMISS_EVENT, VOICE_RING_EVENT } from "@/constants/events";
 import { usePlaySound, useStopSound } from "@/app/stores/audio-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
+import { useChannelsStore } from "@/app/stores/channels-store";
+import { useGuildsStore } from "@/app/stores/guilds-store";
+import { useVoice } from "@/hooks/use-voice";
 
 const PopupContainer = styled.div`
     background-color: var(--modal-background);
@@ -117,10 +120,20 @@ function VoiceRingPopupCard({ user, onAccept, onDismiss, initPos }: { user: User
             </div>
             <div className="flex gap-[8px]">
                 <PopupActionButton onClick={() => !dragging && onDismiss()} tooltipText="Dismiss" type="danger" />
-                <PopupActionButton onClick={() => !dragging && onAccept} tooltipText="Join Call" type="positive" />
+                <PopupActionButton onClick={() => !dragging && onAccept()} tooltipText="Join Call" type="positive" />
             </div>
         </PopupContainer>
     );
+}
+
+// Rings are normally DM calls, but fall back to the guild route if the channel belongs to a guild.
+function getChannelPath(channelId: string) {
+    if (useChannelsStore.getState().getChannel(channelId)) return `/channels/me/${channelId}`;
+
+    for (const guild of useGuildsStore.getState().guilds.values()) {
+        if (guild.channels.some(ch => ch.id === channelId)) return `/channels/${guild.id}/${channelId}`;
+    }
+    return `/channels/me/${channelId}`;
 }
 
 export function VoiceRingManager() {
@@ -128,6 +141,8 @@ export function VoiceRingManager() {
     const { getUserProfile } = useUserProfileStore();
     const { user } = useCurrentUserStore();
     const pathname = usePathname();
+    const router = useRouter();
+    const { join } = useVoice();
     const { socket } = useSocket();
     const { emitDismissVoiceRing } = useVoiceRingEvents();
     const { batchUpdateVoiceRingState, removeVoiceRingState, setVoiceRingStates } = useVoiceRingStateStore();
@@ -138,6 +153,9 @@ export function VoiceRingManager() {
 
     const handleVoiceRingAccept = (channelId: string, userId: string) => {
         emitDismissVoiceRing(channelId, userId);
+        join(channelId);
+        // The popup only shows outside the ringing channel, so take the user to the call view.
+        router.push(getChannelPath(channelId));
     };
 
     const handleGetVoiceRingStates = (payload: VoiceRingState[]) => {
