@@ -1,7 +1,6 @@
 import { useGuildsStore } from "@/app/stores/guilds-store";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
-import { getImageURL } from "@/services/storage/storage.service";
 import ColorThief from "colorthief";
 import { useRef, useState } from "react";
 import styled from "styled-components";
@@ -130,7 +129,7 @@ export function GuildCard({ guildId }: GuildCardProps) {
                     <IconContainer>
                         {guild.iconURL ?
                             <img
-                                src={getImageURL(`icons/${guild.id}`, guild.iconURL)} alt="initials"
+                                src={guild.iconURL} alt="initials"
                                 ref={iconRef}
                                 onLoad={() => getBannerColor()}
                             />
