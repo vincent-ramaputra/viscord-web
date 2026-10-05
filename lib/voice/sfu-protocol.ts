@@ -39,8 +39,8 @@ export interface ClientToServerEvents {
 
     [PAUSE_PRODUCER]: (dto: { producerId: string }) => void;
     [RESUME_PRODUCER]: (dto: { producerId: string }) => void;
-    [PAUSE_CONSUMER]: () => void;
-    [RESUME_CONSUMER]: () => void;
+    [PAUSE_CONSUMER]: (dto: { consumerId: string }) => void;
+    [RESUME_CONSUMER]: (dto: { consumerId: string }) => void;
     [ACTIVE_SPEAKER_STATE]: (dto: Omit<ActiveSpeakerStateDTO, 'userId'>) => void;
     [CLOSE_PRODUCER]: (dto: { producerId: string }) => void;
     [CLOSE_CONSUMER]: (dto: { consumerId: string }) => void;
