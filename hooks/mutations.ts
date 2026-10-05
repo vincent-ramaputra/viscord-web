@@ -134,12 +134,10 @@ export function useSendMessageMutation(guildId?: string) {
                         return [];
                     }
 
-                    const newMessages = [...old].map(m => {
-                        if (m.id === message.id) {
-                            m.status = MessageStatus.Error;
-                        }
-                        return m;
-                    });
+                    // New object for the failed message so memoized rows see the change.
+                    const newMessages = old.map(m =>
+                        m.id === optimisticMessage.id ? { ...m, status: MessageStatus.Error } : m
+                    );
                     return newMessages;
                 })
                 return;
@@ -219,12 +217,10 @@ export function useSendMessageGuildMutation(guildId: string) {
                         return [];
                     }
 
-                    const newMessages = [...old].map(m => {
-                        if (m.id === message.id) {
-                            m.status = MessageStatus.Error;
-                        }
-                        return m;
-                    });
+                    // New object for the failed message so memoized rows see the change.
+                    const newMessages = old.map(m =>
+                        m.id === optimisticMessage.id ? { ...m, status: MessageStatus.Error } : m
+                    );
                     return newMessages;
                 })
                 return;
