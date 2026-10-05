@@ -13,6 +13,7 @@ import { sendTypingStatus } from "@/services/channels/channels.service";
 import { dateToShortDate } from "@/utils/date.utils";
 import { useParams } from "next/navigation"
 import { Fragment, KeyboardEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { useChannelReadState } from "@/hooks/use-channel-read-state";
 import { FaCirclePlus } from "react-icons/fa6";
 import styled from "styled-components";
 import { DMChannelHeader } from "./channel-header";
@@ -218,10 +219,10 @@ export default function Page() {
     }, {} as Record<string, Message[]>);
     const { user } = useCurrentUserStore();
     const { getUserProfile } = useUserProfileStore();
-    const hasDismounted = useRef(false)
     const typingUsers = useTypingUsersFromChannel(channelId as string);
     const { mutateAsync: sendMessage } = useSendMessageMutation();
     const { mutateAsync: acknowledgeMessage } = useAcknowledgeMessageMutation();
+    const { dividerAfterId } = useChannelReadState(channel, acknowledgeMessage);
 
 
     useEffect(() => {
@@ -234,21 +235,6 @@ export default function Page() {
         document.title = `Viscord | @${channel.recipients![0].displayName}`
     }, [channel]);
 
-    useEffect(() => {
-        return () => {
-            if (process.env.NODE_ENV === 'development' && !hasDismounted.current) {
-                console.log('discmounted')
-                hasDismounted.current = true;
-                return;
-            }
-            const channel = getChannel(channelId as string);
-            if (channel) {
-                const lastMessageId = channel.lastMessageId;
-                if (lastMessageId && lastMessageId !== channel.userChannelState.lastReadId) acknowledgeMessage({ channelId: channel!.id, messageId: lastMessageId });
-
-            }
-        }
-    }, []);
 
     if (!channel) {
         return <p></p>
@@ -269,7 +255,7 @@ export default function Page() {
                                     const isSubsequent = index !== 0 && (message.createdAt.getMinutes() - prev!.createdAt.getMinutes()) < 5 && message.senderId === prev!.senderId;
                                     return (
                                         <Fragment key={message.id}>
-                                            {message.id === channel.userChannelState.lastReadId && index !== messages.length - 1 && <LastReadDivider />}
+                                            {message.id === dividerAfterId && <LastReadDivider />}
                                             <MessageItem
                                                 message={{ ...message }}
                                                 isSubsequent={isSubsequent}
