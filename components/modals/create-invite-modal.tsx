@@ -8,6 +8,7 @@ import TextInputSecondary from "../text-input/text-input-secondary";
 import TextInput from "../text-input/text-input";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import { useEffect, useRef, useState } from "react";
+import { getInviteURL } from "@/utils/url.utils";
 import { useChannelsStore } from "@/app/stores/channels-store";
 import UserAvatar from "../user-avatar/user-avatar";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
@@ -207,7 +208,8 @@ export function CreateInviteModal({ channelId, guildId, onClose }: CreateInviteM
     const [search, setSearch] = useState('');
     const { channels } = useChannelsStore();
     const [invite, setInvite] = useState<Invite | undefined>();
-    const inviteLink = `${process.env.NEXT_PUBLIC_FRONTEND_URL}/${invite?.code ?? ''}`;
+    // Only built once the invite has loaded, which also keeps window out of any server render.
+    const inviteLink = invite ? getInviteURL(invite.code) : '';
     const [copied, setCopied] = useState(false);
     const [screen, setScreen] = useState<"create-invite" | "edit-invite">("create-invite")
     const [inviteSettings, setInviteSettings] = useState<CreateInviteDto>({ guildId, channelId, maxAge: INVITE_DURATIONS["7 days"] });

@@ -20,6 +20,7 @@ import { Role } from "@/interfaces/role";
 import { createDMChannel } from "@/services/channels/channels.service";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { getChannelURL } from "@/utils/url.utils";
 import { FaAngleRight, FaTrash } from "react-icons/fa6";
 import styled from "styled-components";
 
@@ -206,7 +207,7 @@ function ChannelButtonContextMenu({ channelId, guildId }: { channelId: string, g
                 <ListItem
                     className="flex items-center justify-between"
                     onClick={() => {
-                        navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_FRONTEND_URL}/channels/${channel.guildId}/${channel.id}`)
+                        navigator.clipboard.writeText(getChannelURL(channel.guildId, channel.id))
                         hideMenu();
                     }}>
                     <p>Copy Link</p>
