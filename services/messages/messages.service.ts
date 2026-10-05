@@ -36,9 +36,13 @@ export async function getMessages(channelId: string): Promise<Response<Message[]
 
 export async function sendMessage(dto: CreateMessageDto): Promise<Response<Message>> {
     const formData = new FormData()
-    formData.append('data', JSON.stringify(dto));
+    // Files go in their own 'attachments' parts; File objects would serialize to {} here anyway.
+    const { attachments, ...data } = dto;
+    // A plain string part has no Content-Type, so Spring treats it as application/octet-stream
+    // and can't bind it to CreateMessageRequest. A Blob lets us mark it as JSON.
+    formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
 
-    for (const att of dto.attachments) {
+    for (const att of attachments) {
         formData.append('attachments', att);
     }
 
