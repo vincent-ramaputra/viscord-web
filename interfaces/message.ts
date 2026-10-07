@@ -11,5 +11,6 @@ export interface Message {
     updatedAt: Date
     mentions: string[]
     attachments: Attachment[]
+    clientId?: string
     status?: MessageStatus
 }

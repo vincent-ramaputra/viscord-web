@@ -1,14 +1,18 @@
-import { AxiosError, HttpStatusCode } from "axios";
+import axios, { AxiosError, HttpStatusCode } from "axios";
 import { api } from "../api";
 import { Message } from "@/interfaces/message";
 import { Response } from "@/interfaces/response";
 import { CreateMessageDto } from "@/interfaces/dto/create-message.dto";
+import { CreateAttachmentResponseDTO } from "@/interfaces/dto/create-attachment-response.dto";
+import { CreateAttachmentDTO } from "@/interfaces/dto/create-attachment.dto";
 
 // message-service returns the message(s) directly, not wrapped in the
 // { status, message, data } envelope the NestJS services use.
 const messagePath = (channelId: string, ...segments: string[]) => {
     return `/channels/${channelId}/messages${segments.length ? '/' + segments.join('/') : ''}`;
 }
+
+const attachmentPath = (channelId: string) => `/channels/${channelId}/attachments`
 
 export async function getMessages(channelId: string): Promise<Response<Message[]>> {
     try {
@@ -37,19 +41,8 @@ export async function getMessages(channelId: string): Promise<Response<Message[]
 }
 
 export async function sendMessage(dto: CreateMessageDto): Promise<Response<Message>> {
-    const formData = new FormData()
-    // Files go in their own 'attachments' parts; File objects would serialize to {} here anyway.
-    const { attachments, ...data } = dto;
-    // A plain string part has no Content-Type, so Spring treats it as application/octet-stream
-    // and can't bind it to CreateMessageRequest. A Blob lets us mark it as JSON.
-    formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
-
-    for (const att of attachments) {
-        formData.append('attachments', att);
-    }
-
     try {
-        const response = await api.post(messagePath(dto.channelId), formData, {
+        const response = await api.post(messagePath(dto.channelId), dto, {
             withCredentials: true
         });
         if (response.status === HttpStatusCode.Created) {
@@ -99,4 +92,30 @@ export async function acknowledgeMessage(channelId: string, messageId: string) {
         message: "An unknown error occurred."
     });
 
+}
+
+export async function createAttachment(channelId: string, files: CreateAttachmentDTO) : Promise<Response<CreateAttachmentResponseDTO>> {
+     try {
+        const response = await api.post(attachmentPath(channelId), files, {
+            withCredentials: true
+        });
+        if (response.status === HttpStatusCode.Ok) {
+            return Response.Success({
+                data: response.data,
+                message: response.data.message
+            });
+        }
+        return Response.Failed({
+            message: response.data.message
+        });
+    } catch (error) {
+        if (error instanceof AxiosError)
+            return Response.Failed({
+                message: error.response ? error.response.data.message as string : "An unknown Error occurred"
+            });
+    }
+
+    return Response.Failed({
+        message: "An unknown error occurred."
+    });   
 }
