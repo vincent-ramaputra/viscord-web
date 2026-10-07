@@ -2,7 +2,7 @@ import { Message } from "@/interfaces/message";
 import styled from "styled-components";
 import UserAvatar from "../user-avatar/user-avatar";
 import { UserProfile } from "@/interfaces/user-profile";
-import { dateToAMPM, datetoFullDateString } from "@/utils/date.utils";
+import { dateToAMPM, datetoFullDateString, getTimePoint } from "@/utils/date.utils";
 import { ReactNode, useState } from "react";
 import Tooltip from "../tooltip/tooltip";
 import { MessageStatus } from "@/enums/message-status.enum";
@@ -89,27 +89,6 @@ const SenderNameText = styled.p`
     }
 `
 
-function getTimePoint(date: Date) {
-    const now = new Date();
-    const timeDifference = now.getDate() - date.getDate();
-    if (timeDifference === 0) {
-        return `Today at`;
-    }
-
-    if (timeDifference === 1) {
-        return 'Yesterday at';
-    }
-
-    const options: Intl.DateTimeFormatOptions = {
-        day: '2-digit',
-        month: '2-digit',
-        year: '2-digit'
-    };
-
-    const formattedDate = new Intl.DateTimeFormat('en-US', options).format(date);
-
-    return `${formattedDate},`;
-}
 
 function Time({ date, children, className }: { date: Date, children: ReactNode, className?: string }) {
     return (

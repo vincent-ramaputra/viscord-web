@@ -12,7 +12,7 @@ import { Message } from "@/interfaces/message";
 import MessageItem from "@/components/message-item/message-item";
 import AttachmentUploadList from "@/components/attachment-upload-list/attachment-upload-list";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
-import { dateToShortDate } from "@/utils/date.utils";
+import { dateToShortDate, isWithinMessageGroup } from "@/utils/date.utils";
 import { FaCirclePlus } from "react-icons/fa6";
 import { Channel } from "@/interfaces/channel";
 import { LINE_HEIGHT, MAX_LINE_COUNT, VERTICAL_PADDING } from "@/constants/user-interface";
@@ -335,7 +335,7 @@ export default function Page() {
                                     {messages?.map(message => {
                                         const index = messages.findIndex(m => m.id === message.id)
                                         const prev = messages.at(index - 1);
-                                        const isSubsequent = index !== 0 && (message.createdAt.getMinutes() - prev!.createdAt.getMinutes()) < 5 && message.senderId === prev!.senderId;
+                                        const isSubsequent = index !== 0 && isWithinMessageGroup(prev!.createdAt, message.createdAt) && message.senderId === prev!.senderId;
                                         return (
                                             <Fragment key={message.id}>
                                                 {message.id === dividerAfterId && <LastReadDivider />}

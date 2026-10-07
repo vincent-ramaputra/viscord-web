@@ -11,7 +11,7 @@ import { Channel } from "@/interfaces/channel";
 import { SendMessageInput } from "@/interfaces/dto/create-message.dto";
 import { Message } from "@/interfaces/message";
 import { sendTypingStatus } from "@/services/channels/channels.service";
-import { dateToShortDate } from "@/utils/date.utils";
+import { dateToShortDate, isWithinMessageGroup } from "@/utils/date.utils";
 import { useParams } from "next/navigation"
 import { Fragment, KeyboardEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { useChannelReadState } from "@/hooks/use-channel-read-state";
@@ -261,7 +261,7 @@ export default function Page() {
                                 {messages?.map(message => {
                                     const index = messages.findIndex(m => m.id === message.id)
                                     const prev = messages.at(index - 1);
-                                    const isSubsequent = index !== 0 && (message.createdAt.getMinutes() - prev!.createdAt.getMinutes()) < 5 && message.senderId === prev!.senderId;
+                                    const isSubsequent = index !== 0 && isWithinMessageGroup(prev!.createdAt, message.createdAt) && message.senderId === prev!.senderId;
                                     return (
                                         <Fragment key={message.id}>
                                             {message.id === dividerAfterId && <LastReadDivider />}
