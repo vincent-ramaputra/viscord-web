@@ -37,7 +37,7 @@ import { ModalType } from "@/enums/modal-type.enum";
 import { useGuildsStore } from "../stores/guilds-store";
 import { Guild } from "@/interfaces/guild";
 import { SettingsOverlayProvider } from "@/contexts/settings-overlay.context";
-import { SubscribeEventDTO } from "@/interfaces/dto/subscribe-event.dto";
+import { mapClientReady } from "@/utils/client-ready.utils";
 
 interface HomeLayoutProps {
     children: ReactNode
@@ -303,7 +303,8 @@ function GuildListSidebar() {
 
 function AppInitializer({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
-    const [isFriendsStatusLoaded, setIsFriendsStatusLoaded] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [attempt, setAttempt] = useState(0);
     const { socket, isReady } = useSocket();
     // const { data: relationships } = useRelationshipsQuery({ enabled: !!user });
     // const { data: dmChannels } = useDMChannelsQuery({ enabled: !!user })
@@ -315,76 +316,57 @@ function AppInitializer({ children }: { children: ReactNode }) {
 
 
     useEffect(() => {
-        if (!isReady) return;
-        console.log("emitting client ready event", socket);
-        socket?.emit(CLIENT_READY_EVENT, (data: ClientReadyResponseDTO) => {
-            const currentUser = data.user;
-            const guildsMap: Map<string, Guild> = new Map();
-            const eventSubscriptions: SubscribeEventDTO[] = [];
+        let cancelled = false;
+        setIsLoading(true);
+        setLoadError(null);
 
-            if (data.guilds) {
-                for (const guild of data.guilds) {
-                    console.log(guild);
-                    guildsMap.set(guild.id, guild);
-                }
-            }
-
-            const userProfiles: UserProfile[] = [currentUser.profile].concat(data.relationships?.map(rel => rel.user) ?? []);
-            const dmRecipients = data.dmChannels ? data.dmChannels
-                .map(channel => channel.recipients?.find(rep => rep.id !== currentUser.id)!)
-                .filter(Boolean) : [];
-
-            const uniqueUsers = new Map<string, UserProfile>();
-            [...userProfiles, ...dmRecipients, currentUser.profile, ...Array.from(guildsMap.values()).flatMap(guild => guild.members.map(m => m.profile))].forEach(user => {
-                if (!uniqueUsers.has(user.id)) {
-                    uniqueUsers.set(user.id, user);
-                }
-            });
-
-            let userProfilesMap: Map<string, UserProfile> = new Map();
-            for (let [key, value] of uniqueUsers) {
-                eventSubscriptions.push({ event: USER_PROFILE_UPDATE_EVENT, targetId: value.id });
-                eventSubscriptions.push({ event: USER_PRESENCE_UPDATE_EVENT, targetId: value.id });
-                userProfilesMap.set(key, value);
-            }
-
-            const channelMap: Map<string, Channel> = new Map();
-
-            if (data.dmChannels) {
-                for (const channel of data.dmChannels) {
-                    channelMap.set(channel.id, channel);
-                }
-            }
-
-            setChannels(channelMap);
-            setUserProfiles(userProfilesMap);
-            setCurrentUser(currentUser);
-            setGuilds(guildsMap);
-
-            const presenceMap: Map<string, boolean> = new Map();
-            for (const user of data.presences) {
-                presenceMap.set(user, true);
-            }
-
-            setPresenceMap(presenceMap);
-
-            socket.emit(SUBSCRIBE_EVENTS, eventSubscriptions);
-            socket.emit(GET_USERS_PRESENCE_EVENT, Array.from(uniqueUsers.values()).map(u => u.id), (userIds: string[]) => {
-                for (const id of userIds) {
-                    updatePresence(id, true);
-                }
-                console.log('setting isloading false');
+        if (!isReady || !socket) {
+            const timeout = setTimeout(() => {
+                setLoadError("Could not connect to Viscord. Check your connection and try again.");
                 setIsLoading(false);
-            });
-        });
+            }, 10000);
+            return () => clearTimeout(timeout);
+        }
 
-    }, [isReady])
+        async function initialize() {
+            try {
+                const data: ClientReadyResponseDTO = await socket!.timeout(10000).emitWithAck(CLIENT_READY_EVENT);
+                if (cancelled) return;
+                const ready = mapClientReady(data);
+                setChannels(ready.channels);
+                setUserProfiles(ready.userProfiles);
+                setCurrentUser(ready.currentUser);
+                setGuilds(ready.guilds);
+                setPresenceMap(ready.presences);
+                const userIds = Array.from(ready.userProfiles.keys());
+                socket!.emit(SUBSCRIBE_EVENTS, userIds.flatMap(targetId => [
+                    { event: USER_PROFILE_UPDATE_EVENT, targetId },
+                    { event: USER_PRESENCE_UPDATE_EVENT, targetId },
+                ]));
+                const onlineIds: string[] = await socket!.timeout(10000).emitWithAck(GET_USERS_PRESENCE_EVENT, userIds);
+                if (cancelled) return;
+                for (const id of onlineIds) updatePresence(id, true);
+                setIsLoading(false);
+            } catch {
+                if (cancelled) return;
+                setLoadError("Could not load your account. Please try again.");
+                setIsLoading(false);
+            }
+        }
+        void initialize();
+        return () => { cancelled = true; };
+    }, [isReady, socket, attempt, setChannels, setUserProfiles, setCurrentUser, setGuilds, setPresenceMap, updatePresence]);
 
-    // useEffect(() => {
-    //     if (!user || /*!relationships || !dmChannels*/ || !isReady) return;
-
-
-    // }, [user, isReady, relationships, dmChannels]);
+    if (loadError) {
+        return (
+            <div className="w-full h-dvh flex flex-col justify-center items-center gap-4" role="alert">
+                <p>{loadError}</p>
+                <button type="button" className="text-[var(--text-link)]" onClick={() => setAttempt(value => value + 1)}>
+                    Try again
+                </button>
+            </div>
+        );
+    }
 
     if (isLoading) {
         return (
@@ -395,8 +377,8 @@ function AppInitializer({ children }: { children: ReactNode }) {
                         <img alt="true" src="/assets/app-loading.png" />
                     </video>
                     <div className="text-center top-[-20px] relative">
-                        <p className="text-[12px] leading-[16px] mb-[8px] uppercase font-semibold">Did you know</p>
-                        <p>I dont know.</p>
+                        <p className="text-[12px] leading-[16px] mb-[8px] uppercase font-semibold">Connecting to Viscord</p>
+                        <p>Loading your conversations...</p>
                     </div>
                     <div className="absolute bottom-0 pb-[32px] text-center ">
                         <p className="text-[14px] mb-[8px]">Connection problems? Let us know!</p>
