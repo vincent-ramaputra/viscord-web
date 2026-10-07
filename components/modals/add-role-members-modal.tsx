@@ -20,7 +20,7 @@ import { getInviteKeyByValue, INVITE_DURATIONS, isKeyOfInviteDuration } from "@/
 import { MINUTE_IN_SECONDS } from "@/constants/time";
 import { sendMessage } from "@/services/messages/messages.service";
 import { Channel } from "@/interfaces/channel";
-import { useAssignRoleMembers, useSendMessageGuildMutation } from "@/hooks/mutations";
+import { useAssignRoleMembers } from "@/hooks/mutations";
 import ButtonTertiary from "../buttons/button-tertiary";
 import { useQueryClient } from "@tanstack/react-query";
 import { MESSAGES_CACHE } from "@/constants/query-keys";

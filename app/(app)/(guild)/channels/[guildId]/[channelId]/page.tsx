@@ -21,7 +21,7 @@ import { useIsUserTyping, useTypingUsersFromChannel, useUserTypingStore } from "
 import UserAvatar from "@/components/user-avatar/user-avatar";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
 import { useGuildsStore } from "@/app/stores/guilds-store";
-import { useAcknowledgeGuildMessageMutation, useAcknowledgeMessageMutation, useSendMessageGuildMutation } from "@/hooks/mutations";
+import { useAcknowledgeGuildMessageMutation, useAcknowledgeMessageMutation, useSendMessageMutation } from "@/hooks/mutations";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
 import { Permissions } from "@/enums/permissions.enum";
 import { Role } from "@/interfaces/role";
@@ -254,7 +254,7 @@ export default function Page() {
     const guild = getGuild(guildId as string);
     const channel = guild?.channels.find(ch => ch.id == channelId);
     const { data: messages } = useMessagesQuery(channelId! as string);
-    const { mutateAsync: sendMessage } = useSendMessageGuildMutation(guildId as string);
+    const { mutateAsync: sendMessage } = useSendMessageMutation(guildId as string);
     const { mutateAsync: acknowledgeMessage } = useAcknowledgeGuildMessageMutation(guildId as string);
     const { dividerAfterId } = useChannelReadState(channel, acknowledgeMessage);
     const groupedMessages = messages?.reduce((groups, message) => {

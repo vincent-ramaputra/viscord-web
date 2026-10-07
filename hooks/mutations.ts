@@ -80,91 +80,23 @@ export function useAcceptFriendRequestMutation() {
     });
 }
 
-export function useSendMessageMutation(guildId?: string) {
-    const queryClient = useQueryClient();
+function markChannelSent(guildId: string | undefined, channelId: string, messageId: string) {
+    if (guildId) {
+        const { getGuild, upsertChannel } = useGuildsStore.getState();
+        const channel = getGuild(guildId)?.channels.find(ch => ch.id === channelId);
+        if (!channel) return;
 
-    return useMutation({
-        mutationFn: async (dto: CreateMessageDto) => sendMessage(dto),
-        onMutate: (dto) => {
-            const messages = queryClient.getQueryData<Message[]>([MESSAGES_CACHE, dto.channelId]);
-            const { user } = useCurrentUserStore.getState();
-            const { getChannel, updateChannel } = useChannelsStore.getState();
-            const { getGuild } = useGuildsStore.getState();
-            const guild = guildId ? getGuild(guildId)! : null;
-            const channel = guild ? guild.channels.find(ch => ch.id === dto.channelId)! : getChannel(dto.channelId)!;
+        upsertChannel(guildId, channel.id, { ...channel, lastMessageId: messageId, userChannelState: { ...channel.userChannelState, lastReadId: messageId, unreadCount: 0 } });
+    } else {
+        const { getChannel, updateChannel } = useChannelsStore.getState();
+        const channel = getChannel(channelId);
+        if (!channel) return;
 
-            const id = `pending-${messages!.length}`
-            const createdAt = new Date();
-            const message: Message = {
-                id: id,
-                createdAt: createdAt,
-                updatedAt: createdAt,
-                senderId: user!.id,
-                status: MessageStatus.Pending,
-                attachments: [],
-                channelId: dto.channelId,
-                content: dto.content,
-                mentions: dto.mentions,
-                is_pinned: false,
-            };
-
-            updateChannel({ ...channel, lastMessageId: message.id, userChannelState: { ...channel.userChannelState, lastReadId: message.id, unreadCount: 0 } });
-
-            queryClient.setQueryData<Message[]>([MESSAGES_CACHE, dto.channelId], (old) => {
-                if (!old) {
-                    return [];
-                }
-
-                const newMessages = [...old, message];
-
-                return newMessages;
-            });
-
-            //TODO: handle error when sending message
-            return message;
-        },
-        onSuccess: (response, dto, optimisticMessage) => {
-            const { getChannel, updateChannel } = useChannelsStore.getState();
-            const { getGuild, upsertChannel } = useGuildsStore.getState();
-            const guild = guildId ? getGuild(guildId)! : null;
-            const channel = guild ? guild.channels.find(ch => ch.id === dto.channelId)! : getChannel(dto.channelId)!;
-            if (!response.success) {
-                queryClient.setQueryData<Message[]>([MESSAGES_CACHE, dto.channelId], (old) => {
-                    if (!old) {
-                        return [];
-                    }
-
-                    // New object for the failed message so memoized rows see the change.
-                    const newMessages = old.map(m =>
-                        m.id === optimisticMessage.id ? { ...m, status: MessageStatus.Error } : m
-                    );
-                    return newMessages;
-                })
-                return;
-            }
-            const message = response.data!;
-            queryClient.setQueryData<Message[]>([MESSAGES_CACHE, dto.channelId], (old) => {
-                if (!old) {
-                    return [];
-                }
-                message.createdAt = new Date(message.createdAt);
-
-                const newMessages = [...old].map(m => {
-                    if (m.id === optimisticMessage.id) {
-                        return response.data!;
-                    }
-                    return m;
-                });
-                return newMessages;
-            });
-
-            updateChannel({ ...channel, lastMessageId: message.id, userChannelState: { ...channel.userChannelState, lastReadId: message.id, unreadCount: 0 } });
-
-        }
-    })
+        updateChannel({ ...channel, lastMessageId: messageId, userChannelState: { ...channel.userChannelState, lastReadId: messageId, unreadCount: 0 } });
+    }
 }
 
-export function useSendMessageGuildMutation(guildId: string) {
+export function useSendMessageMutation(guildId?: string) {
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -172,9 +104,6 @@ export function useSendMessageGuildMutation(guildId: string) {
         onMutate: (dto) => {
             const messages = queryClient.getQueryData<Message[]>([MESSAGES_CACHE, dto.channelId]) ?? [];
             const { user } = useCurrentUserStore.getState();
-            const { getGuild, upsertChannel } = useGuildsStore.getState();
-            const guild = getGuild(guildId)!;
-            const channel = guild?.channels.find(ch => ch.id === dto.channelId);
 
             const id = `pending-${messages.length}`
             const createdAt = new Date();
@@ -191,6 +120,7 @@ export function useSendMessageGuildMutation(guildId: string) {
                 is_pinned: false,
             };
 
+            markChannelSent(guildId, dto.channelId, message.id);
             queryClient.setQueryData<Message[]>([MESSAGES_CACHE, dto.channelId], (old) => {
                 if (!old) {
                     return [];
@@ -201,17 +131,11 @@ export function useSendMessageGuildMutation(guildId: string) {
                 return newMessages;
             });
 
-            if (!channel) return
-            upsertChannel(guild.id, channel?.id, { ...channel, lastMessageId: message.id, userChannelState: { ...channel.userChannelState, lastReadId: message.id, unreadCount: 0 } });
-
-
+            //TODO: handle error when sending message
             return message;
         },
         onSuccess: (response, dto, optimisticMessage) => {
-            const { getGuild, upsertChannel } = useGuildsStore.getState();
-            const guild = getGuild(guildId)!;
-            const channel = guild?.channels.find(ch => ch.id === dto.channelId);
-            if (!response.success) {
+            if (!response.success || !response.data) {
                 queryClient.setQueryData<Message[]>([MESSAGES_CACHE, dto.channelId], (old) => {
                     if (!old) {
                         return [];
@@ -225,7 +149,6 @@ export function useSendMessageGuildMutation(guildId: string) {
                 })
                 return;
             }
-
             const message = response.data!;
             queryClient.setQueryData<Message[]>([MESSAGES_CACHE, dto.channelId], (old) => {
                 if (!old) {
@@ -242,8 +165,7 @@ export function useSendMessageGuildMutation(guildId: string) {
                 return newMessages;
             });
 
-            if (!channel) return;
-            upsertChannel(guild.id, channel?.id, { ...channel, lastMessageId: message.id, userChannelState: { ...channel.userChannelState, lastReadId: message.id, unreadCount: 0 } });
+            markChannelSent(guildId, dto.channelId, message.id);
         }
     })
 }
