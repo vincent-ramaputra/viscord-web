@@ -181,11 +181,11 @@ export function useSendMessageMutation(guildId?: string) {
                 if (!old) {
                     return [];
                 }
-                message.createdAt = new Date(message.createdAt);
+                const parsedMessage = { ...message, createdAt: new Date(message.createdAt) };
 
                 const newMessages = [...old].map(m => {
                     if (m.id === optimisticMessage.id) {
-                        return message;
+                        return parsedMessage;
                     }
                     return m;
                 });
@@ -368,18 +368,16 @@ export function useUpdatePermissionOverwrite(parentId?: string) {
             const parent = parentId ? getChannel(parentId) : undefined;
             if (!channel) return;
 
-            if (channel.isSynced && channel.parent) {
-                channel.isSynced = false;
-                channel.permissionOverwrites = parent!.permissionOverwrites;
-            }
-            const oldOverwrites = channel.permissionOverwrites;
-            if (oldOverwrites.find(ow => ow.targetId === overwrite.targetId)) {
-                channel.permissionOverwrites = oldOverwrites.map(ow => ow.targetId !== overwrite!.targetId ? ow : response.data!);
-            }
-            else {
-                channel.permissionOverwrites = [...oldOverwrites, overwrite]
-            }
-            updateChannel(channel.guildId, channel.id, channel);
+            const unsync = channel.isSynced && channel.parent;
+            const oldOverwrites = unsync ? parent!.permissionOverwrites : channel.permissionOverwrites;
+            const permissionOverwrites = oldOverwrites.some(ow => ow.targetId === overwrite.targetId)
+                ? oldOverwrites.map(ow => ow.targetId === overwrite.targetId ? overwrite : ow)
+                : [...oldOverwrites, overwrite];
+            updateChannel(channel.guildId, channel.id, {
+                ...channel,
+                isSynced: unsync ? false : channel.isSynced,
+                permissionOverwrites,
+            });
         }
     })
 }
@@ -410,8 +408,10 @@ export function useDeletePermissionOverwrite() {
             if (!channel) return;
 
             const oldOverwrites = channel.permissionOverwrites;
-            channel.permissionOverwrites = oldOverwrites.filter(ow => ow.targetId !== dto.targetId);
-            updateChannel(channel.guildId, channel.id, channel);
+            updateChannel(channel.guildId, channel.id, {
+                ...channel,
+                permissionOverwrites: oldOverwrites.filter(ow => ow.targetId !== dto.targetId),
+            });
         }
     });
 }

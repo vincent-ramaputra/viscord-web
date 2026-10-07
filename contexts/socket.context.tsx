@@ -104,9 +104,9 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
                 return [];
             }
 
-            payload.createdAt = new Date(payload.createdAt);
+            const message = { ...payload, createdAt: new Date(payload.createdAt) };
 
-            const newMessages = [...old, payload];
+            const newMessages = [...old, message];
             return newMessages;
         })
     }

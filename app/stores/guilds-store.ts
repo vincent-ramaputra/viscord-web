@@ -225,10 +225,10 @@ export const useGuildsStore = create<GuildStoreState>((set, get) => ({
             const updatedGuild: Guild = {
                 ...guild,
                 roles: guild.roles.filter(r => r.id !== roleId),
-                members: guild.members.map(m => {
-                    m.roles = m.roles.filter(id => id !== roleId);
-                    return m;
-                })
+                members: guild.members.map(m => m.roles.includes(roleId)
+                    ? { ...m, roles: m.roles.filter(id => id !== roleId) }
+                    : m)
+
             };
 
             const newGuilds = new Map(state.guilds);
