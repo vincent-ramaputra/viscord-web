@@ -1,6 +1,6 @@
 import { CURRENT_USER_CACHE, GUILDS_CACHE, MESSAGES_CACHE, RELATIONSHIPS_CACHE } from "@/constants/query-keys";
 import { RelationshipType } from "@/enums/relationship-type.enum";
-import { CreateMessageDto, SendMessageInput } from "@/interfaces/dto/create-message.dto";
+import { SendMessageInput } from "@/interfaces/dto/create-message.dto";
 import Relationship from "@/interfaces/relationship";
 import { login, logout } from "@/services/auth/auth.service";
 import { acknowledgeMessage, createAttachment, sendMessage } from "@/services/messages/messages.service";
@@ -101,13 +101,13 @@ function markChannelSent(guildId: string | undefined, channelId: string, message
 
 export function useSendMessageMutation(guildId?: string) {
     const queryClient = useQueryClient();
+    const contentTypeOf = (file: File) => file.type || "application/octet-stream";
 
     return useMutation({
         mutationFn: async ({ dto, attachments, clientId }: { dto: SendMessageInput, attachments?: File[], clientId: string }) => {
             const attachmentKeys: { key: string, fileName: string }[] = [];
             if (attachments && attachments.length > 0) {
 
-                const contentTypeOf = (file: File) => file.type || "application/octet-stream";
                 const response = await createAttachment(dto.channelId, {
                     files: attachments.map((att, idx) => ({
                         id: idx,
@@ -155,7 +155,7 @@ export function useSendMessageMutation(guildId?: string) {
                 updatedAt: createdAt,
                 senderId: user!.id,
                 status: MessageStatus.Pending,
-                attachments: attachments ? attachments.map((att, idx) => ({ id: `${clientId}/${idx}`, url: URL.createObjectURL(att), type: att.type, filename: att.name, size: att.size})) : [],
+                attachments: attachments ? attachments.map((att, idx) => ({ id: `${clientId}/${idx}`, url: URL.createObjectURL(att), type: contentTypeOf(att), filename: att.name, size: att.size })) : [],
                 channelId: dto.channelId,
                 content: dto.content,
                 mentions: dto.mentions,

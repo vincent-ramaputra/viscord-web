@@ -1,4 +1,4 @@
-import axios, { AxiosError, HttpStatusCode } from "axios";
+import { AxiosError, HttpStatusCode } from "axios";
 import { api } from "../api";
 import { Message } from "@/interfaces/message";
 import { Response } from "@/interfaces/response";
