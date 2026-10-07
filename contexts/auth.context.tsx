@@ -2,13 +2,13 @@
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { api } from "@/services/api";
 import { refreshToken } from "@/services/auth/auth.service";
-import axios, { AxiosInstance, HttpStatusCode } from "axios";
+import axios, { HttpStatusCode, type InternalAxiosRequestConfig } from "axios";
 import { useRouter } from "next/navigation";
 import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useEffect, useRef, useState } from "react";
 
 export interface AuthContextType {
     isAuthorized: boolean;
-    handleRefreshToken: () => void;
+    handleRefreshToken: () => ReturnType<typeof refreshToken>;
 }
 
 const AuthContext = createContext<AuthContextType>(null!)
@@ -22,30 +22,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
 
 
-    const handleRefreshToken = async () => {
-        const { setIsAuthorized } = useCurrentUserStore.getState();
-        const response = await refreshToken();
-        if (!response.success) {
-            setIsAuthorized(false);
-            router.push('/login');
-            return response;
-        }
+    const refreshInFlight = useRef<ReturnType<typeof refreshToken> | null>(null);
 
-        setIsAuthorized(true)
-        return response;
+    const handleRefreshToken = () => {
+        if (!refreshInFlight.current) {
+            refreshInFlight.current = refreshToken().then(response => {
+                const { setIsAuthorized } = useCurrentUserStore.getState();
+                setIsAuthorized(response.success);
+                if (!response.success) router.push('/login');
+                return response;
+            }).finally(() => {
+                refreshInFlight.current = null;
+            });
+        }
+        return refreshInFlight.current;
     };
 
     useEffect(() => {
         const refreshTokenInterceptor = api.interceptors.response.use(
             (response) => response,
-            async (error: any) => {
-                if (error.response.status === HttpStatusCode.Unauthorized && !error.config._retry) {
-                    error.config._retry = true;
+            async (error: unknown) => {
+                if (!axios.isAxiosError(error)) return Promise.reject(error);
+                const config = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+                if (error.response?.status === HttpStatusCode.Unauthorized && config && !config._retry) {
+                    config._retry = true;
                     const response = await handleRefreshToken();
                     if (!response.success) {
                         return Promise.reject(error);
                     }
-                    return api.request(error.config);
+                    return api.request(config);
                 }
 
                 return Promise.reject(error);
