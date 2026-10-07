@@ -10,7 +10,7 @@ import { HiMagnifyingGlass } from "react-icons/hi2";
 import { useEffect, useState } from "react";
 import { useChannelsStore } from "@/app/stores/channels-store";
 import UserAvatar from "../user-avatar/user-avatar";
-import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store";
+import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import ButtonSecondary from "../buttons/button-secondary";
 import ButtonSuccess from "../buttons/button-success";
 import ButtonPrimary from "../buttons/button-primary";
@@ -123,17 +123,17 @@ const SelectedMemberContainer = styled.div`
 
 export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembersModalProps) {
     const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId)!;
-    const role = guild.roles.find(role => role.id === roleId)!;
+    const guild = getGuild(guildId);
+    const role = guild?.roles.find(role => role.id === roleId);
     const [searchText, setSearchText] = useState('');
     const { getUserProfile } = useUserProfileStore();
-    const filteredMembers = guild.members.filter(member => {
-        const profile = useGetUserProfile(member.userId)!;
-        return !(member.roles.find(roleId => roleId === role.id)) && (profile.username.includes(searchText) || profile.displayName.includes(searchText));
+    const filteredMembers = (guild?.members ?? []).filter(member => {
+        const profile = getUserProfile(member.userId);
+        return profile && role && !(member.roles.find(roleId => roleId === role.id)) && (profile.username.includes(searchText) || profile.displayName.includes(searchText));
     })
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
     const {mutateAsync: assignRoleMembers} = useAssignRoleMembers();
-    if (!guild) {
+    if (!guild || !role) {
         onClose();
         return null;
     }

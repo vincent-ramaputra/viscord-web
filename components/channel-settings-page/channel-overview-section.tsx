@@ -75,7 +75,10 @@ interface ChannelOverviewSectionProps {
 }
 
 export function ChannelOverviewSection({ channel }: ChannelOverviewSectionProps) {
-    if (!channel) return null;
+    return channel ? <ChannelOverviewForm key={channel.id} channel={channel} /> : null;
+}
+
+function ChannelOverviewForm({ channel }: { channel: Channel }) {
     const [channelName, setChannelName] = useState(channel.name ?? "");
     const [isLoading, setIsLoading] = useState(false)
     const haveChanges = channelName !== channel.name;

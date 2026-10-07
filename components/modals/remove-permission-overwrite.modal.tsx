@@ -12,7 +12,7 @@ import { useDeleteGuildChannelMutation, useDeletePermissionOverwrite } from "@/h
 import { GuildMember } from "@/interfaces/guild-member";
 import { Role } from "@/interfaces/role";
 import { PermissionOverwriteTargetType } from "@/enums/permission-overwrite-target-type.enum";
-import { useGetUserProfile } from "@/app/stores/user-profiles-store";
+import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 
 const ContentContainer = styled.div`
     background: var(--modal-background);
@@ -107,7 +107,8 @@ const ContentFooter = styled.div`
 
 export function RemovePermissionOverwriteModal({ channel, target, targetType, onClose }: { channel: Channel, target: Role | GuildMember, targetType: PermissionOverwriteTargetType, onClose: () => void }) {
     const router = useRouter();
-    const profile = targetType === PermissionOverwriteTargetType.MEMBER ? useGetUserProfile((target as GuildMember).userId) : undefined;
+    const { getUserProfile } = useUserProfileStore();
+    const profile = targetType === PermissionOverwriteTargetType.MEMBER ? getUserProfile((target as GuildMember).userId) : undefined;
     const { mutateAsync: deletePermissionOverwrite, isPending } = useDeletePermissionOverwrite();
 
     async function handleRemovePermissionOverwrite() {
