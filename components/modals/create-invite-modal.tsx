@@ -170,14 +170,15 @@ const InviteLinkSettingActionButtons = styled.div`
 function RelationshipItem({ channel, inviteLink }: { channel: Channel, inviteLink: string }) {
     const queryClient = useQueryClient();
     const { getUserProfile } = useUserProfileStore();
-    const { mutateAsync: sendMessage, isPending, isSuccess } = useSendMessageMutation(channel.guildId);
+    const { mutate: sendMessage, isPending, isSuccess } = useSendMessageMutation(channel.guildId);
 
     const userId = channel.recipients![0].id;
     const user = getUserProfile(userId);
 
-    async function onSendInvite() {
-        await sendMessage({ channelId: channel!.id, content: inviteLink, attachments: [], mentions: [] })
-        await queryClient.invalidateQueries({ queryKey: [MESSAGES_CACHE, channel.id], exact: true });
+    function onSendInvite() {
+        sendMessage({ dto: { channelId: channel!.id, content: inviteLink, mentions: [] }, clientId: crypto.randomUUID() }, {
+            onSuccess: () => queryClient.invalidateQueries({ queryKey: [MESSAGES_CACHE, channel.id], exact: true })
+        });
     }
 
     if (!user) return <div></div>;

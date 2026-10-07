@@ -1,9 +1,9 @@
 import { CURRENT_USER_CACHE, GUILDS_CACHE, MESSAGES_CACHE, RELATIONSHIPS_CACHE } from "@/constants/query-keys";
 import { RelationshipType } from "@/enums/relationship-type.enum";
-import { CreateMessageDto } from "@/interfaces/dto/create-message.dto";
+import { CreateMessageDto, SendMessageInput } from "@/interfaces/dto/create-message.dto";
 import Relationship from "@/interfaces/relationship";
 import { login, logout } from "@/services/auth/auth.service";
-import { acknowledgeMessage, sendMessage } from "@/services/messages/messages.service";
+import { acknowledgeMessage, createAttachment, sendMessage } from "@/services/messages/messages.service";
 import { acceptFriendRequest, declineFriendRequest } from "@/services/relationships/relationships.service";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Message } from "@/interfaces/message";
@@ -28,6 +28,9 @@ import { DeleteRoleDTO } from "@/interfaces/dto/delete-role.dto";
 import { UpdateUserProfileDto } from "@/interfaces/dto/update-user-profile.dto";
 import { updateUserProfile } from "@/services/user-profiles/user-profiles.service";
 import { LoginDTO } from "@/interfaces/dto/login.dto";
+import { CreateAttachmentDTO } from "@/interfaces/dto/create-attachment.dto";
+import { uploadToPresignedUrl } from "@/services/s3/s3.service";
+import { useUploadProgressStore } from "@/app/stores/upload-progress-store";
 
 
 
@@ -100,20 +103,59 @@ export function useSendMessageMutation(guildId?: string) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (dto: CreateMessageDto) => sendMessage(dto),
-        onMutate: (dto) => {
-            const messages = queryClient.getQueryData<Message[]>([MESSAGES_CACHE, dto.channelId]) ?? [];
+        mutationFn: async ({ dto, attachments, clientId }: { dto: SendMessageInput, attachments?: File[], clientId: string }) => {
+            const attachmentKeys: { key: string, fileName: string }[] = [];
+            if (attachments && attachments.length > 0) {
+
+                const contentTypeOf = (file: File) => file.type || "application/octet-stream";
+                const response = await createAttachment(dto.channelId, {
+                    files: attachments.map((att, idx) => ({
+                        id: idx,
+                        contentType: contentTypeOf(att),
+                        fileName: att.name,
+                        size: att.size
+                    }))
+                });
+
+                if (!response.success || !response.data) throw new Error("Failed uploading attachment");
+
+                const promises = [];
+                const attachmentUploads = response.data.attachments;
+                for (const upload of attachmentUploads) {
+                    const att = attachments.at(upload.id);
+                    if (!att) throw new Error("Invalid attachment id");
+
+                    promises.push(uploadToPresignedUrl(upload.uploadUrl, att, contentTypeOf(att), (progress) => {
+                        const { setProgress } = useUploadProgressStore.getState();
+                        setProgress(`${clientId}/${upload.id}`, Math.round(progress * 100));
+                    }));
+
+
+                    attachmentKeys.push({ key: upload.key, fileName: att.name });
+                }
+
+                const results = await Promise.all(promises);
+                if (!results.every(r => r.success)) throw new Error("Upload failed");
+
+            }
+
+            const response = await sendMessage({ ...dto, attachments: attachmentKeys });
+            if (!response.success || !response.data) throw new Error(typeof response.message === "string" ? response.message : "Failed to send message");
+
+            return response.data;
+        },
+        onMutate: ({ dto, clientId, attachments }) => {
             const { user } = useCurrentUserStore.getState();
 
-            const id = `pending-${messages.length}`
             const createdAt = new Date();
             const message: Message = {
-                id: id,
+                id: clientId,
+                clientId,
                 createdAt: createdAt,
                 updatedAt: createdAt,
                 senderId: user!.id,
                 status: MessageStatus.Pending,
-                attachments: [],
+                attachments: attachments ? attachments.map((att, idx) => ({ id: `${clientId}/${idx}`, url: URL.createObjectURL(att), type: att.type, filename: att.name, size: att.size})) : [],
                 channelId: dto.channelId,
                 content: dto.content,
                 mentions: dto.mentions,
@@ -131,25 +173,10 @@ export function useSendMessageMutation(guildId?: string) {
                 return newMessages;
             });
 
-            //TODO: handle error when sending message
             return message;
         },
-        onSuccess: (response, dto, optimisticMessage) => {
-            if (!response.success || !response.data) {
-                queryClient.setQueryData<Message[]>([MESSAGES_CACHE, dto.channelId], (old) => {
-                    if (!old) {
-                        return [];
-                    }
-
-                    // New object for the failed message so memoized rows see the change.
-                    const newMessages = old.map(m =>
-                        m.id === optimisticMessage.id ? { ...m, status: MessageStatus.Error } : m
-                    );
-                    return newMessages;
-                })
-                return;
-            }
-            const message = response.data!;
+        onSuccess: (message, { dto }, optimisticMessage) => {
+            optimisticMessage.attachments.forEach(att => URL.revokeObjectURL(att.url));
             queryClient.setQueryData<Message[]>([MESSAGES_CACHE, dto.channelId], (old) => {
                 if (!old) {
                     return [];
@@ -158,7 +185,7 @@ export function useSendMessageMutation(guildId?: string) {
 
                 const newMessages = [...old].map(m => {
                     if (m.id === optimisticMessage.id) {
-                        return response.data!;
+                        return message;
                     }
                     return m;
                 });
@@ -166,6 +193,28 @@ export function useSendMessageMutation(guildId?: string) {
             });
 
             markChannelSent(guildId, dto.channelId, message.id);
+        },
+        onError: (error, { dto }, optimisticMessage) => {
+            console.error("Failed sending message", error);
+            if (!optimisticMessage) return;
+
+            queryClient.setQueryData<Message[]>([MESSAGES_CACHE, dto.channelId], (old) => {
+                if (!old) {
+                    return [];
+                }
+
+                // New object for the failed message so memoized rows see the change.
+                const newMessages = old.map(m =>
+                    m.id === optimisticMessage.id ? { ...m, status: MessageStatus.Error } : m
+                );
+                return newMessages;
+            })
+        },
+        onSettled: (message, error, { attachments, clientId }) => {
+            if (!attachments || attachments.length === 0) return;
+            const { clearProgress } = useUploadProgressStore.getState();
+            clearProgress(attachments.map((a, idx) => `${clientId}/${idx}`));
+
         }
     })
 }

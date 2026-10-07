@@ -11,6 +11,10 @@ import { useRelationshipsQuery } from "@/hooks/queries";
 import { ContextMenuType } from "@/enums/context-menu-type.enum";
 import { Guild } from "@/interfaces/guild";
 import { numberToHex } from "@/helpers/color.helper";
+import { Attachment } from "@/interfaces/attachment";
+import { useUploadProgressStore } from "@/app/stores/upload-progress-store";
+import GenericFileIcon from "../generic-file-icon/generic-file-icon";
+import { formatFileSize } from "@/utils/file.utils";
 
 const Container = styled.div`
     display: flex;
@@ -118,6 +122,123 @@ function Time({ date, children, className }: { date: Date, children: ReactNode, 
     )
 }
 
+const AttachmentCard = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 432px;
+    margin-top: 8px;
+    padding: 16px;
+    background-color: var(--background-primary);
+    border: 1px solid var(--border-faint);
+    border-radius: 8px;
+`
+
+const AttachmentDetails = styled.div`
+    flex-grow: 1;
+    min-width: 0;
+    word-break: normal;
+`
+
+const AttachmentName = styled.a`
+    display: block;
+    font-size: 16px;
+    line-height: 22px;
+    color: var(--text-link);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &[href]:hover {
+        text-decoration: underline;
+    }
+
+    &:not([href]) {
+        color: var(--text-default);
+    }
+`
+
+const AttachmentSize = styled.p`
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--text-muted);
+`
+
+// While uploading: "name — size" on one line. Only the name shrinks, so the size stays visible.
+const UploadingHeader = styled.div`
+    display: flex;
+    min-width: 0;
+    font-size: 16px;
+    line-height: 22px;
+    white-space: nowrap;
+`
+
+const UploadingName = styled.span`
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-default);
+`
+
+const UploadingSize = styled.span`
+    flex-shrink: 0;
+    color: var(--text-muted);
+`
+
+const ProgressTrack = styled.div`
+    height: 8px;
+    margin-top: 6px;
+    border-radius: 4px;
+    background-color: var(--background-modifier-accent);
+    overflow: hidden;
+`
+
+const ProgressFill = styled.div`
+    height: 100%;
+    border-radius: 4px;
+    background-color: var(--primary);
+    transition: width 150ms linear;
+`
+
+function AttachmentPreview({ attachment, isPending }: { attachment: Attachment, isPending: boolean }) {
+    const progress = useUploadProgressStore(s => s.progressMap.get(attachment.id) ?? 0);
+    // Pending and failed messages point at a local blob: URL, which shares the app's origin
+    // (an opened .html would run as Viscord), so only server URLs are linked.
+    const isLocal = attachment.url.startsWith('blob:');
+
+    if (isPending) {
+        return (
+            <AttachmentCard>
+                <GenericFileIcon width={30} />
+                <AttachmentDetails>
+                    <UploadingHeader title={attachment.filename}>
+                        <UploadingName>{attachment.filename}</UploadingName>
+                        <UploadingSize>&nbsp;— {formatFileSize(attachment.size)}</UploadingSize>
+                    </UploadingHeader>
+                    <ProgressTrack><ProgressFill style={{ width: `${progress}%` }} /></ProgressTrack>
+                </AttachmentDetails>
+            </AttachmentCard>
+        );
+    }
+
+    return (
+        <AttachmentCard>
+            <GenericFileIcon width={30} />
+            <AttachmentDetails>
+                <AttachmentName
+                    href={isLocal ? undefined : attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={attachment.filename}>
+                    {attachment.filename}
+                </AttachmentName>
+                <AttachmentSize>{formatFileSize(attachment.size)}</AttachmentSize>
+            </AttachmentDetails>
+        </AttachmentCard>
+    );
+}
+
 
 export default function MessageItem({ sender, message, isSubsequent = false, guild }: { sender: UserProfile, guild?: Guild, message: Message, isSubsequent?: boolean }) {
     const time = dateToAMPM(message.createdAt);
@@ -148,17 +269,18 @@ export default function MessageItem({ sender, message, isSubsequent = false, gui
                 {!isSubsequent &&
                     <SubsequentMessageHelper>
                         <SenderNameText
-                        style={{color: highestRole ? numberToHex(highestRole.color!) : ''}}
-                        onContextMenu={(e) => {
-                            const relationship = relationships?.find(rel => rel.user.id === sender.id)
-                            if (relationship) {
-                                showMenu(e, ContextMenuType.USER, relationship)
-                            }
-                        }}>{sender.displayName}</SenderNameText>
+                            style={{ color: highestRole ? numberToHex(highestRole.color!) : '' }}
+                            onContextMenu={(e) => {
+                                const relationship = relationships?.find(rel => rel.user.id === sender.id)
+                                if (relationship) {
+                                    showMenu(e, ContextMenuType.USER, relationship)
+                                }
+                            }}>{sender.displayName}</SenderNameText>
                         <Time date={message.createdAt} className="active">{getTimePoint(message.createdAt)} {time}</Time>
                     </SubsequentMessageHelper>
                 }
                 <ContentText className={`${message.status !== undefined && message.status === MessageStatus.Pending ? 'pending' : message.status !== undefined && message.status === MessageStatus.Error ? 'error' : ''}`}>{message.content}</ContentText>
+                {message.attachments.length > 0 && message.attachments.map(att => <AttachmentPreview key={att.id} attachment={att} isPending={message.status === MessageStatus.Pending} />)}
             </ContentContainer>
         </Container >
     );

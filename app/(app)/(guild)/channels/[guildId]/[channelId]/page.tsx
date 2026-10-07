@@ -5,11 +5,12 @@ import { Fragment, KeyboardEvent, useEffect, useMemo, useRef, useState } from "r
 import { useChannelReadState } from "@/hooks/use-channel-read-state";
 import styled from "styled-components";
 import { GuildChannelHeader } from "./header";
-import { CreateMessageDto } from "@/interfaces/dto/create-message.dto";
+import { SendMessageInput } from "@/interfaces/dto/create-message.dto";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { MessageStatus } from "@/enums/message-status.enum";
 import { Message } from "@/interfaces/message";
 import MessageItem from "@/components/message-item/message-item";
+import AttachmentUploadList from "@/components/attachment-upload-list/attachment-upload-list";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { dateToShortDate } from "@/utils/date.utils";
 import { FaCirclePlus } from "react-icons/fa6";
@@ -69,8 +70,6 @@ const InputContainer = styled.div`
     background-color: var(--chat-background-default);
     border-radius: 8px;
     border: 1px solid var(--border-faint);
-    display: flex;
-    align-items: flex-start;
 `
 
 const TextInput = styled.textarea`
@@ -207,15 +206,14 @@ function LastReadDivider() {
     )
 }
 
-function TextInputItem({ channel, onSubmit }: { channel: Channel, onSubmit: (message: CreateMessageDto) => any }) {
+function TextInputItem({ channel, onSubmit }: { channel: Channel, onSubmit: (message: SendMessageInput) => any }) {
     const [inputHeight, setInputHeight] = useState(LINE_HEIGHT + VERTICAL_PADDING)
-    const [attachments, setAttachments] = useState<File[]>([]);
     const [isTypingStatusCooldown, setTypingStatusCooldown] = useState(false);
 
     function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            const dto: CreateMessageDto = { channelId: channel.id as string, content: text, attachments: attachments, mentions: [] as string[] };
+            const dto: SendMessageInput = { channelId: channel.id as string, content: text, mentions: [] as string[] };
             onSubmit(dto);
             onInputChanged('');
         }
@@ -254,9 +252,11 @@ export default function Page() {
     const guild = getGuild(guildId as string);
     const channel = guild?.channels.find(ch => ch.id == channelId);
     const { data: messages } = useMessagesQuery(channelId! as string);
-    const { mutateAsync: sendMessage } = useSendMessageMutation(guildId as string);
+    const { mutate: sendMessage } = useSendMessageMutation(guildId as string);
     const { mutateAsync: acknowledgeMessage } = useAcknowledgeGuildMessageMutation(guildId as string);
     const { dividerAfterId } = useChannelReadState(channel, acknowledgeMessage);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [attachments, setAttachments] = useState<File[]>([]);
     const groupedMessages = messages?.reduce((groups, message) => {
         const key = message.createdAt.toLocaleDateString();
 
@@ -305,7 +305,10 @@ export default function Page() {
         return groups;
     }, [allowedMembers, guild]);
 
-
+    function handleSubmit(dto: SendMessageInput) {
+        sendMessage({ dto, attachments, clientId: crypto.randomUUID() });
+        setAttachments([]);
+    }
 
     if (!channel) {
         return <div>bingbong</div>
@@ -351,8 +354,23 @@ export default function Page() {
                     </MessagesContainer>
                     <ChatInputWrapper>
                         <InputContainer>
-                            <UploadItemContainer><FaCirclePlus size={20} /></UploadItemContainer>
-                            <TextInputItem channel={channel} onSubmit={sendMessage} />
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                className="hidden"
+                                multiple
+                                onChange={(e) => {
+                                    const files = Array.from(e.target.files ?? []);
+                                    setAttachments(prev => [...prev, ...files]);
+                                    e.target.value = "";
+                                }} />
+                            <AttachmentUploadList files={attachments} onRemove={(i) => setAttachments(prev => prev.filter((_, j) => j !== i))} />
+                            <div className="flex">
+                                <UploadItemContainer onClick={() => fileInputRef.current?.click()}>
+                                    <FaCirclePlus size={20} />
+                                </UploadItemContainer>
+                                <TextInputItem channel={channel} onSubmit={handleSubmit} />
+                            </div>
                         </InputContainer>
                         {typingUsers.length > 0 &&
                             <div className="ml-2 text-[12px] h-[24px] items-center flex absolute w-full">
