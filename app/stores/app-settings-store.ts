@@ -39,7 +39,7 @@ export const useAppSettingsStore = create<AppSettings>((set) => {
         setAudioOutputDevice: (deviceId: string) => {
             set(state => {
                 const newMediaSettings: MediaSettings = { ...state.mediaSettings, audioOutputDeviceId: deviceId };
-                if (typeof window !== undefined) localStorage.setItem('media_settings', JSON.stringify(newMediaSettings))
+                if (typeof window !== 'undefined') localStorage.setItem('media_settings', JSON.stringify(newMediaSettings))
                 return { mediaSettings: newMediaSettings }
             });
             usePlaySound('audio-test');

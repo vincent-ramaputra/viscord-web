@@ -48,7 +48,7 @@ export default function Login() {
             return false;
         }
 
-        setIdentifierError(null);
+        setPasswordError(null);
         return true;
     }
 
@@ -57,7 +57,9 @@ export default function Login() {
     async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
-        const validationPassed = validateIdentifier() && validatePassword();
+        const identifierIsValid = validateIdentifier();
+        const passwordIsValid = validatePassword();
+        const validationPassed = identifierIsValid && passwordIsValid;
 
         if (!validationPassed) {
             return;

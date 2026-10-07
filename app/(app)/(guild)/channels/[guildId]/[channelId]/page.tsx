@@ -206,13 +206,14 @@ function LastReadDivider() {
     )
 }
 
-function TextInputItem({ channel, onSubmit }: { channel: Channel, onSubmit: (message: SendMessageInput) => any }) {
+function TextInputItem({ channel, onSubmit, hasAttachments }: { channel: Channel, onSubmit: (message: SendMessageInput) => any, hasAttachments: boolean }) {
     const [inputHeight, setInputHeight] = useState(LINE_HEIGHT + VERTICAL_PADDING)
     const [isTypingStatusCooldown, setTypingStatusCooldown] = useState(false);
 
     function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
             e.preventDefault();
+            if (!text.trim() && !hasAttachments) return;
             const dto: SendMessageInput = { channelId: channel.id as string, content: text, mentions: [] as string[] };
             onSubmit(dto);
             onInputChanged('');
@@ -369,7 +370,7 @@ export default function Page() {
                                 <UploadItemContainer onClick={() => fileInputRef.current?.click()}>
                                     <FaCirclePlus size={20} />
                                 </UploadItemContainer>
-                                <TextInputItem channel={channel} onSubmit={handleSubmit} />
+                                <TextInputItem channel={channel} onSubmit={handleSubmit} hasAttachments={attachments.length > 0} />
                             </div>
                         </InputContainer>
                         {typingUsers.length > 0 &&
