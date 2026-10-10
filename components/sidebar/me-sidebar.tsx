@@ -197,7 +197,6 @@ export default function MeSidebarContent() {
 
 
     return (
-        // <div className={styles["container"]}>
         <Fragment>
             <SidebarHeader>
                 <div className={"w-full p-[10px] rounded-sm"}>
