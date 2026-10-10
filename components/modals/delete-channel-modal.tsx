@@ -84,7 +84,7 @@ const ContentFooter = styled.div`
 
 export function DeleteChannelModal({ channel, onClose }: { channel: Channel, onClose: () => void }) {
     const router = useRouter();
-    const { closeSettings } = useSettingsOverlay();
+    const closeSettings = useSettingsOverlay(s => s.closeSettings);
     const guild = getGuild(channel.guildId);
     const { mutateAsync: deleteChannel, isPending } = useDeleteGuildChannelMutation(channel.guildId);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);

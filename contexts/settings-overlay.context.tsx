@@ -8,9 +8,10 @@ import { ReactNode, useEffect } from "react";
 
 
 export function SettingsOverlayProvider({ children }: { children: ReactNode }) {
-    const { metadata, closeSettings } = useSettingsOverlay();
-    const channelSettings = metadata?.type === SettingsOverlayType.CHANNEL_SETTINGS ? metadata.data: undefined;
-    const guildSettings = metadata?.type === SettingsOverlayType.GUILD_SETTINGS ? metadata.data: undefined;
+    const closeSettings = useSettingsOverlay(s => s.closeSettings);
+    const metadata = useSettingsOverlay(s => s.metadata);
+    const channelSettings = metadata?.type === SettingsOverlayType.CHANNEL_SETTINGS ? metadata.data : undefined;
+    const guildSettings = metadata?.type === SettingsOverlayType.GUILD_SETTINGS ? metadata.data : undefined;
 
     function closeSettingsKeyListener(event: KeyboardEvent) {
         if (event.key === "Escape") {

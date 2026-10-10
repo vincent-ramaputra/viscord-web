@@ -147,7 +147,7 @@ function GuildSidebarContextMenu({ guild }: { guild: Guild }) {
 }
 
 function ChannelCategoryContextMenu({ categoryId, guildId }: { categoryId: string, guildId: string }) {
-    const { openSettings } = useSettingsOverlay();
+    const openSettings = useSettingsOverlay(s => s.openSettings);
     const { openModal } = useModal();
     const { hideMenu } = useContextMenu();
     const guild = useGuildsStore(s => s.getGuild(guildId))!;
@@ -182,7 +182,7 @@ function ChannelCategoryContextMenu({ categoryId, guildId }: { categoryId: strin
 
 
 function ChannelButtonContextMenu({ channelId, guildId }: { channelId: string, guildId: string }) {
-    const { openSettings } = useSettingsOverlay();
+    const openSettings = useSettingsOverlay(s => s.openSettings);
     const { openModal } = useModal();
     const { hideMenu } = useContextMenu();
     const guild = useGuildsStore(s => s.getGuild(guildId))!;

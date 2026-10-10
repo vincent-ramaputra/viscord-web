@@ -183,7 +183,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     const { showMenu } = useContextMenu();
     const [active, setActive] = useState(false);
     const { openModal } = useModal();
-    const { openSettings } = useSettingsOverlay();
+    const openSettings = useSettingsOverlay(s => s.openSettings);
     const voiceStates = useChannelVoiceStates(channel.id);
     const activeSpeakers = useMediasoupStore(s => s.activeSpeakers);
     const { join, channelId: voiceChannelId } = useVoice();

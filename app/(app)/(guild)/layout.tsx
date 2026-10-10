@@ -115,7 +115,7 @@ function Header({ guild }: { guild: Guild }) {
     const menuRef = useRef<HTMLDivElement>(null!);
     const menuButtonRef = useRef<HTMLDivElement>(null!);
     const { openModal } = useModal();
-    const { openSettings } = useSettingsOverlay();
+    const openSettings = useSettingsOverlay(s => s.openSettings);
     const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild);
 
     useEffect(() => {

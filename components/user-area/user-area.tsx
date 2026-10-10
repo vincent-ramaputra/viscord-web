@@ -203,7 +203,7 @@ export default function UserArea() {
     const profileCardRef = useRef<HTMLDivElement>(null!)
     const { isDeafened, isMicOff, toggleDeafened, toggleMute } = useVoice();
     const channelId = useMediasoupStore(s => s.channelId);
-    const { openSettings } = useSettingsOverlay();
+    const openSettings = useSettingsOverlay(s => s.openSettings);
 
     useEffect(() => {
         function handleOutsideClick(e: MouseEvent) {
