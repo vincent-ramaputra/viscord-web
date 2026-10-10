@@ -416,7 +416,9 @@ function VideoView({
 
     const screenShareConsumers = Array.from(consumers.values()).filter(c => c.appData.mediaTag === 'screen');
     const screenShareProducer = Array.from(producers.values()).find(c => c.appData.mediaTag === 'screen');
-    const [focusedTile, setFocusedTile] = useState<ReactNode | undefined>();
+    // Store which tile is focused, not the rendered element: an element kept in state keeps the props it was
+    // created with, so the focused tile would stop updating (speaking, mute, a new video track).
+    const [focusedTileKey, setFocusedTileKey] = useState<string | null>(null);
 
 
     const tiles = [
@@ -425,34 +427,31 @@ function VideoView({
         ...Array.from(voiceRings),
         ...Array.from(voiceStates),
     ];
+    // If the focused tile goes away (they left, or stopped sharing), this is undefined and the grid shows again.
+    const focusedTile = focusedTileKey ? tiles.find(tile => getTileKey(tile) === focusedTileKey) : undefined;
+
+    function renderTile(tile: (typeof tiles)[number], onClick?: () => void) {
+        return (
+            <CallTile
+                key={getTileKey(tile)}
+                tile={tile}
+                isHovering={isHovering}
+                activeSpeakers={activeSpeakers}
+                voiceStates={voiceStates}
+                onClick={onClick}
+                getUserProfile={id => userProfiles.get(id)}
+            />
+        );
+    }
 
     return (
         <div className="flex flex-wrap gap-4 justify-center">
             {focusedTile ?
-                <div className="flex items-center justify-center relative bg-black" onClick={() => setFocusedTile(null)}>
-                    {focusedTile}
+                <div className="flex items-center justify-center relative bg-black" onClick={() => setFocusedTileKey(null)}>
+                    {renderTile(focusedTile)}
                 </div>
                 :
-                tiles.map(tile => (
-                    <CallTile
-                        key={getTileKey(tile)}
-                        tile={tile}
-                        isHovering={isHovering}
-                        activeSpeakers={activeSpeakers}
-                        voiceStates={voiceStates}
-                        onClick={() => setFocusedTile(
-                            <CallTile
-                                key={getTileKey(tile)}
-                                tile={tile}
-                                isHovering={isHovering}
-                                activeSpeakers={activeSpeakers}
-                                voiceStates={voiceStates}
-                                getUserProfile={id => userProfiles.get(id)}
-                            />
-                        )}
-                        getUserProfile={id => userProfiles.get(id)}
-                    />
-                ))}
+                tiles.map(tile => renderTile(tile, () => setFocusedTileKey(getTileKey(tile))))}
         </div>
     );
 }
