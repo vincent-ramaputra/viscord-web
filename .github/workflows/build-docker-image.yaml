@@ -6,7 +6,11 @@ on:
       - main
 
 jobs:
+  check:
+    uses: ./.github/workflows/check.yaml
+
   build:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
