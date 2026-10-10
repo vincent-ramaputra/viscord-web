@@ -49,11 +49,3 @@ export const useVoiceRingStateStore = create<VoiceRingStoreState>((set) => ({
 export function getVoiceRingKey(channelId: string, recipientId: string) {
     return `${channelId}:${recipientId}`
 }
-
-export function useGetChannelVoiceRing(channelId: string) {
-    const voiceRings = useVoiceRingStateStore.getState().voiceRingStates;
-
-    return Array.from(voiceRings.entries())
-        .filter(([key]) => key.startsWith(channelId))
-        .map(([, state]) => state);
-}

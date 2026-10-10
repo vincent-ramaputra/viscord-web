@@ -4,7 +4,7 @@ import styled from "styled-components";
 import ButtonSecondary from "@/components/buttons/button-secondary";
 import { useRouter } from "next/navigation";
 import ButtonDanger from "../buttons/button-danger";
-import { useGetGuild } from "@/app/stores/guilds-store";
+import { getGuild } from "@/app/stores/guilds-store";
 import { useLeaveGuildMutation } from "@/hooks/mutations";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
 import { useState } from "react";
@@ -82,7 +82,7 @@ const ContentFooter = styled.div`
 export function LeaveGuildModal({ guildId, onClose }: { guildId: string, onClose: () => void }) {
     const router = useRouter();
     const { closeSettings } = useSettingsOverlay();
-    const guild = useGetGuild(guildId)!;
+    const guild = getGuild(guildId)!;
     const { mutateAsync: leaveGuild, isPending } = useLeaveGuildMutation();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 

@@ -10,7 +10,7 @@ import { ModalType } from "@/enums/modal-type.enum";
 import { useContextMenu } from "@/contexts/context-menu.context";
 import { ContextMenuType } from "@/enums/context-menu-type.enum";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
-import { useGetGuild } from "@/app/stores/guilds-store";
+import { useGuildsStore } from "@/app/stores/guilds-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { Permissions } from "@/enums/permissions.enum";
 
@@ -66,7 +66,7 @@ export function ChannelCategory({ category, channels }: { category: Channel, cha
     const [hoverAddChannel, setHoverAddChannel] = useState(false);
     const pathname = usePathname();
     const { showMenu } = useContextMenu();
-    const guild = useGetGuild(category.guildId)!;
+    const guild = useGuildsStore(s => s.getGuild(category.guildId))!;
     const { user } = useCurrentUserStore();
     const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild, category);
 

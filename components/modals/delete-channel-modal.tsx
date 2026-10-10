@@ -7,7 +7,7 @@ import ButtonSecondary from "@/components/buttons/button-secondary";
 import { ChannelType } from "@/enums/channel-type.enum";
 import { useRouter } from "next/navigation";
 import ButtonDanger from "../buttons/button-danger";
-import { useGetGuild } from "@/app/stores/guilds-store";
+import { getGuild } from "@/app/stores/guilds-store";
 import { useDeleteGuildChannelMutation } from "@/hooks/mutations";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
 import { useState } from "react";
@@ -85,7 +85,7 @@ const ContentFooter = styled.div`
 export function DeleteChannelModal({ channel, onClose }: { channel: Channel, onClose: () => void }) {
     const router = useRouter();
     const { closeSettings } = useSettingsOverlay();
-    const guild = useGetGuild(channel.guildId);
+    const guild = getGuild(channel.guildId);
     const { mutateAsync: deleteChannel, isPending } = useDeleteGuildChannelMutation(channel.guildId);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
