@@ -131,7 +131,7 @@ function getChannelPath(channelId: string) {
 
 export function VoiceRingManager() {
     const { voiceRingStates } = useVoiceRingStateStore();
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const user = useCurrentUserStore(s => s.user);
     const pathname = usePathname();
     const router = useRouter();
@@ -199,7 +199,7 @@ export function VoiceRingManager() {
             {Array.from(voiceRingStates.entries()).map(([k, v], i) => {
                 const pos: Pos = { x: window.innerWidth / 2 + (i * 10), y: window.innerHeight / 2 };
 
-                const initiator = getUserProfile(v.initiatorId);
+                const initiator = userProfiles.get(v.initiatorId);
                 if (v.recipientId !== user?.id || pathname.endsWith(v.channelId) || !initiator) {
                     return null;
                 }

@@ -266,7 +266,7 @@ export default function Page() {
 
         return groups;
     }, {} as Record<string, Message[]>);
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const [showMemberList, setShowMemberList] = useState(true);
     const typingUsers = useTypingUsersFromChannel(channelId as string);
     const { isUserTyping } = useUserTypingStore();
@@ -340,7 +340,7 @@ export default function Page() {
                                                 <MessageItem
                                                     message={{ ...message }}
                                                     isSubsequent={isSubsequent}
-                                                    sender={getUserProfile(message.senderId)!}
+                                                    sender={userProfiles.get(message.senderId)!}
                                                     guild={guild}
                                                 />
                                             </Fragment>
@@ -376,7 +376,7 @@ export default function Page() {
                                     <LoadingIndicator></LoadingIndicator>
                                 </span>
 
-                                <span className="font-bold">{formatTyping(typingUsers.map(tu => getUserProfile(tu.userId)!.displayName))}</span>&nbsp;is typing...
+                                <span className="font-bold">{formatTyping(typingUsers.map(tu => userProfiles.get(tu.userId)!.displayName))}</span>&nbsp;is typing...
                             </div>}
                     </ChatInputWrapper>
                 </ChatContainer>
@@ -388,7 +388,7 @@ export default function Page() {
                                 <div key={role?.id ?? '1'}>
                                     <h3>{role ? role.name : 'Online'} — {members.length}</h3>
                                     {members.map(member => {
-                                        const user = getUserProfile(member.userId);
+                                        const user = userProfiles.get(member.userId);
                                         return (
                                             <MemberItem key={member.userId}>
                                                 <div className="mr-[12px]">
@@ -409,7 +409,7 @@ export default function Page() {
                             <>
                                 <h3>Offline — {offlineMembers.length}</h3>
                                 {offlineMembers.map(member => {
-                                    const user = getUserProfile(member.userId);
+                                    const user = userProfiles.get(member.userId);
                                     return (
                                         <MemberItem key={member.userId}>
                                             <div className="mr-[12px]">

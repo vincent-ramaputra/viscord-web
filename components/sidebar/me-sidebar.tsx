@@ -152,7 +152,7 @@ const Pill = styled.div`
 export default function MeSidebarContent() {
     const pathname = usePathname();
     const router = useRouter();
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const { isUserTyping } = useUserTypingStore();
     const dmChannels = useGetDMChannels();
 
@@ -219,7 +219,7 @@ export default function MeSidebarContent() {
                         </DMListHeader>
                         <DMListWrapper>
                             {dmChannels?.map((channel) => {
-                                const recipient = getUserProfile(channel.recipients![0].id)!;
+                                const recipient = userProfiles.get(channel.recipients![0].id)!;
                                 const isActive = pathname === `/channels/me/${channel.id}`;
                                 const hasNewMessage = channel.userChannelState.unreadCount > 0;
                                 return (

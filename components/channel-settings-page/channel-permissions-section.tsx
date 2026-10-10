@@ -364,12 +364,12 @@ const AddTargetMenuOverlay = styled.div`
 
 function AddTargetMenu({ channelId, guildId, onClose, onAddTarget }: { channelId: string, guildId: string, onClose: () => void, onAddTarget: (target: Role | GuildMember, targetType: PermissionOverwriteTargetType) => void }) {
     const guild = useGuildsStore(s => s.getGuild(guildId));
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const channel = guild?.channels.find(channel => channel.id === channelId);
     const [searchText, setSearchText] = useState('');
     const filteredRoles = guild?.roles.filter(role => !channel?.permissionOverwrites.find(ow => ow.targetId === role.id) && role.name.toLowerCase().includes(searchText.toLowerCase())) ?? [];
     const filteredMembers = guild?.members.filter(member => {
-        const profile = getUserProfile(member.userId);
+        const profile = userProfiles.get(member.userId);
         return (!channel?.permissionOverwrites.find(ow => ow.targetId === member.userId) && profile?.username.toLowerCase().includes(searchText.toLowerCase()));
     }) ?? [];
     const menuRef = useRef<HTMLDivElement>(null!);
@@ -427,7 +427,7 @@ function AddTargetMenu({ channelId, guildId, onClose, onAddTarget }: { channelId
                         <div>
                             <TargetTypeHeader>Members</TargetTypeHeader>
                             {filteredMembers.map(member => {
-                                const profile = getUserProfile(member.userId);
+                                const profile = userProfiles.get(member.userId);
                                 return (
                                     <AddTargetItemRole
                                         key={member.userId}
@@ -458,7 +458,7 @@ interface PermissionSection {
 
 export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermissionsSectionProps) {
     const guild = useGuildsStore(s => s.getGuild(guildId));
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const { showMenu } = useContextMenu();
     const channel = guild?.channels.find(channel => channel.id === channelId);
     const permissionOverwrites = (channel?.isSynced ? guild?.channels.find(ch => ch.id === channel.parent?.id)?.permissionOverwrites : channel?.permissionOverwrites) ?? [];
@@ -661,7 +661,7 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
                                     ow.targetType === PermissionOverwriteTargetType.ROLE
                                         ? guild?.roles.find(role => role.id === ow.targetId)
                                         : guild?.members.find(m => m.userId === ow.targetId);
-                                const profile = ow.targetType === PermissionOverwriteTargetType.MEMBER ? getUserProfile(ow.targetId) : undefined;
+                                const profile = ow.targetType === PermissionOverwriteTargetType.MEMBER ? userProfiles.get(ow.targetId) : undefined;
                                 const color = ow.targetType === PermissionOverwriteTargetType.ROLE && target ? getRoleColor((target as Role).color) : "";
                                 return (
                                     <TargetListItem

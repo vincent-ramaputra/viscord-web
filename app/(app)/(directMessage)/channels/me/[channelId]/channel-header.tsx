@@ -245,8 +245,8 @@ function UserTile({ user, showDisplayName, isSpeaking, isMuted = false, isDeafen
 function CallHeader({ channel }: { channel: Channel }) {
     const [isHovering, setIsHovering] = useState(false);
     const user = useCurrentUserStore(s => s.user);
-    const { getUserProfile } = useUserProfileStore();
-    const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
+    const recipient: UserProfile = userProfiles.get(channel.recipients![0].id) || channel.recipients![0];
     const { join, leave } = useVoice();
 
     async function handleJoinVoiceCall() {
@@ -406,7 +406,7 @@ function VideoView({
     const consumers = useMediasoupStore(s => s.consumers);
     const producers = useMediasoupStore(s => s.producers);
     const activeSpeakers = useMediasoupStore(s => s.activeSpeakers);
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const voiceRings = useVoiceRingStateStore(useShallow(s => {
         return Array.from(s.voiceRingStates.entries())
             .filter(([key]) => key.startsWith(channel.id))
@@ -447,10 +447,10 @@ function VideoView({
                                 isHovering={isHovering}
                                 activeSpeakers={activeSpeakers}
                                 voiceStates={voiceStates}
-                                getUserProfile={getUserProfile}
+                                getUserProfile={id => userProfiles.get(id)}
                             />
                         )}
-                        getUserProfile={getUserProfile}
+                        getUserProfile={id => userProfiles.get(id)}
                     />
                 ))}
         </div>
@@ -464,7 +464,7 @@ function VoiceOnlyView({
     isHovering: boolean;
 }) {
     const user = useCurrentUserStore(s => s.user);
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const activeSpeakers = useMediasoupStore(s => s.activeSpeakers);
     const voiceRings = useVoiceRingStateStore(useShallow(s => {
         return Array.from(s.voiceRingStates.entries())
@@ -476,7 +476,7 @@ function VoiceOnlyView({
     return (
         <AnimatePresence>
             {voiceRings.map(vr => {
-                const userProfile = getUserProfile(vr.recipientId);
+                const userProfile = userProfiles.get(vr.recipientId);
                 return (
                     <motion.div
                         key={vr.recipientId}
@@ -496,7 +496,7 @@ function VoiceOnlyView({
             })}
 
             {voiceStates.map((vs) => {
-                const participant = getUserProfile(vs.userId);
+                const participant = userProfiles.get(vs.userId);
                 const isSpeaking = voiceStates.find(state => state.userId === user!.id) && activeSpeakers.has(vs.userId);
 
                 return (
@@ -808,8 +808,8 @@ function getTileKey(tile: Consumer | Producer | VoiceRingState | VoiceState): st
 
 export function DMChannelHeader({ channel }: { channel: Channel }) {
     const [isHoveringName, setIsHoveringName] = useState(false);
-    const { getUserProfile } = useUserProfileStore();
-    const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
+    const recipient: UserProfile = userProfiles.get(channel.recipients![0].id) || channel.recipients![0];
     const isTyping = useIsUserTyping(channel.id, recipient.id);
     const voiceStates = useChannelVoiceStates(channel.id);
     const { join } = useVoice();

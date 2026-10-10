@@ -101,9 +101,9 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
     const guild = useGuildsStore(s => s.getGuild(guildId))!;
     const role = guild.roles.find(role => role.id === roleId)!;
     const [searchText, setSearchText] = useState('');
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const filteredMembers = guild.members.filter(member => {
-        const profile = getUserProfile(member.userId)!;
+        const profile = userProfiles.get(member.userId)!;
         return !(member.roles.find(roleId => roleId === role.id)) && (profile.username.includes(searchText) || profile.displayName.includes(searchText));
     })
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
@@ -145,7 +145,7 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
                 <ContentBody>
                     <SearchContainer>
                         {/* {selectedMembers.map(userId => {
-                            const profile = getUserProfile(userId);
+                            const profile = userProfiles.get(userId);
                             return (
                                 <SelectedMemberContainer>
                                     {profile && <UserAvatar user={profile} size="16" showStatus={false} />}
@@ -162,7 +162,7 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
                     <MemberListContainer>
                         <p className="text-sm font-[var(--font-weight-semibold)]">Members</p>
                         {filteredMembers.map(member => {
-                            const profile = getUserProfile(member.userId);
+                            const profile = userProfiles.get(member.userId);
                             return (
                                 <MemberContainer key={member.userId} onClick={() => toggleMember(member.userId)}>
                                     <Checkbox

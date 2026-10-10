@@ -542,11 +542,11 @@ function RolePermissionsTab({ role, onUpdateRole }: { role: Role, onUpdateRole: 
 
 function RoleMembersTab({ role, guild }: { role: Role, guild: Guild }) {
     const [searchText, setSearchText] = useState('');
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const { openModal } = useModal();
     const { mutateAsync: updateMember } = useUpdateMember();
     const filteredRoleMembers = guild.members.filter(m => {
-        const profile = getUserProfile(m.userId);
+        const profile = userProfiles.get(m.userId);
 
         return (role.id === guild.id ? true : m.roles.find(roleId => roleId === role.id)) && (profile?.username.includes(searchText) || profile?.displayName.includes(searchText));
     })
@@ -576,7 +576,7 @@ function RoleMembersTab({ role, guild }: { role: Role, guild: Guild }) {
                 </CreateRoleButtonLayout>
             </div>
             {filteredRoleMembers.map(member => {
-                const profile = getUserProfile(member.userId);
+                const profile = userProfiles.get(member.userId);
 
                 return (
                     <RoleMemberContainer key={member.userId}>

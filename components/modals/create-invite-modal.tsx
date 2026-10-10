@@ -166,11 +166,11 @@ const InviteLinkSettingActionButtons = styled.div`
 
 function RelationshipItem({ channel, inviteLink }: { channel: Channel, inviteLink: string }) {
     const queryClient = useQueryClient();
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const { mutate: sendMessage, isPending, isSuccess } = useSendMessageMutation(channel.guildId);
 
     const userId = channel.recipients![0].id;
-    const user = getUserProfile(userId);
+    const user = userProfiles.get(userId);
 
     function onSendInvite() {
         sendMessage({ dto: { channelId: channel!.id, content: inviteLink, mentions: [] }, clientId: crypto.randomUUID() }, {

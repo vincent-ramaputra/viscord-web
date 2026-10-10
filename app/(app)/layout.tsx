@@ -294,7 +294,7 @@ function GuildListSidebar() {
 function AppInitializer({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const { socket, isReady } = useSocket();
-    const { setUserProfiles } = useUserProfileStore();
+    const setUserProfiles = useUserProfileStore(s => s.setUserProfiles);
     const setPresenceMap = useUserPresenceStore(s => s.setPresenceMap);
     const updatePresence = useUserPresenceStore(s => s.updatePresence);
 

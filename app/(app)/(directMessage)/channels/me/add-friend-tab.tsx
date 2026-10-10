@@ -82,7 +82,7 @@ export function AddFriendTab() {
     const [responseText, setResponseText] = useState<string | undefined>();
     const [responseSuccess, setResponseSuccess] = useState<boolean | undefined>();
     const queryClient = useQueryClient();
-    const { upsertUserProfile } = useUserProfileStore();
+    const upsertUserProfile = useUserProfileStore(s => s.upsertUserProfile);
 
     const { mutate: addFriendMutation, isPending, } = useMutation(
         {
