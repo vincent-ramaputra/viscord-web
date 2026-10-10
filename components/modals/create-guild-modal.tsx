@@ -105,11 +105,11 @@ export function CreateGuildModal({ onClose }: { onClose: () => void }) {
     const { mutate: createGuildMutation } = useMutation({
         mutationFn: (dto: CreateGuildDto) => createGuild(dto),
         onSuccess: (response) => {
-            if (!response.success) {
+            if (!response.ok) {
                 return;
             }
 
-            addGuild(response.data!);
+            addGuild(response.data);
 
             onClose();
         },

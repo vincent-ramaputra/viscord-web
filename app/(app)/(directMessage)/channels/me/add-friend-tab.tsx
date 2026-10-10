@@ -87,24 +87,23 @@ export function AddFriendTab() {
     const { mutate: addFriendMutation, isPending, } = useMutation(
         {
             mutationFn: (username: string) => addFriend(username),
-            onSuccess: (response) => {
-                if (!response.success) {
-                    setResponseText(response.message as string);
+            onSuccess: (result) => {
+                if (!result.ok) {
+                    setResponseText(result.error.message);
                     setResponseSuccess(false);
                     return;
                 }
 
+                const relationship = result.data;
                 setResponseText(usernameText);
                 setResponseSuccess(true);
-                if (response.data) {
-                    upsertUserProfile(response.data.user);
-                    queryClient.setQueryData<Relationship[]>([RELATIONSHIPS_CACHE], (old) => {
-                        if (!old) {
-                            return [response.data!];
-                        }
-                        return [...old, response.data!];
-                    })
-                }
+                upsertUserProfile(relationship.user);
+                queryClient.setQueryData<Relationship[]>([RELATIONSHIPS_CACHE], (old) => {
+                    if (!old) {
+                        return [relationship];
+                    }
+                    return [...old, relationship];
+                })
             },
             onError: () => {
                 setResponseText("An error occurred while sending the friend request.");

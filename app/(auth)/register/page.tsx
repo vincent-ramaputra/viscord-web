@@ -9,9 +9,6 @@ import { FormEvent, useRef, useState } from "react"
 import { MIN_AGE_REQUIREMENT, MIN_PASSWORD_LENGTH } from "@/constants/validations"
 import { RegisterDTO } from "@/interfaces/dto/register.dto"
 import { register } from "@/services/auth/auth.service"
-import { ErrorResponse } from "@/interfaces/errors/error-response"
-import { Response } from "@/interfaces/response"
-import { RegisterError } from "@/interfaces/errors/register-error"
 import { useRouter } from "next/navigation"
 
 export default function Register() {
@@ -120,15 +117,15 @@ export default function Register() {
         };
 
         setIsSubmitting(true)
-        const response: Response<null> = await register(dto);
+        const result = await register(dto);
         setIsSubmitting(false)
-        if (!response.success) {
-            if (response.message instanceof ErrorResponse) {
-                const error = response.message as RegisterError;
-                setEmailError(error.email);
-                setPasswordError(error.password);
-                setUsernameError(error.username);
-                setDOBError(error.dateOfBirth);
+        if (!result.ok) {
+            const fields = result.error.errorFields;
+            if (fields) {
+                setEmailError(fields.email);
+                setPasswordError(fields.password);
+                setUsernameError(fields.username);
+                setDOBError(fields.dateOfBirth);
             }
             return;
         }

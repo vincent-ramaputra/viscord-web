@@ -134,8 +134,8 @@ export function ChannelInvitesSection({ channelId, guildId }: ChannelInvitesSect
         const interval = setInterval(() => {
             setNow(new Date());
         }, 1000);
-        getChannelInvites(channelId).then(response => {
-            if (response.success) setInvites(response.data!);
+        getChannelInvites(channelId).then(result => {
+            if (result.ok) setInvites(result.data);
         });
 
         return () => clearInterval(interval);

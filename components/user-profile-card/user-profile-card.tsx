@@ -240,9 +240,9 @@ export const CurrentUserProfileCard = ({ user }: { user: UserProfile }) => {
         const prevStatus = user.status;
         if (status == user.status) return;
         updateCurrentUserStatus(status);
-        const response = await updateStatus(status);
+        const result = await updateStatus(status);
 
-        if (!response.success) {
+        if (!result.ok) {
             updateCurrentUserStatus(prevStatus);
         }
 
