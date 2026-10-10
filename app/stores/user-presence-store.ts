@@ -24,7 +24,6 @@ export const useUserPresenceStore = create<UserPresenceStore>((set, get) => ({
       } else {
         newMap.delete(userId);
       }
-      console.log("newMap", newMap);
       return { presenceMap: newMap };
     });
   },
