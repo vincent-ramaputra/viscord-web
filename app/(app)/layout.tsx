@@ -306,7 +306,6 @@ function AppInitializer({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (!isReady) return;
-        console.log("emitting client ready event", socket);
         socket?.emit(CLIENT_READY_EVENT, (data: ClientReadyResponseDTO) => {
             const currentUser = data.user;
             const guildsMap: Map<string, Guild> = new Map();
@@ -314,7 +313,6 @@ function AppInitializer({ children }: { children: ReactNode }) {
 
             if (data.guilds) {
                 for (const guild of data.guilds) {
-                    console.log(guild);
                     guildsMap.set(guild.id, guild);
                 }
             }
@@ -363,7 +361,6 @@ function AppInitializer({ children }: { children: ReactNode }) {
                 for (const id of userIds) {
                     updatePresence(id, true);
                 }
-                console.log('setting isloading false');
                 setIsLoading(false);
             });
         });
@@ -405,8 +402,6 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
     // if (!isAuthorized) {
     //     return <div></div>;
     // }
-
-    console.log('rerendering');
 
     return (
         // <AppStateProvider>

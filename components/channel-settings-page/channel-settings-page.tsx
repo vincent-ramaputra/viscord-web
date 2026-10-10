@@ -111,7 +111,6 @@ export default function ChannelSettingsPage({ channelId, guildId, show, onClose 
                     <div className={styles["content-container"]}>
                         {sidebarItems.find(si => {
                             if (si.id === activeItem) {
-                                console.log("sybau")
                                 return si;
                             }
                         })!.page}

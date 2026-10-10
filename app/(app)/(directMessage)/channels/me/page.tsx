@@ -153,7 +153,6 @@ export default function FriendListPage() {
             return presenceMap.has(rel.user.id) && rel.type === RelationshipType.Friends;
         }
         else if (activeTab.id === 'all') {
-            console.log(rel.type === RelationshipType.Friends);
             return rel.type === RelationshipType.Friends;
         }
         else if (activeTab.id === 'pending') {
@@ -185,7 +184,6 @@ export default function FriendListPage() {
     }, [relationships, activeTab, searchText, presenceMap]);
 
     useEffect(() => {
-        console.log('hehe')
         document.title = "Viscord | Friends";
     }, [])
 

@@ -407,7 +407,6 @@ function AddTargetMenu({ channelId, guildId, onClose, onAddTarget }: { channelId
                         <div>
                             <TargetTypeHeader>Roles</TargetTypeHeader>
                             {filteredRoles.map(role => {
-                                console.log('role', role);
                                 const color = getRoleColor(role.color);
                                 return (
                                     <AddTargetItemRole

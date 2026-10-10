@@ -116,7 +116,6 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     };
 
     const handleUserTyping = (payload: { userId: string, channelId: string }) => {
-        console.log('typing', payload);
         handleTypingStart(payload.channelId, payload.userId);
     };
 
@@ -129,7 +128,6 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
             playSound('voice-leave');
         }
         else {
-            console.log('updating voice state');
             updateVoiceState(event.data);
             if (event.type === VoiceEventType.VOICE_JOIN && (event.userId === user?.id || event.channelId === channelId)) {
                 playSound('voice-join');
@@ -146,7 +144,6 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     }, [setVoiceStates]);
 
     function handleGuildUpdate(dto: GuildUpdateDTO) {
-        console.log('guild update', dto);
         const { deleteChannel, upsertMember, removeMember, upsertChannel, upsertRole, upsertGuild, removeRole } = useGuildsStore.getState();
         switch (dto.type) {
             case GuildUpdateType.MEMBER_JOIN: upsertMember(dto.guildId, dto.data); break;
@@ -172,21 +169,17 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         //     reconnection: true,
         //     reconnectionDelay: 5000,
         // })
-        console.log('intiializing socket');
         const socket = initializeSocket();
 
         const handleConnect = () => {
-            console.log('Socket connected');
             setIsConnected(true);
         };
 
         const handleDisconnect = () => {
-            // console.log('Socket disconnected');
             setIsConnected(false);
         };
 
         const handleConnectError = (error: Error & { description?: unknown }) => {
-            // console.log('Socket connection error:', error.description);
             if (error.description === HttpStatusCode.Unauthorized) {
                 refreshToken();
             }
