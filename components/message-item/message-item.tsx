@@ -3,13 +3,13 @@ import styled from "styled-components";
 import UserAvatar from "../user-avatar/user-avatar";
 import { UserProfile } from "@/interfaces/user-profile";
 import { dateToAMPM } from "@/utils/date.utils";
-import { ReactNode, useState } from "react";
+import { memo, ReactNode } from "react";
 import { MessageStatus } from "@/enums/message-status.enum";
-import { useContextMenu } from "@/contexts/context-menu.context";
-import { useRelationshipsQuery } from "@/hooks/queries";
+import { useContextMenuActions } from "@/contexts/context-menu.context";
+import { useQueryClient } from "@tanstack/react-query";
+import { RELATIONSHIPS_CACHE } from "@/constants/query-keys";
+import Relationship from "@/interfaces/relationship";
 import { ContextMenuType } from "@/enums/context-menu-type.enum";
-import { Guild } from "@/interfaces/guild";
-import { numberToHex } from "@/helpers/color.helper";
 import { Attachment } from "@/interfaces/attachment";
 import { useUploadProgressStore } from "@/app/stores/upload-progress-store";
 import GenericFileIcon from "../generic-file-icon/generic-file-icon";
@@ -72,7 +72,8 @@ const TimeText = styled.p`
     line-height: 20px;
     display: none;
 
-    &.active {
+    &.active,
+    ${Container}:hover & {
         display: block;
     }
 `
@@ -239,42 +240,35 @@ function AttachmentPreview({ attachment, isPending }: { attachment: Attachment, 
 }
 
 
-export default function MessageItem({ sender, message, isSubsequent = false, guild }: { sender: UserProfile, guild?: Guild, message: Message, isSubsequent?: boolean }) {
+// nameColor: the sender's highest role color, computed once per channel page instead of per row.
+function MessageItem({ sender, message, isSubsequent = false, nameColor }: { sender: UserProfile, message: Message, isSubsequent?: boolean, nameColor?: string }) {
     const time = dateToAMPM(message.createdAt);
-    const [hover, setHover] = useState(false);
-    const { data: relationships } = useRelationshipsQuery();
-    const { showMenu } = useContextMenu();
-    const highestRole = guild?.roles.filter(role => {
-        const member = guild?.members.find(m => m.userId === sender.id);
+    const queryClient = useQueryClient();
+    const { showMenu } = useContextMenuActions();
 
-        return member?.roles.find(roleId => roleId === role.id);
-    }).sort((a, b) => b.position - a.position)[0];
+    // Relationships are only needed on right-click, so read the cache then instead of subscribing every row to it.
+    function openUserMenu(e: React.MouseEvent) {
+        const relationship = queryClient.getQueryData<Relationship[]>([RELATIONSHIPS_CACHE])?.find(rel => rel.user.id === sender.id);
+        if (relationship) {
+            showMenu(e, ContextMenuType.USER, relationship);
+        }
+    }
 
 
     return (
-        <Container className={`${!isSubsequent ? 'mt-[17px]' : ''} ${hover ? 'active' : ''}`} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+        <Container className={!isSubsequent ? 'mt-[17px]' : ''}>
             <DetailContainer>
                 {isSubsequent ?
-                    <TimeText className={`text-[11px] ${hover ? 'active' : ''}`}>{time}</TimeText>
+                    <TimeText className="text-[11px]">{time}</TimeText>
                     :
-                    <div className="cursor-pointer" onContextMenu={(e) => {
-                        const relationship = relationships?.find(rel => rel.user.id === sender.id)
-                        if (relationship) {
-                            showMenu(e, ContextMenuType.USER, relationship);
-                        }
-                    }}><UserAvatar user={sender} size="40" showStatus={false} /></div>}
+                    <div className="cursor-pointer" onContextMenu={openUserMenu}><UserAvatar user={sender} size="40" showStatus={false} /></div>}
             </DetailContainer>
             <ContentContainer >
                 {!isSubsequent &&
                     <SubsequentMessageHelper>
                         <SenderNameText
-                            style={{ color: highestRole ? numberToHex(highestRole.color!) : '' }}
-                            onContextMenu={(e) => {
-                                const relationship = relationships?.find(rel => rel.user.id === sender.id)
-                                if (relationship) {
-                                    showMenu(e, ContextMenuType.USER, relationship)
-                                }
-                            }}>{sender.displayName}</SenderNameText>
+                            style={{ color: nameColor ?? '' }}
+                            onContextMenu={openUserMenu}>{sender.displayName}</SenderNameText>
                         <Time className="active">{getTimePoint(message.createdAt)} {time}</Time>
                     </SubsequentMessageHelper>
                 }
@@ -284,3 +278,5 @@ export default function MessageItem({ sender, message, isSubsequent = false, gui
         </Container >
     );
 }
+
+export default memo(MessageItem);

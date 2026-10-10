@@ -27,6 +27,7 @@ import { Permissions } from "@/enums/permissions.enum";
 import { Role } from "@/interfaces/role";
 import { GuildMember } from "@/interfaces/guild-member";
 import { getRoleColor } from "@/helpers/color.helper";
+import { numberToHex } from "@/helpers/color.helper";
 
 const ChatContainer = styled.div`
     display: flex;
@@ -303,6 +304,19 @@ export default function Page() {
         return groups;
     }, [allowedMembers, guild, presenceMap]);
 
+    // Each member's highest-role color, computed once here instead of in every message row.
+    const nameColors = useMemo(() => {
+        const colors = new Map<string, string>();
+        if (!guild) return colors;
+        for (const member of guild.members) {
+            const highestRole = guild.roles
+                .filter(role => member.roles.includes(role.id))
+                .sort((a, b) => b.position - a.position)[0];
+            if (highestRole) colors.set(member.userId, numberToHex(highestRole.color!));
+        }
+        return colors;
+    }, [guild]);
+
     function handleSubmit(dto: SendMessageInput) {
         sendMessage({ dto, attachments, clientId: crypto.randomUUID() });
         setAttachments([]);
@@ -338,10 +352,10 @@ export default function Page() {
                                             <Fragment key={message.id}>
                                                 {message.id === dividerAfterId && <LastReadDivider />}
                                                 <MessageItem
-                                                    message={{ ...message }}
+                                                    message={message}
                                                     isSubsequent={isSubsequent}
                                                     sender={userProfiles.get(message.senderId)!}
-                                                    guild={guild}
+                                                    nameColor={nameColors.get(message.senderId)}
                                                 />
                                             </Fragment>
                                         )

@@ -7,7 +7,7 @@ import { Guild } from "@/interfaces/guild";
 import { GuildMember } from "@/interfaces/guild-member";
 import Relationship from "@/interfaces/relationship";
 import { Role } from "@/interfaces/role";
-import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 
 export interface ContextMenuDataMap {
@@ -20,16 +20,24 @@ export interface ContextMenuDataMap {
     [ContextMenuType.USER_VC]: never;
 };
 
-interface ContextMenuContextType {
-    menuState: ContextMenuState | undefined;
+interface ContextMenuActions {
     showMenu: <T extends ContextMenuType>(evt: React.MouseEvent, type: T, data: ContextMenuDataMap[T]) => void;
     hideMenu: () => void;
 }
 
-const ContextMenuContext = createContext<ContextMenuContextType>(null!);
+// Split so components that only open menus don't re-render when a menu opens or closes:
+// the actions never change, the state changes on every open/close.
+const ContextMenuActionsContext = createContext<ContextMenuActions>(null!);
+const ContextMenuStateContext = createContext<ContextMenuState | undefined>(undefined);
+
+export function useContextMenuActions() {
+    return useContext(ContextMenuActionsContext);
+}
 
 export function useContextMenu() {
-    return useContext(ContextMenuContext);
+    const actions = useContext(ContextMenuActionsContext);
+    const menuState = useContext(ContextMenuStateContext);
+    return { ...actions, menuState };
 }
 
 const ClickTrapOverlay = styled.div`
@@ -42,7 +50,7 @@ const ClickTrapOverlay = styled.div`
 export function ContextMenuProvider({ children }: { children: ReactNode }) {
     const [menuState, setMenuState] = useState<ContextMenuState | undefined>();
     const menuRef = useRef<HTMLDivElement>(null!);
-    function showMenu<T extends ContextMenuType>(evt: React.MouseEvent, type: T, data: ContextMenuDataMap[T]) {
+    const showMenu = useCallback(<T extends ContextMenuType>(evt: React.MouseEvent, type: T, data: ContextMenuDataMap[T]) => {
         evt.preventDefault();
         setMenuState({
             x: evt.clientX,
@@ -51,11 +59,13 @@ export function ContextMenuProvider({ children }: { children: ReactNode }) {
             type: type,
             data: data
         } as ContextMenuState);
-    };
+    }, []);
 
-    function hideMenu() {
+    const hideMenu = useCallback(() => {
         setMenuState(undefined);
-    }
+    }, []);
+
+    const actions = useMemo(() => ({ showMenu, hideMenu }), [showMenu, hideMenu]);
 
     function handleOutsideClick(e: MouseEvent) {
         if (!menuRef.current.contains(e.target as Node)) {
@@ -72,12 +82,14 @@ export function ContextMenuProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <ContextMenuContext.Provider value={{ menuState, showMenu, hideMenu }}>
-            {children}
-            {menuState && <ClickTrapOverlay />}
-            <div ref={menuRef}>
-                <ContextMenu />
-            </div>
-        </ContextMenuContext.Provider>
+        <ContextMenuActionsContext.Provider value={actions}>
+            <ContextMenuStateContext.Provider value={menuState}>
+                {children}
+                {menuState && <ClickTrapOverlay />}
+                <div ref={menuRef}>
+                    <ContextMenu />
+                </div>
+            </ContextMenuStateContext.Provider>
+        </ContextMenuActionsContext.Provider>
     );
 }

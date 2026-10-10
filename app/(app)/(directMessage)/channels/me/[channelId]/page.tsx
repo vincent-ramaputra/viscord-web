@@ -258,7 +258,7 @@ export default function Page() {
                                         <Fragment key={message.id}>
                                             {message.id === dividerAfterId && <LastReadDivider />}
                                             <MessageItem
-                                                message={{ ...message }}
+                                                message={message}
                                                 isSubsequent={isSubsequent}
                                                 sender={userProfiles.get(message.senderId)!} />
                                         </Fragment>
