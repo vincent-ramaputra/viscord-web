@@ -137,6 +137,7 @@ export class MediaSession {
 
                 callback();
             } catch (error) {
+                console.error('Failed connecting recv transport', error);
                 errback(error instanceof Error ? error : new Error(String(error)));
             }
         });
