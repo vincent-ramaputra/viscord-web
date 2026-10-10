@@ -40,7 +40,9 @@ export function useSocket() {
 }
 
 export default function SocketProvider({ children }: { children: ReactNode }) {
-    const { socket, initializeSocket, removeSocket } = useSocketStore();
+    const socket = useSocketStore(s => s.socket);
+    const initializeSocket = useSocketStore(s => s.initializeSocket);
+    const removeSocket = useSocketStore(s => s.removeSocket);
     const [isConnected, setIsConnected] = useState(false);
 
     const queryClient = useQueryClient();
