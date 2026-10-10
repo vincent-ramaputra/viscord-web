@@ -3,7 +3,6 @@ import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { useIsUserTyping } from "@/app/stores/user-typing-store";
-import { useGetChannelVoiceRing } from "@/app/stores/voice-ring-state-store";
 import { getChannelVoiceStates, useChannelVoiceStates } from "@/app/stores/voice-state-store";
 import Tooltip from "@/components/tooltip/tooltip";
 import UserAvatar from "@/components/user-avatar/user-avatar";
@@ -25,6 +24,8 @@ import { VoiceRingState } from "@/interfaces/voice-ring-state";
 import ColorThief from "colorthief";
 import { useVoice } from "@/hooks/use-voice";
 import { UserData } from "@/interfaces/user-data";
+import { useShallow } from "zustand/shallow";
+import { useVoiceRingStateStore } from "@/app/stores/voice-ring-state-store";
 
 
 const UserProfileHeader = styled.div`
@@ -403,7 +404,11 @@ function VideoView({
 }) {
     const { consumers, producers, activeSpeakers } = useMediasoupStore();
     const { getUserProfile } = useUserProfileStore();
-    const voiceRings = useGetChannelVoiceRing(channel.id);
+    const voiceRings = useVoiceRingStateStore(useShallow(s => {
+        return Array.from(s.voiceRingStates.entries())
+            .filter(([key]) => key.startsWith(channel.id))
+            .map(([, state]) => state);
+    }));
     const voiceStates = useChannelVoiceStates(channel.id);
 
     const screenShareConsumers = Array.from(consumers.values()).filter(c => c.appData.mediaTag === 'screen');
@@ -458,7 +463,11 @@ function VoiceOnlyView({
     const { user } = useCurrentUserStore();
     const { getUserProfile } = useUserProfileStore();
     const { activeSpeakers } = useMediasoupStore();
-    const voiceRings = useGetChannelVoiceRing(channel.id);
+    const voiceRings = useVoiceRingStateStore(useShallow(s => {
+        return Array.from(s.voiceRingStates.entries())
+            .filter(([key]) => key.startsWith(channel.id))
+            .map(([, state]) => state);
+    }));
     const voiceStates = useChannelVoiceStates(channel.id);
 
     return (

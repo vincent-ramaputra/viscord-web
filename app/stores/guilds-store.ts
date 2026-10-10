@@ -238,7 +238,7 @@ export const useGuildsStore = create<GuildStoreState>((set, get) => ({
     }
 }))
 
-export function useGetGuild(guildId: string) {
+export function getGuild(guildId: string) {
     return useGuildsStore.getState().getGuild(guildId);
 }
 
