@@ -24,7 +24,7 @@ import { useGuildsStore } from "@/app/stores/guilds-store";
 import { GuildMember } from "@/interfaces/guild-member";
 import { UserProfile } from "@/interfaces/user-profile";
 import { UserPresenceUpdateDTO } from "@/interfaces/dto/user-presence-update.dto";
-import { usePlaySound } from "@/app/stores/audio-store";
+import { playSound } from "@/app/stores/audio-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { voiceSession } from "@/lib/voice/voice-session";
 
@@ -126,13 +126,13 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         if (event.type === VoiceEventType.VOICE_LEAVE) {
             if (event.userId === user?.id) voiceSession.handleServerLeave(event.channelId);
             removeVoiceState(event.channelId, event.userId);
-            usePlaySound('voice-leave');
+            playSound('voice-leave');
         }
         else {
             console.log('updating voice state');
             updateVoiceState(event.data);
             if (event.type === VoiceEventType.VOICE_JOIN && (event.userId === user?.id || event.channelId === channelId)) {
-                usePlaySound('voice-join');
+                playSound('voice-join');
             }
         }
     }, [removeVoiceState, updateVoiceState]);

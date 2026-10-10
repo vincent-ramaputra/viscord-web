@@ -13,10 +13,10 @@ export const useAudioStore = create<AudioStore>(() => ({
   stopSound: () => {},
 }));
 
-export const usePlaySound = (type: SoundType) => {
+export const playSound = (type: SoundType) => {
   useAudioStore.getState().playSound(type);
 }
 
-export const useStopSound = (type: SoundType) => {
+export const stopSound = (type: SoundType) => {
   useAudioStore.getState().stopSound(type);
 }

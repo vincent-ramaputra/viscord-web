@@ -242,7 +242,7 @@ export function useGetGuild(guildId: string) {
     return useGuildsStore.getState().getGuild(guildId);
 }
 
-export function useGetGuildChannel(channelId: string) {
+export function getGuildChannel(channelId: string) {
     return useGuildsStore.getState().getChannel(channelId);
 }
 

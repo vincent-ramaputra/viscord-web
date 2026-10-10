@@ -4,7 +4,7 @@ import { useGuildsStore } from "@/app/stores/guilds-store";
 import TextInputSecondary from "../text-input/text-input-secondary";
 import { useState } from "react";
 import UserAvatar from "../user-avatar/user-avatar";
-import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store";
+import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import ButtonSecondary from "../buttons/button-secondary";
 import ButtonPrimary from "../buttons/button-primary";
 import { useAssignRoleMembers } from "@/hooks/mutations";
@@ -103,7 +103,7 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
     const [searchText, setSearchText] = useState('');
     const { getUserProfile } = useUserProfileStore();
     const filteredMembers = guild.members.filter(member => {
-        const profile = useGetUserProfile(member.userId)!;
+        const profile = getUserProfile(member.userId)!;
         return !(member.roles.find(roleId => roleId === role.id)) && (profile.username.includes(searchText) || profile.displayName.includes(searchText));
     })
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
