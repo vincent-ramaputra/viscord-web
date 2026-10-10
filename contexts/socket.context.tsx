@@ -50,7 +50,9 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     const upsertUserProfile = useUserProfileStore(s => s.upsertUserProfile);
     const handleTypingStart = useUserTypingStore(s => s.handleTypingStart);
     const handleTypingStop = useUserTypingStore(s => s.handleTypingStop);
-    const { updateVoiceState, removeVoiceState, setVoiceStates } = useVoiceStateStore();
+    const updateVoiceState = useVoiceStateStore(s => s.updateVoiceState);
+    const removeVoiceState = useVoiceStateStore(s => s.removeVoiceState);
+    const setVoiceStates = useVoiceStateStore(s => s.setVoiceStates);
 
 
     function handleFriendReceived(payload: Relationship) {
