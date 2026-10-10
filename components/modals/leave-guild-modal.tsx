@@ -7,6 +7,8 @@ import ButtonDanger from "../buttons/button-danger";
 import { useGetGuild } from "@/app/stores/guilds-store";
 import { useLeaveGuildMutation } from "@/hooks/mutations";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
+import { useState } from "react";
+import { getErrorMessage } from "@/utils/error.utils";
 
 const ContentContainer = styled.div`
     background: var(--modal-background);
@@ -82,9 +84,15 @@ export function LeaveGuildModal({ guildId, onClose }: { guildId: string, onClose
     const { closeSettings } = useSettingsOverlay();
     const guild = useGetGuild(guildId)!;
     const { mutateAsync: leaveGuild, isPending } = useLeaveGuildMutation();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     async function handleLeaveGuild() {
-        await leaveGuild(guildId);
+        try {
+            await leaveGuild(guildId);
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
+            return;
+        }
 
         router.push(`/channels/me`);
 
@@ -105,6 +113,7 @@ export function LeaveGuildModal({ guildId, onClose }: { guildId: string, onClose
                     <ContentSection>
                         <p>Are you sure you want to leave <b>{guild.name}</b>? You won&apos;t be able to rejoin this server unless you are re-invited</p>
                     </ContentSection>
+                    {errorMessage && <p>{errorMessage}</p>}
                 </ContentBody>
                 <ContentFooter>
                     <ButtonSecondary onClick={onClose} size="lg">Cancel</ButtonSecondary>

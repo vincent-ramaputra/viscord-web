@@ -5,11 +5,11 @@ import TextInput from '@/components/text-input/text-input'
 import TextLink from '@/components/text-link/text-link'
 import ButtonPrimary from "@/components/buttons/button-primary"
 import { FormEvent, useEffect, useRef, useState } from "react"
-import { Response } from "@/interfaces/response"
 import { LoginDTO } from "@/interfaces/dto/login.dto"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth.context"
 import { useLoginMutation } from "@/hooks/mutations"
+import { getErrorMessage } from "@/utils/error.utils";
 
 export default function Login() {
     const containerRef = useRef<HTMLDivElement>(null!);
@@ -64,11 +64,12 @@ export default function Login() {
 
         const dto: LoginDTO = { identifier: identifier, password: password };
 
-        const response: Response<null> = await login(dto);
-
-        if (!response.success) {
-            setIdentifierError(response.message as string);
-            setPasswordError(response.message as string);
+        try {
+            await login(dto);
+        } catch (error) {
+            const message = getErrorMessage(error, 'Login failed');
+            setIdentifierError(message);
+            setPasswordError(message);
             return;
         }
 

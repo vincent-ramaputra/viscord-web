@@ -27,9 +27,13 @@ import { updateUserProfile } from "@/services/user-profiles/user-profiles.servic
 import { LoginDTO } from "@/interfaces/dto/login.dto";
 import { uploadToPresignedUrl } from "@/services/s3/s3.service";
 import { useUploadProgressStore } from "@/app/stores/upload-progress-store";
+import { Response } from "@/interfaces/response";
 
 
-
+function unwrap<T>(response: Response<T>) {
+    if (!response.success) throw new Error(typeof response.message === 'string' ? response.message : 'Request failed');
+    return response.data as T;
+}
 
 export function useLogoutMutation() {
     const queryClient = useQueryClient();
@@ -217,33 +221,30 @@ export function useSendMessageMutation(guildId?: string) {
 
 export function useCreateGuildChannelMutation() {
     return useMutation({
-        mutationFn: (dto: CreateChannelDTO) => createGuildChannel(dto),
-        onSuccess: (response, dto) => {
+        mutationFn: async (dto: CreateChannelDTO) => unwrap(await createGuildChannel(dto)),
+        onSuccess: (channel, dto) => {
             const { upsertChannel } = useGuildsStore.getState();
-            if (!response.success) throw new Error(response.message as string);
-            upsertChannel(dto.guildId, response.data!.id, response.data!);
+            upsertChannel(dto.guildId, channel!.id, channel!);
         }
     })
 }
 
 export function useCreateDMChannelMutation() {
     return useMutation({
-        mutationFn: (recipientId: string) => createDMChannel(recipientId),
-        onSuccess: (response) => {
+        mutationFn: async (recipientId: string) => unwrap(await createDMChannel(recipientId)),
+        onSuccess: (channel) => {
             const { updateChannel } = useChannelsStore.getState();
-            if (!response.success) throw new Error(response.message as string);
-            updateChannel(response.data!);
+            updateChannel(channel!);
         }
     })
 }
 
 export function useDeleteGuildChannelMutation(guildId: string) {
     return useMutation({
-        mutationFn: (channelId: string) => deleteChannel(channelId),
+        mutationFn: async (channelId: string) => unwrap(await deleteChannel(channelId)),
         onSuccess: (response, channelId) => {
             const { deleteChannel: deleteGuildChannel } = useGuildsStore.getState();
 
-            if (!response.success) throw new Error(response.message as string);
             deleteGuildChannel(guildId, channelId);
         }
     });
@@ -276,13 +277,10 @@ export function useAcknowledgeGuildMessageMutation(guildId: string) {
 
 export function useJoinGuildMutation() {
     return useMutation({
-        mutationFn: (inviteCode: string) => joinGuild(inviteCode),
-        onSuccess: (response) => {
-            if (!response.success) throw new Error(response.message as string);
-
+        mutationFn: async (inviteCode: string) => unwrap(await joinGuild(inviteCode)),
+        onSuccess: (guild) => {
             const { upsertGuild: addGuild } = useGuildsStore.getState();
             const { upsertUserProfile: addUserProfile } = useUserProfileStore.getState();
-            const guild = response.data!;
 
             addGuild(guild);
             for (const member of guild.members) addUserProfile(member.profile);
@@ -292,9 +290,8 @@ export function useJoinGuildMutation() {
 
 export function useLeaveGuildMutation() {
     return useMutation({
-        mutationFn: (guildId: string) => leaveGuild(guildId),
+        mutationFn: async (guildId: string) => unwrap(await leaveGuild(guildId)),
         onSuccess: (response, guildId) => {
-            if (!response.success) throw new Error(response.message as string);
 
             const { removeGuild } = useGuildsStore.getState();
             removeGuild(guildId);
@@ -304,61 +301,50 @@ export function useLeaveGuildMutation() {
 
 export function useAssignRoleMembers() {
     return useMutation({
-        mutationFn: (dto: AssignRoleDTO) => assignRoleMembers(dto),
-        onSuccess: (response, dto) => {
-            if (!response.success) throw new Error(response.message as string);
-
+        mutationFn: async (dto: AssignRoleDTO) => unwrap(await assignRoleMembers(dto)),
+        onSuccess: (members, dto) => {
             const { upsertMember } = useGuildsStore.getState();
 
-
-            for (const member of response.data!) upsertMember(dto.guildId, member)
+            for (const member of members) upsertMember(dto.guildId, member)
         }
     })
 }
 
 export function useCreateRole(guildId: string) {
     return useMutation({
-        mutationFn: () => createRole(guildId),
-        onSuccess: (response) => {
-            if (!response.success) return;
+        mutationFn: async () => unwrap(await createRole(guildId)),
+        onSuccess: (role) => {
             const { upsertRole } = useGuildsStore.getState();
-            upsertRole(guildId, response.data!);
+            upsertRole(guildId, role);
         }
     })
 }
 
 export function useUpdateMember() {
     return useMutation({
-        mutationFn: (dto: UpdateMemberDTO) => updateMember(dto),
-        onSuccess: (response, dto) => {
-            if (!response.success) throw new Error(response.message as string);
-
+        mutationFn: async (dto: UpdateMemberDTO) => unwrap(await updateMember(dto)),
+        onSuccess: (member, dto) => {
             const { upsertMember } = useGuildsStore.getState();
 
-            upsertMember(dto.guildId, response.data!);
+            upsertMember(dto.guildId, member);
         }
     })
 }
 
 export function useUpdateRole() {
     return useMutation({
-        mutationFn: (dto: Role) => updateRole(dto),
-        onSuccess: (response, dto) => {
-            if (!response.success) throw new Error(response.message as string);
-
+        mutationFn: async (dto: Role) => unwrap(await updateRole(dto)),
+        onSuccess: (role, dto) => {
             const { upsertRole } = useGuildsStore.getState();
-            upsertRole(dto.guildId, response.data!);
+            upsertRole(dto.guildId, role);
         }
     })
 }
 
 export function useUpdatePermissionOverwrite(parentId?: string) {
     return useMutation({
-        mutationFn: (dto: updatePermissionOverwriteDTO) => updatePermissionOverwrite(dto),
-        onSuccess: (response, dto) => {
-            if (!response.success) throw new Error(response.message as string);
-
-            const overwrite = response.data!;
+        mutationFn: async (dto: updatePermissionOverwriteDTO) => unwrap(await updatePermissionOverwrite(dto)),
+        onSuccess: (overwrite, dto) => {
             const { upsertChannel: updateChannel, getChannel } = useGuildsStore.getState();
             const channel = getChannel(dto.channelId);
             const parent = parentId ? getChannel(parentId) : undefined;
@@ -370,7 +356,7 @@ export function useUpdatePermissionOverwrite(parentId?: string) {
             }
             const oldOverwrites = channel.permissionOverwrites;
             if (oldOverwrites.find(ow => ow.targetId === overwrite.targetId)) {
-                channel.permissionOverwrites = oldOverwrites.map(ow => ow.targetId !== overwrite!.targetId ? ow : response.data!);
+                channel.permissionOverwrites = oldOverwrites.map(ow => ow.targetId !== overwrite!.targetId ? ow : overwrite);
             }
             else {
                 channel.permissionOverwrites = [...oldOverwrites, overwrite]
@@ -382,25 +368,21 @@ export function useUpdatePermissionOverwrite(parentId?: string) {
 
 export function useSyncChannel() {
     return useMutation({
-        mutationFn: (channelId: string) => syncChannel(channelId),
-        onSuccess: (response, channelId) => {
-            if (!response.success) throw new Error(response.message as string);
-
+        mutationFn: async (channelId: string) => unwrap(await syncChannel(channelId)),
+        onSuccess: (channel, channelId) => {
             const { upsertChannel: updateChannel, getChannel } = useGuildsStore.getState();
-            const channel = getChannel(channelId);
-            if (!channel) return;
+            const existingChannel = getChannel(channelId);
+            if (!existingChannel) return;
 
-            updateChannel(channel.guildId, channel.id, response.data!);
+            updateChannel(channel.guildId, channel.id, channel);
         }
     });
 }
 
 export function useDeletePermissionOverwrite() {
     return useMutation({
-        mutationFn: ({ channelId, targetId }: { channelId: string, targetId: string }) => deletePermissionOverwrite(channelId, targetId),
+        mutationFn: async ({ channelId, targetId }: { channelId: string, targetId: string }) => unwrap(await deletePermissionOverwrite(channelId, targetId)),
         onSuccess: (response, dto) => {
-            if (!response.success) throw new Error(response.message as string);
-
             const { upsertChannel: updateChannel, getChannel } = useGuildsStore.getState();
             const channel = getChannel(dto.channelId);
             if (!channel) return;
@@ -414,23 +396,19 @@ export function useDeletePermissionOverwrite() {
 
 export function useUpdateGuildMutation() {
     return useMutation({
-        mutationFn: (dto: UpdateGuildDTO) => updateGuild(dto),
-        onSuccess: (response) => {
-            if (!response.success) throw new Error(response.message as string);
-
+        mutationFn: async (dto: UpdateGuildDTO) => unwrap(await updateGuild(dto)),
+        onSuccess: (guild) => {
             const { upsertGuild } = useGuildsStore.getState();
 
-            upsertGuild(response.data!);
+            upsertGuild(guild);
         }
     });
 }
 
 export function useDeleteRoleMutation() {
     return useMutation({
-        mutationFn: (dto: DeleteRoleDTO) => deleteRole(dto),
+        mutationFn: async (dto: DeleteRoleDTO) => unwrap(await deleteRole(dto)),
         onSuccess: (response, dto) => {
-            if (!response.success) throw new Error(response.message as string);
-
             const { removeRole } = useGuildsStore.getState();
 
             removeRole(dto.guildId, dto.roleId);
@@ -440,13 +418,11 @@ export function useDeleteRoleMutation() {
 
 export function useUpdateUserProfileMutation() {
     return useMutation({
-        mutationFn: (dto: UpdateUserProfileDto) => updateUserProfile(dto),
-        onSuccess: (response) => {
-            if (!response.success) throw new Error(response.message as string);
-
+        mutationFn: async (dto: UpdateUserProfileDto) => unwrap(await updateUserProfile(dto)),
+        onSuccess: (userProfile) => {
             const { upsertUserProfile } = useUserProfileStore.getState();
 
-            upsertUserProfile(response.data!);
+            upsertUserProfile(userProfile);
         }
     });
 
@@ -454,11 +430,9 @@ export function useUpdateUserProfileMutation() {
 
 export function useLoginMutation() {
     return useMutation({
-        mutationFn: (dto: LoginDTO) => login(dto),
-        onSuccess: (response) => {
+        mutationFn: async (dto: LoginDTO) => unwrap(await login(dto)),
+        onSuccess: () => {
             const { setIsAuthorized } = useCurrentUserStore.getState();
-            if (!response.success) return;
-
             setIsAuthorized(true);
         }
     })

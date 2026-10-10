@@ -11,6 +11,7 @@ import { useUserProfileStore } from "@/app/stores/user-profiles-store"
 import ButtonSecondary from "../buttons/button-secondary"
 import { UserProfile } from "@/interfaces/user-profile"
 import ColorThief from "colorthief"
+import { getErrorMessage } from "@/utils/error.utils";
 
 
 const Header = styled.h2`
@@ -211,9 +212,10 @@ export function UserProfileSection() {
     }
 
     async function onSaveChanges() {
-        const response = await updateProfile({displayName: updatedProfile.displayName, bio: updatedProfile.bio, pronouns: updatedProfile.bio});
-        if (!response.success) {
-            setNameError(response.message as string);
+        try {
+            await updateProfile({displayName: updatedProfile.displayName, bio: updatedProfile.bio, pronouns: updatedProfile.bio});
+        } catch (error) {
+            setNameError(getErrorMessage(error));
             return;
         }
 

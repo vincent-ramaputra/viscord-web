@@ -10,6 +10,8 @@ import ButtonDanger from "../buttons/button-danger";
 import { useGetGuild } from "@/app/stores/guilds-store";
 import { useDeleteGuildChannelMutation } from "@/hooks/mutations";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
+import { useState } from "react";
+import { getErrorMessage } from "@/utils/error.utils";
 
 const ContentContainer = styled.div`
     background: var(--modal-background);
@@ -85,9 +87,15 @@ export function DeleteChannelModal({ channel, onClose }: { channel: Channel, onC
     const { closeSettings } = useSettingsOverlay();
     const guild = useGetGuild(channel.guildId);
     const { mutateAsync: deleteChannel, isPending } = useDeleteGuildChannelMutation(channel.guildId);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     async function handleCreateChannel() {
-        await deleteChannel(channel.id);
+        try {
+            await deleteChannel(channel.id);
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
+            return;
+        }
 
         const remainingChannels = guild?.channels.filter(ch => ch.id !== channel.id && ch.type === ChannelType.Text) ?? [];
 
@@ -114,6 +122,7 @@ export function DeleteChannelModal({ channel, onClose }: { channel: Channel, onC
                     <ContentSection>
                         <p>Are you sure you want to delete <b>{channel.type === ChannelType.Text ? `#${channel.name}` : channel.name}</b>? this cannot be undone.</p>
                     </ContentSection>
+                    {errorMessage && <p>{errorMessage}</p>}
                 </ContentBody>
                 <ContentFooter>
                     <ButtonSecondary onClick={onClose} size="lg">Cancel</ButtonSecondary>

@@ -13,6 +13,7 @@ import { CreateChannelDTO } from "@/interfaces/dto/create-channel.dto";
 import { ChannelType } from "@/enums/channel-type.enum";
 import { useRouter } from "next/navigation";
 import { useCreateGuildChannelMutation } from "@/hooks/mutations";
+import { getErrorMessage } from "@/utils/error.utils";
 
 const ContentContainer = styled.div`
     background: var(--modal-background);
@@ -169,12 +170,14 @@ export function CreateChannelModal({ guildId, category, onClose }: { guildId: st
 
 
     async function handleCreateChannel() {
-        const response = await createGuildChannel(channel);
-        if (!response.success) {
-            setErrorMessage(response.message as string);
+        let created: Channel | null;
+        try {
+            created = await createGuildChannel(channel);
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
             return;
         }
-        router.push(`/channels/${guildId}/${response.data!.id}`);
+        if (created) router.push(`/channels/${guildId}/${created.id}`);
         onClose();
     }
 

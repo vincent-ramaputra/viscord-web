@@ -9,6 +9,8 @@ import { GuildMember } from "@/interfaces/guild-member";
 import { Role } from "@/interfaces/role";
 import { PermissionOverwriteTargetType } from "@/enums/permission-overwrite-target-type.enum";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
+import { useState } from "react";
+import { getErrorMessage } from "@/utils/error.utils";
 
 const ContentContainer = styled.div`
     background: var(--modal-background);
@@ -84,12 +86,15 @@ export function RemovePermissionOverwriteModal({ channel, target, targetType, on
     const profile = useUserProfileStore(state =>
         targetType === PermissionOverwriteTargetType.MEMBER ? state.getUserProfile((target as GuildMember).userId) : undefined);
     const { mutateAsync: deletePermissionOverwrite, isPending } = useDeletePermissionOverwrite();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     async function handleRemovePermissionOverwrite() {
         const targetId = targetType === PermissionOverwriteTargetType.MEMBER ? (target as GuildMember).userId : (target as Role).id;
 
-        const response = await deletePermissionOverwrite({ channelId: channel.id, targetId });
-        if (!response.success) {
+        try {
+            await deletePermissionOverwrite({ channelId: channel.id, targetId });
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
             return;
         }
 
@@ -109,6 +114,7 @@ export function RemovePermissionOverwriteModal({ channel, target, targetType, on
                     <ContentSection>
                         <p>Are you sure you want to delete <b>{targetType === PermissionOverwriteTargetType.MEMBER ? profile?.username : (target as Role).name}</b>? this action cannot be undone.</p>
                     </ContentSection>
+                    {errorMessage && <p>{errorMessage}</p>}
                 </ContentBody>
                 <ContentFooter>
                     <ButtonSecondary onClick={onClose} size="lg">Cancel</ButtonSecondary>
