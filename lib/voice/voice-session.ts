@@ -12,6 +12,7 @@ import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { LocalAudio, LocalAudioDeps } from "./local-audio";
 import { ActiveSpeakerStateDTO } from "@/interfaces/dto/active-speaker-state.dto";
 import { VoiceStatePatch } from "@/app/stores/voice-state-store";
+import { unwrap } from "@/services/request";
 
 export type VoiceSessionStatus = 'none' | 'connecting' | 'reconnecting' | 'connected';
 
@@ -334,11 +335,7 @@ export const voiceSession = new VoiceSession({
         return new SfuClient(sfuUrl, ticket);
     },
     createTicket: async (channelId) => {
-        const response = await createVoiceTicket(channelId);
-
-        if (!response.success || !response.data) throw new Error(typeof response.message === 'string' ? response.message : 'Failed creating ticket');
-
-        return response.data;
+        return unwrap(await createVoiceTicket(channelId));
     },
     startLocalAudio: async (deviceId, deps) => {
         return await LocalAudio.start(deviceId, deps);

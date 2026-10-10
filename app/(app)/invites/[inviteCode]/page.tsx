@@ -11,13 +11,13 @@ export default function ReceiveInvitePage() {
     const router = useRouter();
 
     useEffect(() => {
-        joinGuild(inviteCode as string).then(response => {
-            if (!response.success) {
+        joinGuild(inviteCode as string).then(result => {
+            if (!result.ok) {
                 router.back()
                 return;
             }
-            const guild = response.data!;
-            addGuild(response.data!);
+            const guild = result.data;
+            addGuild(guild);
             router.push(`/channels/${guild.id}`);
         });
     }, []);

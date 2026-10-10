@@ -1,32 +1,19 @@
-import { Response } from "@/interfaces/response";
-import axios, { AxiosError, HttpStatusCode } from "axios";
+import axios from "axios";
+import { Result } from "@/interfaces/result";
+import { toApiError } from "../request";
 
-export async function uploadToPresignedUrl(url: string, file: File, contentType: string, onProgress: (progress: number) => void) : Promise<Response<null>> {
-     try {
-        const response = await axios.put(url, file, {
+// Uploads straight to S3, not to our backend: bare axios (no base URL, no cookies) and no response envelope.
+export async function uploadToPresignedUrl(url: string, file: File, contentType: string, onProgress: (progress: number) => void): Promise<Result<void>> {
+    try {
+        await axios.put(url, file, {
             headers: {
                 "Content-Type": contentType
             },
             onUploadProgress: (e) => onProgress(e.loaded / (e.total ?? file.size))
         });
-        if (response.status === HttpStatusCode.Ok) {
-            return Response.Success({
-                data: null,
-                message: response.data.message
-            });
-        }
-        return Response.Failed({
-            message: response.data.message
-        });
+        return { ok: true, data: undefined };
     } catch (error) {
         console.error("Upload error", error);
-        if (error instanceof AxiosError)
-            return Response.Failed({
-                message: error.response ? error.response.data.message as string : "An unknown Error occurred"
-            });
+        return { ok: false, error: toApiError(error) };
     }
-
-    return Response.Failed({
-        message: "An unknown error occurred."
-    });   
 }

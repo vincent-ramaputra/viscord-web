@@ -90,16 +90,16 @@ export function ChannelOverviewSection({ channel }: ChannelOverviewSectionProps)
         }
 
         setIsLoading(true);
-        const response = await updateChannel(channel!.id, { name: channelName });
+        const result = await updateChannel(channel!.id, { name: channelName });
         setIsLoading(false);
 
-        if (!response.success) {
-            setErrorMessage(response.message as string);
+        if (!result.ok) {
+            setErrorMessage(result.error.message);
             return;
         }
 
-        const updatedChannel = channel!;
-        updatedChannel.name = response.data!.name;
+        // a copy: the old code renamed the store's channel object in place
+        const updatedChannel = { ...channel!, name: result.data.name };
 
         updateGuildChannel(channel!.guildId, channel!.id, updatedChannel);
         setErrorMessage(null);

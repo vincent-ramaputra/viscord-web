@@ -27,19 +27,13 @@ import { updateUserProfile } from "@/services/user-profiles/user-profiles.servic
 import { LoginDTO } from "@/interfaces/dto/login.dto";
 import { uploadToPresignedUrl } from "@/services/s3/s3.service";
 import { useUploadProgressStore } from "@/app/stores/upload-progress-store";
-import { Response } from "@/interfaces/response";
-
-
-function unwrap<T>(response: Response<T>) {
-    if (!response.success) throw new Error(typeof response.message === 'string' ? response.message : 'Request failed');
-    return response.data as T;
-}
+import { unwrap } from "@/services/request";
 
 export function useLogoutMutation() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async () => await logout(),
+        mutationFn: async () => unwrap(await logout()),
         onSuccess: () => {
             const { setIsAuthorized } = useCurrentUserStore.getState();
 
@@ -53,7 +47,7 @@ export function useDeleteRelationshipMutation() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (relationship: Relationship) => declineFriendRequest(relationship.id),
+        mutationFn: async (relationship: Relationship) => unwrap(await declineFriendRequest(relationship.id)),
         onSuccess: (_, relationship) => {
             queryClient.setQueryData<Relationship[]>([RELATIONSHIPS_CACHE], (old) => {
                 if (!old) {
@@ -69,7 +63,7 @@ export function useAcceptFriendRequestMutation() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (relationship: Relationship) => acceptFriendRequest(relationship.id),
+        mutationFn: async (relationship: Relationship) => unwrap(await acceptFriendRequest(relationship.id)),
         onSuccess: (_, relationship) => {
             queryClient.setQueryData<Relationship[]>([RELATIONSHIPS_CACHE], (old) => {
                 if (!old) {
@@ -108,19 +102,16 @@ export function useSendMessageMutation(guildId?: string) {
             const attachmentKeys: { key: string, fileName: string }[] = [];
             if (attachments && attachments.length > 0) {
 
-                const response = await createAttachment(dto.channelId, {
+                const { attachments: attachmentUploads } = unwrap(await createAttachment(dto.channelId, {
                     files: attachments.map((att, idx) => ({
                         id: idx,
                         contentType: contentTypeOf(att),
                         fileName: att.name,
                         size: att.size
                     }))
-                });
-
-                if (!response.success || !response.data) throw new Error("Failed uploading attachment");
+                }));
 
                 const promises = [];
-                const attachmentUploads = response.data.attachments;
                 for (const upload of attachmentUploads) {
                     const att = attachments.at(upload.id);
                     if (!att) throw new Error("Invalid attachment id");
@@ -135,14 +126,11 @@ export function useSendMessageMutation(guildId?: string) {
                 }
 
                 const results = await Promise.all(promises);
-                if (!results.every(r => r.success)) throw new Error("Upload failed");
+                if (!results.every(r => r.ok)) throw new Error("Upload failed");
 
             }
 
-            const response = await sendMessage({ ...dto, attachments: attachmentKeys });
-            if (!response.success || !response.data) throw new Error(typeof response.message === "string" ? response.message : "Failed to send message");
-
-            return response.data;
+            return unwrap(await sendMessage({ ...dto, attachments: attachmentKeys }));
         },
         onMutate: ({ dto, clientId, attachments }) => {
             const { user } = useCurrentUserStore.getState();

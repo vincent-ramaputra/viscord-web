@@ -10,18 +10,14 @@ import { getCurrentUserData } from "@/services/users/users.service";
 import Relationship from "@/interfaces/relationship";
 import { Channel } from "@/interfaces/channel";
 import { UserData } from "@/interfaces/user-data";
+import { unwrap } from "@/services/request";
 
 export function useCurrentUserQuery() {
     return useQuery({
         staleTime: Infinity,
         queryKey: [CURRENT_USER_CACHE],
         queryFn: async () => {
-            const res = await getCurrentUserData();
-            if (!res.success) {
-                throw Error();
-            }
-
-            return res.data!;
+            return unwrap(await getCurrentUserData());
         }
     });
 }
@@ -45,11 +41,7 @@ export function useDMChannelsQuery(options?: Omit<UseQueryOptions<Channel[], Err
         queryKey: [DM_CHANNELS_CACHE],
         queryFn: async () => {
             const res = await getDMChannels();
-            if (res.success) {
-                return res.data!;
-            }
-
-            return [];
+            return res.ok ? res.data : [];
         }
     })
 }
@@ -60,8 +52,8 @@ export function useGuildsQuery() {
         queryKey: [GUILDS_CACHE],
         queryFn: async () => {
             const res = await getGuilds();
-            if (res.success) {
-                return res.data!;
+            if (res.ok) {
+                return res.data;
             }
 
             return [];
@@ -75,20 +67,16 @@ export function useGuildDetailQuery(guildId: string) {
         staleTime: Infinity,
         queryKey: [GUILDS_CACHE, guildId],
         queryFn: async () => {
-            const res = await getGuildDetail(guildId);
-
-            if (!res.success) {
-                throw Error();
-            }
+            const guild = unwrap(await getGuildDetail(guildId));
             queryClient.setQueryData<Guild[]>([GUILDS_CACHE], (old) => {
                 if (!old) {
-                    return [res.data!];
+                    return [guild];
                 }
 
-                return old.map(g => g.id === res.data!.id ? res.data! : g);
+                return old.map(g => g.id === guild.id ? guild : g);
             })
 
-            return res.data!;
+            return guild;
         }
     })
 }
@@ -99,11 +87,11 @@ export function useMessagesQuery(channelId: string) {
         queryKey: [MESSAGES_CACHE, channelId],
         queryFn: async () => {
             const res = await getMessages(channelId);
-            if (!res.success) {
+            if (!res.ok) {
                 return [];
             }
 
-            const data = res.data!.map(m => ({ ...m, createdAt: new Date(m.createdAt), updatedAt: new Date(m.updatedAt) }) as Message)
+            const data = res.data.map(m => ({ ...m, createdAt: new Date(m.createdAt), updatedAt: new Date(m.updatedAt) }) as Message)
 
             return data.sort((a, b) => a.createdAt > b.createdAt ? 1 : a.createdAt < b.createdAt ? -1 : 0);
         }
@@ -116,11 +104,7 @@ export function useRelationshipsQuery(options?: Omit<UseQueryOptions<Relationshi
         staleTime: Infinity,
         queryKey: [RELATIONSHIPS_CACHE],
         queryFn: async () => {
-            const res = await getRelationships();
-            if (!res.success) {
-                throw Error();
-            }
-            return res.data!;
+            return unwrap(await getRelationships());
         },
     });
 }
@@ -130,9 +114,7 @@ export function useGetGuildInvites(guildId: string) {
         queryKey: ['guildInvites', guildId],
         queryFn: async ({ queryKey }) => {
             const [, guildId] = queryKey;
-            const res = await getGuildInvites(guildId as string);
-            if (!res.success) throw Error();
-            return res.data!;
+            return unwrap(await getGuildInvites(guildId as string));
         },
         staleTime: 0
     });

@@ -217,8 +217,8 @@ export function CreateInviteModal({ channelId, guildId, onClose }: CreateInviteM
         if (didRun.current) return;
         didRun.current = true;
 
-        createOrGetInvite(inviteSettings).then(response => {
-            if (response) setInvite(response.data);
+        createOrGetInvite(inviteSettings).then(result => {
+            if (result.ok) setInvite(result.data);
         });
     }, []);
 
@@ -236,8 +236,8 @@ export function CreateInviteModal({ channelId, guildId, onClose }: CreateInviteM
     }
 
     async function onGenerateLink() {
-        const response = await createOrGetInvite(inviteSettings);
-        if (response.success) setInvite(response.data);
+        const result = await createOrGetInvite(inviteSettings);
+        if (result.ok) setInvite(result.data);
         setScreen("create-invite");
     }
 

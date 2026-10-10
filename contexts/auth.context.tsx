@@ -26,15 +26,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const handleRefreshToken = async () => {
         const { setIsAuthorized } = useCurrentUserStore.getState();
-        const response = await refreshToken();
-        if (!response.success) {
+        const result = await refreshToken();
+        if (!result.ok) {
             setIsAuthorized(false);
             router.push('/login');
-            return response;
+            return result;
         }
 
         setIsAuthorized(true)
-        return response;
+        return result;
     };
 
     useEffect(() => {
@@ -48,8 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const config: RetryableRequestConfig = error.config;
                 if (error.response?.status === HttpStatusCode.Unauthorized && !config._retry) {
                     config._retry = true;
-                    const response = await handleRefreshToken();
-                    if (!response.success) {
+                    const result = await handleRefreshToken();
+                    if (!result.ok) {
                         return Promise.reject(error);
                     }
                     return api.request(config);

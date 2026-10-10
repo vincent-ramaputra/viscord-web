@@ -170,7 +170,12 @@ export default function SettingsPage({ show, onClose }: SettingsPageProps) {
     const router = useRouter();
 
     async function handleLogout() {
-        await logoutMutation();
+        try {
+            await logoutMutation();
+        } catch (error) {
+            console.error('Failed logging out', error);
+            return;
+        }
         router.push("/login");
         onClose();
     }
