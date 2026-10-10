@@ -553,7 +553,11 @@ function RoleMembersTab({ role, guild }: { role: Role, guild: Guild }) {
 
     async function handleRemoveRole(memberId: string) {
         const member: GuildMember = guild.members.find(member => member.userId === memberId)!;
-        await updateMember({ guildId: guild.id, memberId, roleIds: member.roles.filter(roleId => roleId !== role.id) })
+        try {
+            await updateMember({ guildId: guild.id, memberId, roleIds: member.roles.filter(roleId => roleId !== role.id) });
+        } catch (error) {
+            console.error('Failed removing role from member', error);
+        }
     }
 
     return (
@@ -667,10 +671,11 @@ function EditRolesScreen({ guild, initialRoleId, onScreenBack }: { guild: Guild,
     }
 
     async function handleCreateRole() {
-        const response = await createRole();
-        if (!response.success) return;
-
-        setSelectedRole(response.data!);
+        try {
+            setSelectedRole(await createRole());
+        } catch (error) {
+            console.error('Failed creating role', error);
+        }
     }
 
     useEffect(() => {
@@ -752,9 +757,11 @@ export function RoleSettingsSection({ guildId }: RoleSettingsSectionProps) {
     }
 
     async function handleCreateRole() {
-        const response = await createRole();
-        if (response.success) {
-            openEditRolesScreen(response.data!.id)
+        try {
+            const role = await createRole();
+            openEditRolesScreen(role.id);
+        } catch (error) {
+            console.error('Failed creating role', error);
         }
     }
 

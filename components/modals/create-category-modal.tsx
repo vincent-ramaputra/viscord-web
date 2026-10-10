@@ -87,8 +87,12 @@ export function CreateCategoryModal({ guildId, onClose }: { guildId: string, onC
 
 
     async function handleCreateChannel() {
-        const response = await createCategory(category);
-        if (!response.success) return;
+        try {
+            await createCategory(category);
+        } catch {
+            // shown through the mutation's `error` below
+            return;
+        }
 
         onClose();
     }

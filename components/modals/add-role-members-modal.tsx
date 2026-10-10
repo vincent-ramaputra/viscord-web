@@ -9,6 +9,7 @@ import ButtonSecondary from "../buttons/button-secondary";
 import ButtonPrimary from "../buttons/button-primary";
 import { useAssignRoleMembers } from "@/hooks/mutations";
 import Checkbox from "../checkbox/checkbox";
+import { getErrorMessage } from "@/utils/error.utils";
 
 interface AddRoleMembersModalProps   {
     roleId: string;
@@ -107,14 +108,20 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
         return !(member.roles.find(roleId => roleId === role.id)) && (profile.username.includes(searchText) || profile.displayName.includes(searchText));
     })
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-    const {mutateAsync: assignRoleMembers} = useAssignRoleMembers();
+    const {mutateAsync: assignRoleMembers, isPending} = useAssignRoleMembers();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     if (!guild) {
         onClose();
         return null;
     }
 
     async function handleAddMembers() {
-        assignRoleMembers({assigneeIds: selectedMembers, guildId, roleId});
+        try {
+            await assignRoleMembers({assigneeIds: selectedMembers, guildId, roleId});
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
+            return;
+        }
         onClose();
     }
 
@@ -176,10 +183,11 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
                             )
                         })}
                     </MemberListContainer>
+                    {errorMessage && <p>{errorMessage}</p>}
                 </ContentBody>
                 <ContentFooter>
                     <ButtonSecondary onClick={onClose} size="lg">Cancel</ButtonSecondary>
-                    <ButtonPrimary onClick={handleAddMembers} disabled={selectedMembers.length === 0} size="lg">Add</ButtonPrimary>
+                    <ButtonPrimary onClick={handleAddMembers} disabled={selectedMembers.length === 0 || isPending} size="lg">Add</ButtonPrimary>
                 </ContentFooter>
             </ContentContainer>
         </Modal>);

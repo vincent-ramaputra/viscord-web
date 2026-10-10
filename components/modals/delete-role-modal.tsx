@@ -6,6 +6,8 @@ import ButtonSecondary from "@/components/buttons/button-secondary";
 import ButtonDanger from "../buttons/button-danger";
 import { useDeleteRoleMutation } from "@/hooks/mutations";
 import { Role } from "@/interfaces/role";
+import { useState } from "react";
+import { getErrorMessage } from "@/utils/error.utils";
 
 const ContentContainer = styled.div`
     background: var(--modal-background);
@@ -79,9 +81,15 @@ const ContentFooter = styled.div`
 
 export function DeleteRoleModal({ role, onClose }: { role: Role, onClose: () => void }) {
     const { mutateAsync: deleteRole, isPending } = useDeleteRoleMutation();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     async function handleCreateChannel() {
-        await deleteRole({ roleId: role.id, guildId: role.guildId });
+        try {
+            await deleteRole({ roleId: role.id, guildId: role.guildId });
+        } catch (error) {
+            setErrorMessage(getErrorMessage(error));
+            return;
+        }
 
         onClose();
     }
@@ -99,6 +107,7 @@ export function DeleteRoleModal({ role, onClose }: { role: Role, onClose: () => 
                     <ContentSection>
                         <p>Are you sure you want to delete the <b>{role.name}</b> role? this cannot be undone.</p>
                     </ContentSection>
+                    {errorMessage && <p>{errorMessage}</p>}
                 </ContentBody>
                 <ContentFooter>
                     <ButtonSecondary onClick={onClose} size="lg">Cancel</ButtonSecondary>

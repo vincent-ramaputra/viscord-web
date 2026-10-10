@@ -8,6 +8,7 @@ import ButtonTertiary from "../buttons/button-tertiary"
 import ButtonSuccess from "../buttons/button-success"
 import { useUpdateGuildMutation } from "@/hooks/mutations"
 import { MdInfo } from "react-icons/md"
+import { getErrorMessage } from "@/utils/error.utils";
 
 
 const Header = styled.h2`
@@ -126,9 +127,10 @@ export function GuildProfileSection({ guildId }: GuildProfileSectionProps) {
             return;
         }
 
-        const response = await updateGuild({guildId, name: guildName});
-        if (!response.success){
-            setNameError(response.message as string);
+        try {
+            await updateGuild({guildId, name: guildName});
+        } catch (error) {
+            setNameError(getErrorMessage(error));
             return;
         }
 

@@ -468,7 +468,7 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
     const everyoneOW: PermissionOverwrite | undefined = permissionOverwrites.find(ow => ow.targetId === guild?.id);
     const isPrivate = checkPermission(BigInt(everyoneOW?.deny ?? 0n), Permissions.VIEW_CHANNELS)
     const { mutateAsync: updatePermissionOverwrite, isPending } = useUpdatePermissionOverwrite(channel?.parent?.id);
-    const { mutateAsync: syncChannel } = useSyncChannel();
+    const { mutate: syncChannel } = useSyncChannel();
     const [selectedTarget, setSelectedTarget] = useState<PermissionOverwrite | undefined>(everyoneOW);
     const [updatedTarget, setUpdatedTarget] = useState<PermissionOverwrite | undefined>(selectedTarget);
     const [showAddTarget, setShowAddTarget] = useState(false);
@@ -595,23 +595,31 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
     }
 
     async function handleUpdatePermissions(ow: PermissionOverwrite) {
-        await updatePermissionOverwrite({
-            channelId,
-            allow: ow.allow,
-            deny: ow.deny,
-            targetId: ow.targetId,
-            targetType: ow.targetType
-        });
+        try {
+            await updatePermissionOverwrite({
+                channelId,
+                allow: ow.allow,
+                deny: ow.deny,
+                targetId: ow.targetId,
+                targetType: ow.targetType
+            });
+        } catch (error) {
+            console.error('Failed updating permission overwrite', error);
+        }
     }
 
     async function handleCreatePermission(target: Role | GuildMember, targetType: PermissionOverwriteTargetType) {
-        await updatePermissionOverwrite({
-            channelId,
-            allow: "0",
-            deny: "0",
-            targetId: targetType === PermissionOverwriteTargetType.ROLE ? (target as Role).id : (target as GuildMember).userId,
-            targetType
-        });
+        try {
+            await updatePermissionOverwrite({
+                channelId,
+                allow: "0",
+                deny: "0",
+                targetId: targetType === PermissionOverwriteTargetType.ROLE ? (target as Role).id : (target as GuildMember).userId,
+                targetType
+            });
+        } catch (error) {
+            console.error('Failed adding permission overwrite', error);
+        }
     }
 
 
