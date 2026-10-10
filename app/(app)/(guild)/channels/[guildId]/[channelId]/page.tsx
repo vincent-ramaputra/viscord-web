@@ -270,13 +270,13 @@ export default function Page() {
     const [showMemberList, setShowMemberList] = useState(true);
     const typingUsers = useTypingUsersFromChannel(channelId as string);
     const { isUserTyping } = useUserTypingStore();
-    const {  isUserOnline } = useUserPresenceStore();
+    const presenceMap = useUserPresenceStore(s => s.presenceMap);
     const allowedMembers = guild?.members.filter(member => {
         const parent = guild.channels.find(ch => ch.id === channel?.parent?.id);
         const effectivePermission = getEffectivePermission(member, guild, channel, parent);
         return checkPermission(effectivePermission, Permissions.VIEW_CHANNELS);
     }) ?? [];
-    const offlineMembers = allowedMembers?.filter(re => !isUserOnline(re.userId)) ?? [];
+    const offlineMembers = allowedMembers?.filter(re => !presenceMap.get(re.userId)) ?? [];
     const roleGroups = useMemo(() => {
         const hoistedRoles = guild?.roles.filter(role => role.isHoisted).sort((a, b) => b.position - a.position) ?? [];
         const groups: { role: Role | null, members: GuildMember[] }[] = [];
@@ -286,7 +286,7 @@ export default function Page() {
                 const memberRoles = hoistedRoles.filter(role => member.roles.includes(role.id)).sort((a, b) => b.position - a.position);
                 const highestRole = memberRoles.length > 0 ? memberRoles[0] : null;
 
-                return highestRole?.id === role.id && member.roles.find(roleId => roleId === role.id) && isUserOnline(member.userId)
+                return highestRole?.id === role.id && member.roles.find(roleId => roleId === role.id) && !!presenceMap.get(member.userId)
             });
 
             if (members.length > 0) groups.push({ role, members });
@@ -295,13 +295,13 @@ export default function Page() {
         const noHoistedRoleMembers = guild?.members.filter(member => {
             const roles = member.roles.map(roleId => guild.roles.find(role => roleId === role.id)).filter(role => role !== undefined);
 
-            return isUserOnline(member.userId) && !roles.some(role => role.isHoisted);
+            return !!presenceMap.get(member.userId) && !roles.some(role => role.isHoisted);
         }) ?? [];
 
         if (noHoistedRoleMembers.length > 0) groups.push({ role: null, members: noHoistedRoleMembers });
 
         return groups;
-    }, [allowedMembers, guild]);
+    }, [allowedMembers, guild, presenceMap]);
 
     function handleSubmit(dto: SendMessageInput) {
         sendMessage({ dto, attachments, clientId: crypto.randomUUID() });

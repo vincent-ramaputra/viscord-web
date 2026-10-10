@@ -46,7 +46,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     const [isConnected, setIsConnected] = useState(false);
 
     const queryClient = useQueryClient();
-    const { updatePresence } = useUserPresenceStore();
+    const updatePresence = useUserPresenceStore(s => s.updatePresence);
     const { upsertUserProfile } = useUserProfileStore();
     const { handleTypingStart, handleTypingStop } = useUserTypingStore();
     const { updateVoiceState, removeVoiceState, setVoiceStates } = useVoiceStateStore();

@@ -49,11 +49,11 @@ const UsernameText = styled.div`
 
 export default function RelationshipListItem({ relationship, children }: { relationship: Relationship, children: ReactNode }) {
     const { showMenu } = useContextMenu();
-    const { isUserOnline } = useUserPresenceStore();
+    const isOnline = useUserPresenceStore(s => !!s.presenceMap.get(relationship.user.id));
     const user = useGetUserProfile(relationship.user.id);
-    
+
     if (!user) return;
-    
+
     return (
         <UserListItemContainer onContextMenu={(e) => showMenu(e, ContextMenuType.USER, relationship)}>
             <UserListItemWrapper>
@@ -66,7 +66,7 @@ export default function RelationshipListItem({ relationship, children }: { relat
                             <p className="text-base leading-[20px] font-semibold">{user.displayName}</p>
                             <UsernameText>{user.username}</UsernameText>
                         </div>
-                        <p>{isUserOnline(user.id) ? UserStatusString[user.status] : UserStatusString[UserStatus.Offline]}</p>
+                        <p>{isOnline ? UserStatusString[user.status] : UserStatusString[UserStatus.Offline]}</p>
                     </UserInfoContainer>
                 </div>
                 {children}

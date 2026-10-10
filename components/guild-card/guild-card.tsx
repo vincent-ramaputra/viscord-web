@@ -86,7 +86,8 @@ const MemberInfoContainer = styled.div`
 
 export function GuildCard({ guildId }: GuildCardProps) {
     const guild = useGuildsStore(s => s.getGuild(guildId));
-    const { isUserOnline } = useUserPresenceStore();
+    // a number is compared by value, so the filter inside the selector can't cause a render loop
+    const onlineUserCount = useUserPresenceStore(s => guild?.members.filter(m => s.presenceMap.get(m.userId)).length ?? 0);
     const [bannerColor, setBannerColor] = useState('black');
     const iconRef = useRef<HTMLImageElement>(null!);
 
@@ -113,7 +114,6 @@ export function GuildCard({ guildId }: GuildCardProps) {
     }
 
     const initials = guild.name.split(' ').map(s => s[0]).join(' ');
-    const onlineUserCount = guild.members.filter(m => isUserOnline(m.userId)).length;
     const formattedEstablishedDate = new Date(guild.createdAt).toLocaleString("en-US", {
         month: "short",
         year: "numeric",

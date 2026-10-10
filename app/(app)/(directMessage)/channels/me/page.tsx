@@ -107,7 +107,7 @@ interface TabItem {
 
 export default function FriendListPage() {
     const [searchText, setSearchText] = useState('');
-    const { presenceMap } = useUserPresenceStore();
+    const presenceMap = useUserPresenceStore(s => s.presenceMap);
     const { data: relationships } = useRelationshipsQuery();
     const filterButtons: TabItem[] = [
         {
