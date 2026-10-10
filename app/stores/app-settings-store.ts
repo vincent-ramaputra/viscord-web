@@ -1,6 +1,6 @@
 import { MAX_VOLUME, MIN_VOLUME } from "@/constants/app-config"
 import { create } from "zustand"
-import { usePlaySound } from "./audio-store"
+import { playSound } from "./audio-store"
 
 interface MediaSettings {
     isMuted: boolean
@@ -42,7 +42,7 @@ export const useAppSettingsStore = create<AppSettings>((set) => {
                 if (typeof window !== undefined) localStorage.setItem('media_settings', JSON.stringify(newMediaSettings))
                 return { mediaSettings: newMediaSettings }
             });
-            usePlaySound('audio-test');
+            playSound('audio-test');
         },
         setAudioInputDevice: (deviceId: string) => {
             set(state => {

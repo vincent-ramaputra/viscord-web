@@ -11,7 +11,7 @@ import Tooltip from "../tooltip/tooltip";
 import { useVoiceRingEvents } from "@/app/(auth)/hooks/socket-events";
 import { useSocket } from "@/contexts/socket.context";
 import { GET_VOICE_RINGS_EVENT, VOICE_RING_DISMISS_EVENT, VOICE_RING_EVENT } from "@/constants/events";
-import { usePlaySound, useStopSound } from "@/app/stores/audio-store";
+import { playSound, stopSound } from "@/app/stores/audio-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useChannelsStore } from "@/app/stores/channels-store";
 import { useGuildsStore } from "@/app/stores/guilds-store";
@@ -164,10 +164,10 @@ export function VoiceRingManager() {
         const { user } = useCurrentUserStore.getState();
         batchUpdateVoiceRingState(payload.map(p => new VoiceRingState(p.initiatorId, p.channelId, p.recipientId)));
         if (payload.find(vr => vr.initiatorId === user?.id)) {
-            usePlaySound('ring');
+            playSound('ring');
         }
         if (payload.find(vr => vr.recipientId === user?.id)) {
-            usePlaySound('call');
+            playSound('call');
         }
     }
 
@@ -175,10 +175,10 @@ export function VoiceRingManager() {
         const { user } = useCurrentUserStore.getState();
         removeVoiceRingState(payload.channelId, payload.recipientId);
         if (payload.initiatorId === user?.id) {
-            useStopSound('ring')
+            stopSound('ring')
         }
         if (payload.recipientId === user?.id) {
-            useStopSound('call')
+            stopSound('call')
         }
     }
 

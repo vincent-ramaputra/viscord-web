@@ -73,10 +73,9 @@ interface ChannelOverviewSectionProps {
 }
 
 export function ChannelOverviewSection({ channel }: ChannelOverviewSectionProps) {
-    if (!channel) return null;
-    const [channelName, setChannelName] = useState(channel.name ?? "");
+    const [channelName, setChannelName] = useState(channel?.name ?? "");
     const [isLoading, setIsLoading] = useState(false)
-    const haveChanges = channelName !== channel.name;
+    const haveChanges = channelName !== channel?.name;
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const { upsertChannel: updateGuildChannel } = useGuildsStore();
 
@@ -107,6 +106,7 @@ export function ChannelOverviewSection({ channel }: ChannelOverviewSectionProps)
         return;
     }
 
+    if (!channel) return null;
 
     return (
         <div className="flex flex-col gap-[16px] w-full relative">

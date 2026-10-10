@@ -10,11 +10,10 @@ import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import styled from "styled-components";
 import { useGetChannel } from "@/app/stores/channels-store";
-import { Channel } from "@/interfaces/channel";
 import { ImPhoneHangUp } from "react-icons/im";
 import { useRouter } from "next/navigation";
 import { ChannelType } from "@/enums/channel-type.enum";
-import { useGetGuildChannel } from "@/app/stores/guilds-store";
+import { useGuildsStore } from "@/app/stores/guilds-store";
 import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
 import { useVoice } from "@/hooks/use-voice";
@@ -169,7 +168,9 @@ const STATUS_DISPLAY: Record<VoiceSessionStatus, { label: string, type: string }
 
 function Voice() {
     const { channelId } = useMediasoupStore();
-    const channel: Channel = (useGetChannel(channelId!) ?? useGetGuildChannel(channelId!))!;
+    const dmChannel = useGetChannel(channelId!);
+    const guildChannel = useGuildsStore(state => state.getChannel(channelId!));
+    const channel = (dmChannel ?? guildChannel)!;
     const router = useRouter();
     const { status, leave } = useVoice();
     const statusDisplay = STATUS_DISPLAY[status];
