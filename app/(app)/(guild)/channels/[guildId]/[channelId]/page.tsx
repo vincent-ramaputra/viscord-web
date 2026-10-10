@@ -17,7 +17,7 @@ import { Channel } from "@/interfaces/channel";
 import { LINE_HEIGHT, MAX_LINE_COUNT, VERTICAL_PADDING } from "@/constants/user-interface";
 import { sendTypingStatus } from "@/services/channels/channels.service";
 import { LoadingIndicator } from "@/components/loading-indicator/loading-indicator";
-import { useTypingUsersFromChannel, useUserTypingStore } from "@/app/stores/user-typing-store";
+import { useTypingUsersFromChannel, useUserTypingStore, isTypingIn } from "@/app/stores/user-typing-store";
 import UserAvatar from "@/components/user-avatar/user-avatar";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
 import { useGuildsStore } from "@/app/stores/guilds-store";
@@ -269,7 +269,7 @@ export default function Page() {
     const userProfiles = useUserProfileStore(s => s.userProfiles);
     const [showMemberList, setShowMemberList] = useState(true);
     const typingUsers = useTypingUsersFromChannel(channelId as string);
-    const { isUserTyping } = useUserTypingStore();
+    const typingUsersMap = useUserTypingStore(s => s.typingUsers);
     const presenceMap = useUserPresenceStore(s => s.presenceMap);
     const allowedMembers = guild?.members.filter(member => {
         const parent = guild.channels.find(ch => ch.id === channel?.parent?.id);
@@ -392,7 +392,7 @@ export default function Page() {
                                         return (
                                             <MemberItem key={member.userId}>
                                                 <div className="mr-[12px]">
-                                                    {user && <UserAvatar user={user} showStatus={true} isTyping={isUserTyping(channel.id, user.id)} />}
+                                                    {user && <UserAvatar user={user} showStatus={true} isTyping={isTypingIn(typingUsersMap, channel.id, user.id)} />}
                                                 </div>
                                                 <MemberName style={{ color: roleColor }}>{user?.displayName}</MemberName>
                                                 {user?.id === guild?.ownerId &&
@@ -413,7 +413,7 @@ export default function Page() {
                                     return (
                                         <MemberItem key={member.userId}>
                                             <div className="mr-[12px]">
-                                                {user && <UserAvatar user={user} showStatus={true} isTyping={isUserTyping(channel.id, user.id)} />}
+                                                {user && <UserAvatar user={user} showStatus={true} isTyping={isTypingIn(typingUsersMap, channel.id, user.id)} />}
                                             </div>
                                             <MemberName>{user?.displayName}</MemberName>
                                             {user?.id === guild?.ownerId &&

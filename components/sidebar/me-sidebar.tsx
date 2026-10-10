@@ -1,7 +1,7 @@
 "use client"
 import { useGetDMChannels } from "@/app/stores/channels-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
-import { useUserTypingStore } from "@/app/stores/user-typing-store";
+import { useUserTypingStore, isTypingIn } from "@/app/stores/user-typing-store";
 import SidebarContentContainer from "@/components/guild-sidebar/sidebar-content-container";
 import SidebarHeader from "@/components/guild-sidebar/sidebar-header";
 import UserAvatar from "@/components/user-avatar/user-avatar";
@@ -153,7 +153,7 @@ export default function MeSidebarContent() {
     const pathname = usePathname();
     const router = useRouter();
     const userProfiles = useUserProfileStore(s => s.userProfiles);
-    const { isUserTyping } = useUserTypingStore();
+    const typingUsers = useUserTypingStore(s => s.typingUsers);
     const dmChannels = useGetDMChannels();
 
 
@@ -231,7 +231,7 @@ export default function MeSidebarContent() {
                                                 </PillWrapper>
                                             }
                                             <div className="mr-[12px]">
-                                                <UserAvatar user={recipient} showStatus={true} isTyping={isUserTyping(channel.id, recipient.id)} />
+                                                <UserAvatar user={recipient} showStatus={true} isTyping={isTypingIn(typingUsers, channel.id, recipient.id)} />
                                             </div>
                                             <DMRecipientName>{recipient.displayName}</DMRecipientName>
                                         </DMItemContainer>

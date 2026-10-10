@@ -22,12 +22,16 @@ function toMapKey(channelId: string, userId: string) {
     return `${channelId}-${userId}`
 }
 
+// Pure, so components can select the `typingUsers` Map and check rows during render.
+export function isTypingIn(typingUsers: Map<string, TypingUser>, channelId: string, userId: string) {
+    return typingUsers.has(toMapKey(channelId, userId));
+}
+
 export const useUserTypingStore = create<UserTypingStoreState>((set, get) => ({
     typingUsers: new Map(),
 
     isUserTyping: (channelId: string, userId: string) => {
-        const key = toMapKey(channelId, userId);
-        return get().typingUsers.has(key);
+        return isTypingIn(get().typingUsers, channelId, userId);
     },
 
     handleTypingStart: (channelId: string, userId: string) => {
