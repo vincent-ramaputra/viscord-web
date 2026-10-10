@@ -310,7 +310,7 @@ export default function Page() {
     }
 
     if (!channel) {
-        return <div>bingbong</div>
+        return <div>Channel not found</div>
     }
 
     if (!allowedMembers.find(m => m.userId === user!.id)) {

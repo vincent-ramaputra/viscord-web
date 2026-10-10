@@ -6,7 +6,6 @@ import { useEffect } from "react";
 export default function Page() {
     const { guildId } = useParams();
 
-    // const { isPending, data: guild } = useGuildDetailQuery(guildId ? guildId.toString() : '');
     const {getGuild} = useGuildsStore();
     const guild = getGuild(guildId as string); 
 

@@ -324,7 +324,6 @@ function VoiceSettingsTab() {
                         <div className="relative">
                             <Slider min={MIN_VOLUME} max={MAX_VOLUME} value={mediaSettings.inputVolume} onChange={(value) => setInputVolume(Number(value))} />
                         </div>
-                        {/* <output htmlFor="input-volume" ="value = foo.valueAsNumber;"></output> */}
                     </div>
                     <div className="flex-1">
                         <SubHeader>Output Volume</SubHeader>

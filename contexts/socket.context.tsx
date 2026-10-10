@@ -164,11 +164,6 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     }
 
     useEffect(() => {
-        // const socket = io(process.env.NEXT_PUBLIC_WS_GATEWAY!, {
-        //     withCredentials: true,
-        //     reconnection: true,
-        //     reconnectionDelay: 5000,
-        // })
         const socket = initializeSocket();
 
         const handleConnect = () => {
@@ -206,7 +201,6 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
-        // setSocket(socket);
         return () => {
             removeSocket();
             window.removeEventListener('beforeunload', handleBeforeUnload);

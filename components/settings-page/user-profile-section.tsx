@@ -226,7 +226,6 @@ export function UserProfileSection() {
         <div className="flex flex-col gap-[16px] w-full relative pl-[20px] pt-[60px]">
             <div className="flex flex-col">
                 <Header>Profiles</Header>
-                {/* <DescriptionText>Customize how your server appears in invite links and, if enabled, in Server Discovery and Announcement Channel messages</DescriptionText> */}
             </div>
             <div className="flex gap-[16px]">
                 <div className="grow">
@@ -274,7 +273,6 @@ export function UserProfileSection() {
                 <div>
                     <Label>Preview</Label>
                     <UserProfilePreviewCard user={updatedProfile} />
-                    {/* <GuildCard guildId={guildId} /> */}
                 </div>
             </div>
             <SaveChangesOverlay className={haveChanges ? 'active' : ''}>

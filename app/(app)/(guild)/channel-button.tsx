@@ -107,13 +107,6 @@ const ChannelLockedIcon = styled.div`
     top: 0;
     right: 0;
     padding: 2px;
-    // border-radius: 50%;
-
-    //  -webkit-mask-image: radial-gradient(circle 12px at 100% 0%, transparent 0%, black 100%);
-    // mask-image: radial-gradient(circle 12px at 100% 0%, transparent 0%, black 100%);
-    // mask-repeat: no-repeat;
-    // mask-composite: exclude;
-    // pointer-events: none; /* let clicks pass through */
 `
 
 const PillWrapper = styled.div`

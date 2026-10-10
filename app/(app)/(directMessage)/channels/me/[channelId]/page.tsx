@@ -203,7 +203,6 @@ function formatTyping(names: string[]) {
 export default function Page() {
     const { channelId } = useParams();
     const { getChannel } = useChannelsStore();
-    // const [channel, setChannel] = useState<Channel>(getChannel(channelId as string)!);
     const [attachments, setAttachments] = useState<File[]>([]);
     const channel = getChannel(channelId as string);
     const { data: messages } = useMessagesQuery(channelId! as string);
@@ -235,10 +234,6 @@ export default function Page() {
     useEffect(() => {
         if (!channel) return;
 
-        // const ch = channels.get(channel.id)
-        // if (!ch) return;
-
-        // setChannel(ch)
         document.title = `Viscord | @${channel.recipients![0].displayName}`
     }, [channel]);
 

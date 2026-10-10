@@ -40,13 +40,6 @@ export default function Dropdown({ placeholder = "", values, value, onChange }: 
                     setShowDropdown(true)
                 }}
                 value={input}
-                onBlur={
-                    () => {
-                        if (dropdownRef.current && !dropdownRef.current.contains(document.activeElement)) {
-                            // setShowDropdown(false);
-                        }
-                    }
-                }
                 onChange={(e) => {
                     onChange(e.target.value);
                     setInput(e.target.value);

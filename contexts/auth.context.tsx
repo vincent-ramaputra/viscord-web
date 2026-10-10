@@ -61,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return () => {
             api.interceptors.response.eject(refreshTokenInterceptor)
-            // api.interceptors.request.eject(addIdentityInterceptor);
         }
     }, [])
 

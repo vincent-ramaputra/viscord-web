@@ -295,8 +295,6 @@ function GuildListSidebar() {
 function AppInitializer({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const { socket, isReady } = useSocket();
-    // const { data: relationships } = useRelationshipsQuery({ enabled: !!user });
-    // const { data: dmChannels } = useDMChannelsQuery({ enabled: !!user })
     const { setUserProfiles } = useUserProfileStore();
     const { setPresenceMap, updatePresence } = useUserPresenceStore();
     const { setChannels } = useChannelsStore();
@@ -367,12 +365,6 @@ function AppInitializer({ children }: { children: ReactNode }) {
 
     }, [isReady])
 
-    // useEffect(() => {
-    //     if (!user || /*!relationships || !dmChannels*/ || !isReady) return;
-
-
-    // }, [user, isReady, relationships, dmChannels]);
-
     if (isLoading) {
         return (
             <div className="w-full h-dvh flex justify-center items-center">
@@ -399,13 +391,7 @@ function AppInitializer({ children }: { children: ReactNode }) {
 
 
 export default function HomeLayout({ children }: HomeLayoutProps) {
-    // if (!isAuthorized) {
-    //     return <div></div>;
-    // }
-
     return (
-        // <AppStateProvider>
-        // {/* <UserPresenceProvider> */ }
         <SocketProvider>
             <AppInitializer>
                 <ModalProvider>
@@ -428,9 +414,7 @@ export default function HomeLayout({ children }: HomeLayoutProps) {
                 </ModalProvider>
             </AppInitializer>
             <VoiceAudioRenderer />
-        </SocketProvider >
-        // {/* </UserPresenceProvider> */ }
-        // </AppStateProvider>
+        </SocketProvider>
     );
 }
 

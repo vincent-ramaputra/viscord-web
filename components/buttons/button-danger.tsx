@@ -68,9 +68,6 @@ export default function ButtonDanger({ className = "", size = 'md', children, on
             {tooltip &&
                 <Tooltip position={tooltipPosition!} show={isHovering} text={tooltip} fontSize={tooltipSize} />}
             {isLoading === true ?
-                // <div className={styles["loading-wrapper"]}>
-                //     <div className={styles["dot-flashing"]}></div>
-                // </div>
                 <LoadingIndicator />
                 :
                 children}
