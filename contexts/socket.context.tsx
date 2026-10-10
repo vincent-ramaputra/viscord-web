@@ -1,5 +1,5 @@
 "use client"
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Socket } from "socket.io-client";
 import { useQueryClient } from "@tanstack/react-query";
 import Relationship from "@/interfaces/relationship";
@@ -40,14 +40,19 @@ export function useSocket() {
 }
 
 export default function SocketProvider({ children }: { children: ReactNode }) {
-    const { socket, initializeSocket, removeSocket } = useSocketStore();
+    const socket = useSocketStore(s => s.socket);
+    const initializeSocket = useSocketStore(s => s.initializeSocket);
+    const removeSocket = useSocketStore(s => s.removeSocket);
     const [isConnected, setIsConnected] = useState(false);
 
     const queryClient = useQueryClient();
-    const { updatePresence } = useUserPresenceStore();
-    const { upsertUserProfile } = useUserProfileStore();
-    const { handleTypingStart, handleTypingStop } = useUserTypingStore();
-    const { updateVoiceState, removeVoiceState, setVoiceStates } = useVoiceStateStore();
+    const updatePresence = useUserPresenceStore(s => s.updatePresence);
+    const upsertUserProfile = useUserProfileStore(s => s.upsertUserProfile);
+    const handleTypingStart = useUserTypingStore(s => s.handleTypingStart);
+    const handleTypingStop = useUserTypingStore(s => s.handleTypingStop);
+    const updateVoiceState = useVoiceStateStore(s => s.updateVoiceState);
+    const removeVoiceState = useVoiceStateStore(s => s.removeVoiceState);
+    const setVoiceStates = useVoiceStateStore(s => s.setVoiceStates);
 
 
     function handleFriendReceived(payload: Relationship) {
@@ -208,8 +213,11 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     }, []);
 
 
+    // A new object every render would re-render every useSocket() consumer whenever the provider renders.
+    const value = useMemo(() => ({ socket, isReady: isConnected }), [socket, isConnected]);
+
     return (
-        <SocketContext.Provider value={{ socket, isReady: isConnected }}>
+        <SocketContext.Provider value={value}>
             {children}
         </SocketContext.Provider>
     );

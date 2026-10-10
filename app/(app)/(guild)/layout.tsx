@@ -110,12 +110,12 @@ const Separator = styled.div`
 
 
 function Header({ guild }: { guild: Guild }) {
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const [showMenu, setShowMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null!);
     const menuButtonRef = useRef<HTMLDivElement>(null!);
     const { openModal } = useModal();
-    const { openSettings } = useSettingsOverlay();
+    const openSettings = useSettingsOverlay(s => s.openSettings);
     const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild);
 
     useEffect(() => {
@@ -164,9 +164,8 @@ function Header({ guild }: { guild: Guild }) {
 
 export default function Page({ children }: { children: ReactNode }) {
     const { guildId } = useParams();
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId as string);
-    const { user } = useCurrentUserStore();
+    const guild = useGuildsStore(s => s.getGuild(guildId as string));
+    const user = useCurrentUserStore(s => s.user);
     const member = guild?.members.find(member => member.userId === user!.id);
     const channelsWithoutParent = guild?.channels.filter(channel => {
         if (channel.parent || channel.type === ChannelType.Category || !member) return false;

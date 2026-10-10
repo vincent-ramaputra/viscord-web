@@ -33,8 +33,7 @@ export const SettingsSectionHeader = styled.h2`
 
 export default function ChannelSettingsPage({ channelId, guildId, show, onClose }: ChannelSettingsPageProps) {
     const { openModal } = useModal();
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId);
+    const guild = useGuildsStore(s => s.getGuild(guildId));
     const channel = guild?.channels.find(ch => ch.id === channelId);
     const sidebarItems: SidebarItem[] = [
         {

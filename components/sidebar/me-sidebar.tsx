@@ -1,11 +1,10 @@
 "use client"
-import { useChannelsStore } from "@/app/stores/channels-store";
+import { useGetDMChannels } from "@/app/stores/channels-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
-import { useUserTypingStore } from "@/app/stores/user-typing-store";
+import { useUserTypingStore, isTypingIn } from "@/app/stores/user-typing-store";
 import SidebarContentContainer from "@/components/guild-sidebar/sidebar-content-container";
 import SidebarHeader from "@/components/guild-sidebar/sidebar-header";
 import UserAvatar from "@/components/user-avatar/user-avatar";
-import { ChannelType } from "@/enums/channel-type.enum";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment } from "react";
 import styled from "styled-components";
@@ -153,10 +152,9 @@ const Pill = styled.div`
 export default function MeSidebarContent() {
     const pathname = usePathname();
     const router = useRouter();
-    const { getUserProfile } = useUserProfileStore();
-    const { isUserTyping } = useUserTypingStore();
-    const { channels } = useChannelsStore();
-    const dmChannels = Array.from(channels.values()).filter(c => c.type === ChannelType.DM);
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
+    const typingUsers = useUserTypingStore(s => s.typingUsers);
+    const dmChannels = useGetDMChannels();
 
 
     const menuItems = [
@@ -221,7 +219,7 @@ export default function MeSidebarContent() {
                         </DMListHeader>
                         <DMListWrapper>
                             {dmChannels?.map((channel) => {
-                                const recipient = getUserProfile(channel.recipients![0].id)!;
+                                const recipient = userProfiles.get(channel.recipients![0].id)!;
                                 const isActive = pathname === `/channels/me/${channel.id}`;
                                 const hasNewMessage = channel.userChannelState.unreadCount > 0;
                                 return (
@@ -233,7 +231,7 @@ export default function MeSidebarContent() {
                                                 </PillWrapper>
                                             }
                                             <div className="mr-[12px]">
-                                                <UserAvatar user={recipient} showStatus={true} isTyping={isUserTyping(channel.id, recipient.id)} />
+                                                <UserAvatar user={recipient} showStatus={true} isTyping={isTypingIn(typingUsers, channel.id, recipient.id)} />
                                             </div>
                                             <DMRecipientName>{recipient.displayName}</DMRecipientName>
                                         </DMItemContainer>

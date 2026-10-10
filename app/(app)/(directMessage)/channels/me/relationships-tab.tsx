@@ -10,7 +10,7 @@ import { MdCheck, MdClose } from "react-icons/md";
 import { IoMdMore } from "react-icons/io";
 import { useRouter } from "next/navigation";
 import { useAcceptFriendRequestMutation, useCreateDMChannelMutation, useDeleteRelationshipMutation } from "@/hooks/mutations";
-import { useChannelsStore } from "@/app/stores/channels-store";
+import { findFriendChannel, useChannelsStore } from "@/app/stores/channels-store";
 
 const FilterTypeContainer = styled.div`
     padding: 16px 0;
@@ -25,7 +25,7 @@ const FilterTypeContainer = styled.div`
 
 function MessageActionButton({ channel, relationship }: { channel?: Channel, relationship: Relationship }) {
     const router = useRouter();
-    const {mutateAsync: createDMChannel} = useCreateDMChannelMutation();
+    const { mutateAsync: createDMChannel } = useCreateDMChannelMutation();
     return (
         <ActionButton
             tooltipText="Message"
@@ -46,7 +46,7 @@ function MessageActionButton({ channel, relationship }: { channel?: Channel, rel
 }
 
 export function OnlineFriendsTab({ relationships }: { relationships: Relationship[] }) {
-    const { getFriendChannel} = useChannelsStore();
+    const channels = useChannelsStore(s => s.channels);
 
     return (
         <Fragment>
@@ -55,7 +55,7 @@ export function OnlineFriendsTab({ relationships }: { relationships: Relationshi
                 return (
                     <RelationshipListItem relationship={rel} key={rel.id}>
                         <ActionContainer>
-                            <MessageActionButton relationship={rel} channel={getFriendChannel(rel.user.id)} />
+                            <MessageActionButton relationship={rel} channel={findFriendChannel(channels, rel.user.id)} />
                             <ActionButton tooltipText="More">
                                 <IoMdMore size={20} />
                             </ActionButton>
@@ -67,7 +67,7 @@ export function OnlineFriendsTab({ relationships }: { relationships: Relationshi
 }
 
 export function AllFriendsTab({ relationships }: { relationships: Relationship[] }) {
-    const { getFriendChannel } = useChannelsStore();
+    const channels = useChannelsStore(s => s.channels);
 
     return (
         <Fragment>
@@ -77,7 +77,7 @@ export function AllFriendsTab({ relationships }: { relationships: Relationship[]
                     <RelationshipListItem relationship={rel} key={rel.id}>
                         {rel.type === RelationshipType.Friends &&
                             <ActionContainer>
-                                <MessageActionButton relationship={rel} channel={getFriendChannel(rel.user.id)} />
+                                <MessageActionButton relationship={rel} channel={findFriendChannel(channels, rel.user.id)} />
                                 <ActionButton tooltipText="More">
                                     <IoMdMore size={20} />
                                 </ActionButton>
@@ -91,9 +91,9 @@ export function AllFriendsTab({ relationships }: { relationships: Relationship[]
 }
 
 export function PendingRequestsTab({ relationships }: { relationships: Relationship[] }) {
-    const { getFriendChannel} = useChannelsStore();
-    const {mutate: declineFriendRequest} = useDeleteRelationshipMutation();
-    const {mutate: acceptFriendRequest} = useAcceptFriendRequestMutation();
+    const channels = useChannelsStore(s => s.channels);
+    const { mutate: declineFriendRequest } = useDeleteRelationshipMutation();
+    const { mutate: acceptFriendRequest } = useAcceptFriendRequestMutation();
 
     return (
         <Fragment>
@@ -111,7 +111,7 @@ export function PendingRequestsTab({ relationships }: { relationships: Relations
                         }
                         {rel.type === RelationshipType.Friends &&
                             <ActionContainer>
-                                <MessageActionButton relationship={rel} channel={getFriendChannel(rel.user.id)} />
+                                <MessageActionButton relationship={rel} channel={findFriendChannel(channels, rel.user.id)} />
                                 <ActionButton tooltipText="More">
                                     <IoMdMore size={20} />
                                 </ActionButton>
@@ -137,7 +137,7 @@ export function PendingRequestsTab({ relationships }: { relationships: Relations
                         }
                         {rel.type === RelationshipType.Friends &&
                             <ActionContainer>
-                                <MessageActionButton relationship={rel} channel={getFriendChannel(rel.user.id)} />
+                                <MessageActionButton relationship={rel} channel={findFriendChannel(channels, rel.user.id)} />
                                 <ActionButton tooltipText="More">
                                     <IoMdMore size={20} />
                                 </ActionButton>

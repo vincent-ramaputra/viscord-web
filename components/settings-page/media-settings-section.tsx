@@ -263,7 +263,11 @@ function MicTestButton() {
 export default MicTestButton;
 
 function VoiceSettingsTab() {
-    const { mediaSettings, setAudioInputDevice, setAudioOutputDevice, setInputVolume, setOutputVolume } = useAppSettingsStore();
+    const mediaSettings = useAppSettingsStore(s => s.mediaSettings);
+    const setAudioInputDevice = useAppSettingsStore(s => s.setAudioInputDevice);
+    const setAudioOutputDevice = useAppSettingsStore(s => s.setAudioOutputDevice);
+    const setInputVolume = useAppSettingsStore(s => s.setInputVolume);
+    const setOutputVolume = useAppSettingsStore(s => s.setOutputVolume);
     const [devices, setDevices] = useState<MediaDeviceInfo[] | null>(null);
 
     useEffect(() => {

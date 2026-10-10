@@ -167,7 +167,7 @@ const STATUS_DISPLAY: Record<VoiceSessionStatus, { label: string, type: string }
 };
 
 function Voice() {
-    const { channelId } = useMediasoupStore();
+    const channelId = useMediasoupStore(s => s.channelId);
     const dmChannel = useGetChannel(channelId!);
     const guildChannel = useGuildsStore(state => state.getChannel(channelId!));
     const channel = (dmChannel ?? guildChannel)!;
@@ -197,13 +197,13 @@ function Voice() {
 }
 
 export default function UserArea() {
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const [isHovering, setIsHovering] = useState(false);
     const [showProfileCard, setShowProfileCard] = useState(false);
     const profileCardRef = useRef<HTMLDivElement>(null!)
     const { isDeafened, isMicOff, toggleDeafened, toggleMute } = useVoice();
-    const { channelId } = useMediasoupStore();
-    const { openSettings } = useSettingsOverlay();
+    const channelId = useMediasoupStore(s => s.channelId);
+    const openSettings = useSettingsOverlay(s => s.openSettings);
 
     useEffect(() => {
         function handleOutsideClick(e: MouseEvent) {

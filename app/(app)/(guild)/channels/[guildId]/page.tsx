@@ -6,8 +6,7 @@ import { useEffect } from "react";
 export default function Page() {
     const { guildId } = useParams();
 
-    const {getGuild} = useGuildsStore();
-    const guild = getGuild(guildId as string); 
+    const guild = useGuildsStore(s => s.getGuild(guildId as string));
 
     useEffect(() => {
         if (!guild) return;

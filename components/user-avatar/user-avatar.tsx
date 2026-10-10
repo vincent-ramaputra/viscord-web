@@ -60,9 +60,10 @@ export function UserStatusIcon({ status, size = 12, isTyping }: { status: UserSt
 }
 
 export default function UserAvatar({ user, showStatus = true, size, isTyping }: { user: UserProfile, showStatus?: boolean, size?: string, isTyping?: boolean }) {
-    const { isUserOnline } = useUserPresenceStore();
+    // a boolean for this one user: only this avatar re-renders when their presence changes
+    const isOnline = useUserPresenceStore(s => !!s.presenceMap.get(user.id));
     const iconSize = size ? parseInt(size) / 2.6 > 16 ? 16 : parseInt(size) / 2.6 : 12;
-    const showTyping = !!isTyping && isUserOnline(user.id) && user.status !== UserStatus.Invisible;
+    const showTyping = !!isTyping && isOnline && user.status !== UserStatus.Invisible;
     return (
         <div className={styles["pfp-wrapper"]} >
             <div
@@ -78,7 +79,7 @@ export default function UserAvatar({ user, showStatus = true, size, isTyping }: 
                         className={`${styles["status-container"]} ${showTyping ? styles["status-container-typing"] : ""}`}
                         // Keep the right edge where the round dot sits so the pill grows leftward over the avatar.
                         style={showTyping ? { transform: `translate(${(iconSize + 4) / 4}px, 25%)` } : undefined}>
-                        {isUserOnline(user.id) ? (
+                        {isOnline ? (
                             <UserStatusIcon status={user.status} size={iconSize} isTyping={isTyping} />
                         ) : (
                             <MdOutlineCircle className={styles["offline-icon"]} fill="#80848e" size={iconSize} />

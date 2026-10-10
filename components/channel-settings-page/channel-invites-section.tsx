@@ -126,7 +126,7 @@ const ExpiryDate = styled.p`
 
 export function ChannelInvitesSection({ channelId, guildId }: ChannelInvitesSectionProps) {
     const [invites, setInvites] = useState<Invite[]>([]);
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const [now, setNow] = useState(new Date());
     const { openModal } = useModal();
     useEffect(() => {
@@ -173,7 +173,7 @@ export function ChannelInvitesSection({ channelId, guildId }: ChannelInvitesSect
                     <ExpiresColumn>Expires</ExpiresColumn>
                 </TableRow>
                 {invites.map(invite => {
-                    const inviter = getUserProfile(invite.inviterId);
+                    const inviter = userProfiles.get(invite.inviterId);
                     return (
                         <DataRowContainer key={invite.id}>
                             <TableRow className="data">

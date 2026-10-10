@@ -67,7 +67,7 @@ export function ChannelCategory({ category, channels }: { category: Channel, cha
     const pathname = usePathname();
     const { showMenu } = useContextMenu();
     const guild = useGuildsStore(s => s.getGuild(category.guildId))!;
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild, category);
 
     return (

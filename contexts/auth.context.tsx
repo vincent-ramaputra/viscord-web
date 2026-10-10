@@ -20,7 +20,7 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const { isAuthorized } = useCurrentUserStore();
+    const isAuthorized = useCurrentUserStore(s => s.isAuthorized);
     const router = useRouter();
 
 

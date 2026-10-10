@@ -193,9 +193,9 @@ export const UserProfilePreviewCard = ({ user }: { user: UserProfile }) => {
     );
 }
 export function UserProfileSection() {
-    const { user } = useCurrentUserStore();
-    const {getUserProfile} = useUserProfileStore();
-    const profile = getUserProfile(user!.id)!;
+    const user = useCurrentUserStore(s => s.user);
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
+    const profile = userProfiles.get(user!.id)!;
     const [updatedProfile, setUpdatedProfile] = useState(profile);
     const [nameError, setNameError] = useState<string | null>(null);
     const haveChanges = useMemo(() => {

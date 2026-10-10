@@ -202,10 +202,9 @@ function formatTyping(names: string[]) {
 
 export default function Page() {
     const { channelId } = useParams();
-    const { getChannel } = useChannelsStore();
     const [attachments, setAttachments] = useState<File[]>([]);
-    const channel = getChannel(channelId as string);
-    const { data: messages } = useMessagesQuery(channelId! as string);
+    const channel = useChannelsStore(s => s.getChannel(channelId as string));
+    const { data: messages } = useMessagesQuery(channelId as string);
     const groupedMessages = messages?.reduce((groups, message) => {
         const key = message.createdAt.toLocaleDateString();
 
@@ -217,7 +216,7 @@ export default function Page() {
 
         return groups;
     }, {} as Record<string, Message[]>);
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const typingUsers = useTypingUsersFromChannel(channelId as string);
     const { mutate: sendMessage } = useSendMessageMutation();
     const { mutateAsync: acknowledgeMessage } = useAcknowledgeMessageMutation();
@@ -261,7 +260,7 @@ export default function Page() {
                                             <MessageItem
                                                 message={{ ...message }}
                                                 isSubsequent={isSubsequent}
-                                                sender={getUserProfile(message.senderId)!} />
+                                                sender={userProfiles.get(message.senderId)!} />
                                         </Fragment>
                                     )
                                 }).reverse()}
@@ -296,7 +295,7 @@ export default function Page() {
                                 <LoadingIndicator></LoadingIndicator>
                             </span>
 
-                            <span className="font-bold">{formatTyping(typingUsers.map(tu => getUserProfile(tu.userId)!.displayName))}</span>&nbsp;is typing...
+                            <span className="font-bold">{formatTyping(typingUsers.map(tu => userProfiles.get(tu.userId)!.displayName))}</span>&nbsp;is typing...
                         </div>}
                 </ChatInputWrapper>
             </ChatContainer>

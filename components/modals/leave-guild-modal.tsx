@@ -81,7 +81,7 @@ const ContentFooter = styled.div`
 
 export function LeaveGuildModal({ guildId, onClose }: { guildId: string, onClose: () => void }) {
     const router = useRouter();
-    const { closeSettings } = useSettingsOverlay();
+    const closeSettings = useSettingsOverlay(s => s.closeSettings);
     const guild = getGuild(guildId)!;
     const { mutateAsync: leaveGuild, isPending } = useLeaveGuildMutation();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);

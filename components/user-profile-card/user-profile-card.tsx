@@ -203,7 +203,7 @@ function Banner({ user }: { user: UserProfile }) {
 export const CurrentUserProfileCard = ({ user }: { user: UserProfile }) => {
     const [showChangeStatusContainer, setShowChangeStatusContainer] = useState(false);
     const [showCopyUsernameButton, setShowCopyUsernameButton] = useState(false);
-    const { updateStatus: updateCurrentUserStatus } = useCurrentUserStore();
+    const updateCurrentUserStatus = useCurrentUserStore(s => s.updateStatus);
     const changeStatusContainerRef = useRef<HTMLDivElement>(null!);
     const [pos, setPos] = useState({ x: 0, y: 0 });
 

@@ -17,7 +17,7 @@ import { Channel } from "@/interfaces/channel";
 import { LINE_HEIGHT, MAX_LINE_COUNT, VERTICAL_PADDING } from "@/constants/user-interface";
 import { sendTypingStatus } from "@/services/channels/channels.service";
 import { LoadingIndicator } from "@/components/loading-indicator/loading-indicator";
-import { useTypingUsersFromChannel, useUserTypingStore } from "@/app/stores/user-typing-store";
+import { useTypingUsersFromChannel, useUserTypingStore, isTypingIn } from "@/app/stores/user-typing-store";
 import UserAvatar from "@/components/user-avatar/user-avatar";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
 import { useGuildsStore } from "@/app/stores/guilds-store";
@@ -246,9 +246,8 @@ function formatTyping(names: string[]) {
 
 export default function Page() {
     const { guildId, channelId } = useParams();
-    const { user } = useCurrentUserStore();
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId as string);
+    const user = useCurrentUserStore(s => s.user);
+    const guild = useGuildsStore(s => s.getGuild(guildId as string));
     const channel = guild?.channels.find(ch => ch.id == channelId);
     const { data: messages } = useMessagesQuery(channelId! as string);
     const { mutate: sendMessage } = useSendMessageMutation(guildId as string);
@@ -267,17 +266,17 @@ export default function Page() {
 
         return groups;
     }, {} as Record<string, Message[]>);
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const [showMemberList, setShowMemberList] = useState(true);
     const typingUsers = useTypingUsersFromChannel(channelId as string);
-    const { isUserTyping } = useUserTypingStore();
-    const {  isUserOnline } = useUserPresenceStore();
+    const typingUsersMap = useUserTypingStore(s => s.typingUsers);
+    const presenceMap = useUserPresenceStore(s => s.presenceMap);
     const allowedMembers = guild?.members.filter(member => {
         const parent = guild.channels.find(ch => ch.id === channel?.parent?.id);
         const effectivePermission = getEffectivePermission(member, guild, channel, parent);
         return checkPermission(effectivePermission, Permissions.VIEW_CHANNELS);
     }) ?? [];
-    const offlineMembers = allowedMembers?.filter(re => !isUserOnline(re.userId)) ?? [];
+    const offlineMembers = allowedMembers?.filter(re => !presenceMap.get(re.userId)) ?? [];
     const roleGroups = useMemo(() => {
         const hoistedRoles = guild?.roles.filter(role => role.isHoisted).sort((a, b) => b.position - a.position) ?? [];
         const groups: { role: Role | null, members: GuildMember[] }[] = [];
@@ -287,7 +286,7 @@ export default function Page() {
                 const memberRoles = hoistedRoles.filter(role => member.roles.includes(role.id)).sort((a, b) => b.position - a.position);
                 const highestRole = memberRoles.length > 0 ? memberRoles[0] : null;
 
-                return highestRole?.id === role.id && member.roles.find(roleId => roleId === role.id) && isUserOnline(member.userId)
+                return highestRole?.id === role.id && member.roles.find(roleId => roleId === role.id) && !!presenceMap.get(member.userId)
             });
 
             if (members.length > 0) groups.push({ role, members });
@@ -296,13 +295,13 @@ export default function Page() {
         const noHoistedRoleMembers = guild?.members.filter(member => {
             const roles = member.roles.map(roleId => guild.roles.find(role => roleId === role.id)).filter(role => role !== undefined);
 
-            return isUserOnline(member.userId) && !roles.some(role => role.isHoisted);
+            return !!presenceMap.get(member.userId) && !roles.some(role => role.isHoisted);
         }) ?? [];
 
         if (noHoistedRoleMembers.length > 0) groups.push({ role: null, members: noHoistedRoleMembers });
 
         return groups;
-    }, [allowedMembers, guild]);
+    }, [allowedMembers, guild, presenceMap]);
 
     function handleSubmit(dto: SendMessageInput) {
         sendMessage({ dto, attachments, clientId: crypto.randomUUID() });
@@ -341,7 +340,7 @@ export default function Page() {
                                                 <MessageItem
                                                     message={{ ...message }}
                                                     isSubsequent={isSubsequent}
-                                                    sender={getUserProfile(message.senderId)!}
+                                                    sender={userProfiles.get(message.senderId)!}
                                                     guild={guild}
                                                 />
                                             </Fragment>
@@ -377,7 +376,7 @@ export default function Page() {
                                     <LoadingIndicator></LoadingIndicator>
                                 </span>
 
-                                <span className="font-bold">{formatTyping(typingUsers.map(tu => getUserProfile(tu.userId)!.displayName))}</span>&nbsp;is typing...
+                                <span className="font-bold">{formatTyping(typingUsers.map(tu => userProfiles.get(tu.userId)!.displayName))}</span>&nbsp;is typing...
                             </div>}
                     </ChatInputWrapper>
                 </ChatContainer>
@@ -389,11 +388,11 @@ export default function Page() {
                                 <div key={role?.id ?? '1'}>
                                     <h3>{role ? role.name : 'Online'} — {members.length}</h3>
                                     {members.map(member => {
-                                        const user = getUserProfile(member.userId);
+                                        const user = userProfiles.get(member.userId);
                                         return (
                                             <MemberItem key={member.userId}>
                                                 <div className="mr-[12px]">
-                                                    {user && <UserAvatar user={user} showStatus={true} isTyping={isUserTyping(channel.id, user.id)} />}
+                                                    {user && <UserAvatar user={user} showStatus={true} isTyping={isTypingIn(typingUsersMap, channel.id, user.id)} />}
                                                 </div>
                                                 <MemberName style={{ color: roleColor }}>{user?.displayName}</MemberName>
                                                 {user?.id === guild?.ownerId &&
@@ -410,11 +409,11 @@ export default function Page() {
                             <>
                                 <h3>Offline — {offlineMembers.length}</h3>
                                 {offlineMembers.map(member => {
-                                    const user = getUserProfile(member.userId);
+                                    const user = userProfiles.get(member.userId);
                                     return (
                                         <MemberItem key={member.userId}>
                                             <div className="mr-[12px]">
-                                                {user && <UserAvatar user={user} showStatus={true} isTyping={isUserTyping(channel.id, user.id)} />}
+                                                {user && <UserAvatar user={user} showStatus={true} isTyping={isTypingIn(typingUsersMap, channel.id, user.id)} />}
                                             </div>
                                             <MemberName>{user?.displayName}</MemberName>
                                             {user?.id === guild?.ownerId &&

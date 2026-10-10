@@ -62,7 +62,7 @@ const Separator = styled.div`
 `
 
 function UserContextMenu({ relationship }: { relationship: Relationship }) {
-    const { guilds } = useGuildsStore();
+    const guilds = useGuildsStore(s => s.guilds);
     const [showGuilds, setShowGuilds] = useState(false);
     const { mutate: removeFriend } = useDeleteRelationshipMutation();
     const { data: channels } = useDMChannelsQuery();
@@ -147,13 +147,12 @@ function GuildSidebarContextMenu({ guild }: { guild: Guild }) {
 }
 
 function ChannelCategoryContextMenu({ categoryId, guildId }: { categoryId: string, guildId: string }) {
-    const { openSettings } = useSettingsOverlay();
+    const openSettings = useSettingsOverlay(s => s.openSettings);
     const { openModal } = useModal();
     const { hideMenu } = useContextMenu();
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId)!;
+    const guild = useGuildsStore(s => s.getGuild(guildId))!;
     const category = guild.channels.find(ch => ch.id === categoryId)!;
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild, category);
 
     return (
@@ -183,14 +182,13 @@ function ChannelCategoryContextMenu({ categoryId, guildId }: { categoryId: strin
 
 
 function ChannelButtonContextMenu({ channelId, guildId }: { channelId: string, guildId: string }) {
-    const { openSettings } = useSettingsOverlay();
+    const openSettings = useSettingsOverlay(s => s.openSettings);
     const { openModal } = useModal();
     const { hideMenu } = useContextMenu();
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId)!;
+    const guild = useGuildsStore(s => s.getGuild(guildId))!;
     const channel = guild.channels.find(ch => ch.id === channelId)!;
     const parent = guild.channels.find(ch => ch.id === channel.parent?.id);
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild, channel, parent);
 
     return (
@@ -285,7 +283,7 @@ export default function ContextMenu() {
             {menuState.type === ContextMenuType.GUILD_SIDEBAR && <GuildSidebarContextMenu guild={menuState.data} />}
             {menuState.type === ContextMenuType.REMOVE_PERMISSION_OVERWRITE && <RemovePermissionOverwriteContextMenu channel={menuState.data.channel} target={menuState.data.target} targetType={menuState.data.targetType} />}
             {menuState.type === ContextMenuType.CHANNEL_CATEGORY && <ChannelCategoryContextMenu categoryId={menuState.data.categoryId} guildId={menuState.data.guildId} />}
-            {menuState.type === ContextMenuType.CHANNEL_BUTTON && <ChannelButtonContextMenu channelId={menuState.data.channelId} guildId={menuState.data.guildId}/>}
+            {menuState.type === ContextMenuType.CHANNEL_BUTTON && <ChannelButtonContextMenu channelId={menuState.data.channelId} guildId={menuState.data.guildId} />}
         </ContextMenuContainer>
     );
 }

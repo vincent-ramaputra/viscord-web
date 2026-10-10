@@ -121,7 +121,7 @@ const ExpiryDate = styled.p`
 `
 
 export function GuildInvitesSection({ guildId }: GuildInvitesSectionProps) {
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const [now, setNow] = useState(new Date());
     const { data: invites } = useGetGuildInvites(guildId);
 
@@ -165,7 +165,7 @@ export function GuildInvitesSection({ guildId }: GuildInvitesSectionProps) {
                     <ExpiresColumn>Expires</ExpiresColumn>
                 </TableRow>
                 {invites?.map(invite => {
-                    const inviter = getUserProfile(invite.inviterId);
+                    const inviter = userProfiles.get(invite.inviterId);
                     return (
                         <DataRowContainer key={invite.id}>
                             <TableRow className="data">

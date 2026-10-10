@@ -183,19 +183,18 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     const { showMenu } = useContextMenu();
     const [active, setActive] = useState(false);
     const { openModal } = useModal();
-    const { openSettings } = useSettingsOverlay();
+    const openSettings = useSettingsOverlay(s => s.openSettings);
     const voiceStates = useChannelVoiceStates(channel.id);
-    const { activeSpeakers } = useMediasoupStore();
+    const activeSpeakers = useMediasoupStore(s => s.activeSpeakers);
     const { join, channelId: voiceChannelId } = useVoice();
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const isInThisCall = voiceChannelId === channel.id;
     // Read before the voice state map below, which shadows `user` with each participant's profile.
     const currentUserId = user?.id;
-    const { getUserProfile } = useUserProfileStore();
-    const { getChannel, getGuild } = useGuildsStore();
-    const guild = getGuild(channel.guildId)!;
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
+    const guild = useGuildsStore(s => s.getGuild(channel.guildId))!;
     const member = guild.members.find(m => m.userId === user!.id);
-    const parent = channel.parent ? getChannel(channel.parent.id) : undefined;
+    const parent = channel.parent ? guild.channels.find(ch => ch.id === channel.parent!.id) : undefined;
     const effectivePermission = member ? getEffectivePermission(member, guild, channel, parent) : 0n;
     const everyoneOW = channel.isSynced && parent
         ? parent!.permissionOverwrites.find(ow => ow.targetId === channel.guildId)
@@ -293,7 +292,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
             {voiceStates.map(vs => {
                 // Our own state while this tab isn't in the call: we're connected from another tab or device.
                 const isOwnElsewhere = vs.userId === currentUserId && !isInThisCall;
-                const user = getUserProfile(vs.userId);
+                const user = userProfiles.get(vs.userId);
                 const isSpeaking = (voiceStates.find(vs => vs.userId === vs.userId) && activeSpeakers.has(vs.userId)) ?? false;
                 const avatarURL = user ? (user.avatarURL ?? user.defaultAvatarURL) : '';
 

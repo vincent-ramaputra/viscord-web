@@ -11,7 +11,7 @@ import { useAssignRoleMembers } from "@/hooks/mutations";
 import Checkbox from "../checkbox/checkbox";
 import { getErrorMessage } from "@/utils/error.utils";
 
-interface AddRoleMembersModalProps   {
+interface AddRoleMembersModalProps {
     roleId: string;
     guildId: string;
     onClose: () => void;
@@ -98,17 +98,16 @@ const ContentFooter = styled.div`
 `
 
 export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembersModalProps) {
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId)!;
+    const guild = useGuildsStore(s => s.getGuild(guildId))!;
     const role = guild.roles.find(role => role.id === roleId)!;
     const [searchText, setSearchText] = useState('');
-    const { getUserProfile } = useUserProfileStore();
+    const userProfiles = useUserProfileStore(s => s.userProfiles);
     const filteredMembers = guild.members.filter(member => {
-        const profile = getUserProfile(member.userId)!;
+        const profile = userProfiles.get(member.userId)!;
         return !(member.roles.find(roleId => roleId === role.id)) && (profile.username.includes(searchText) || profile.displayName.includes(searchText));
     })
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-    const {mutateAsync: assignRoleMembers, isPending} = useAssignRoleMembers();
+    const { mutateAsync: assignRoleMembers, isPending } = useAssignRoleMembers();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     if (!guild) {
         onClose();
@@ -117,7 +116,7 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
 
     async function handleAddMembers() {
         try {
-            await assignRoleMembers({assigneeIds: selectedMembers, guildId, roleId});
+            await assignRoleMembers({ assigneeIds: selectedMembers, guildId, roleId });
         } catch (error) {
             setErrorMessage(getErrorMessage(error));
             return;
@@ -146,7 +145,7 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
                 <ContentBody>
                     <SearchContainer>
                         {/* {selectedMembers.map(userId => {
-                            const profile = getUserProfile(userId);
+                            const profile = userProfiles.get(userId);
                             return (
                                 <SelectedMemberContainer>
                                     {profile && <UserAvatar user={profile} size="16" showStatus={false} />}
@@ -163,7 +162,7 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
                     <MemberListContainer>
                         <p className="text-sm font-[var(--font-weight-semibold)]">Members</p>
                         {filteredMembers.map(member => {
-                            const profile = getUserProfile(member.userId);
+                            const profile = userProfiles.get(member.userId);
                             return (
                                 <MemberContainer key={member.userId} onClick={() => toggleMember(member.userId)}>
                                     <Checkbox
