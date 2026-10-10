@@ -130,7 +130,7 @@ function getChannelPath(channelId: string) {
 }
 
 export function VoiceRingManager() {
-    const { voiceRingStates } = useVoiceRingStateStore();
+    const voiceRingStates = useVoiceRingStateStore(s => s.voiceRingStates);
     const userProfiles = useUserProfileStore(s => s.userProfiles);
     const user = useCurrentUserStore(s => s.user);
     const pathname = usePathname();
@@ -138,7 +138,9 @@ export function VoiceRingManager() {
     const { join } = useVoice();
     const { socket } = useSocket();
     const { emitDismissVoiceRing } = useVoiceRingEvents();
-    const { batchUpdateVoiceRingState, removeVoiceRingState, setVoiceRingStates } = useVoiceRingStateStore();
+    const batchUpdateVoiceRingState = useVoiceRingStateStore(s => s.batchUpdateVoiceRingState);
+    const removeVoiceRingState = useVoiceRingStateStore(s => s.removeVoiceRingState);
+    const setVoiceRingStates = useVoiceRingStateStore(s => s.setVoiceRingStates);
 
     const handleVoiceRingDismiss = (channelId: string, userId: string) => {
         emitDismissVoiceRing(channelId, userId);
