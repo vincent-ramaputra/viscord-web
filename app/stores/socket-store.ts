@@ -4,7 +4,7 @@ import { create } from "zustand";
 interface SocketStoreState {
     socket: Socket | undefined,
     initializeSocket: () => Socket,
-    removeSocket: () => any
+    removeSocket: () => void
 }
 
 const URL = 

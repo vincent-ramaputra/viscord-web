@@ -2,14 +2,16 @@
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { api } from "@/services/api";
 import { refreshToken } from "@/services/auth/auth.service";
-import axios, { AxiosInstance, HttpStatusCode } from "axios";
+import { HttpStatusCode, InternalAxiosRequestConfig, isAxiosError } from "axios";
 import { useRouter } from "next/navigation";
-import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useEffect, useRef, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect } from "react";
 
 export interface AuthContextType {
     isAuthorized: boolean;
     handleRefreshToken: () => void;
 }
+
+type RetryableRequestConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 const AuthContext = createContext<AuthContextType>(null!)
 
@@ -38,14 +40,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const refreshTokenInterceptor = api.interceptors.response.use(
             (response) => response,
-            async (error: any) => {
-                if (error.response.status === HttpStatusCode.Unauthorized && !error.config._retry) {
-                    error.config._retry = true;
+            async (error: unknown) => {
+                if (!isAxiosError(error) || !error.config) {
+                    return Promise.reject(error);
+                }
+
+                const config: RetryableRequestConfig = error.config;
+                if (error.response?.status === HttpStatusCode.Unauthorized && !config._retry) {
+                    config._retry = true;
                     const response = await handleRefreshToken();
                     if (!response.success) {
                         return Promise.reject(error);
                     }
-                    return api.request(error.config);
+                    return api.request(config);
                 }
 
                 return Promise.reject(error);

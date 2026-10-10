@@ -1,13 +1,12 @@
 "use client"
-import { ReactNode, useEffect, useState } from "react"
-import styles from "./styles.module.css"
+import { ReactNode, useState } from "react"
 import Tooltip from "../tooltip/tooltip"
 import styled from "styled-components"
 import { LoadingIndicator } from "../loading-indicator/loading-indicator"
 
 interface ButtonSecondaryProps {
     children: ReactNode
-    onClick?: () => any
+    onClick?: () => void
     isLoading?: boolean
     tooltip?: string
     tooltipPosition?: "top" | "bottom" | "left" | "right"

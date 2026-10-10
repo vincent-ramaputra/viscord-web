@@ -4,11 +4,10 @@ import styles from './styles.module.css'
 import TextInput from '@/components/text-input/text-input'
 import TextLink from '@/components/text-link/text-link'
 import ButtonPrimary from "@/components/buttons/button-primary"
-import { FormEvent, FormEventHandler, useEffect, useReducer, useRef, useState } from "react"
-import { login, refreshToken } from "@/services/auth/auth.service"
+import { FormEvent, useEffect, useRef, useState } from "react"
 import { Response } from "@/interfaces/response"
 import { LoginDTO } from "@/interfaces/dto/login.dto"
-import { redirect, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/auth.context"
 import { useLoginMutation } from "@/hooks/mutations"
 

@@ -1,5 +1,5 @@
 
-import { Fragment, ReactNode, useEffect, useMemo, useState } from "react"
+import { ReactNode, useState } from "react"
 import styles from "./styles.module.css"
 import styled from "styled-components"
 import { FaTrash } from "react-icons/fa6"
@@ -12,7 +12,7 @@ import { GuildInvitesSection } from "./guild-invites-section"
 interface GuildSettingsPageProps {
     guildId: string;
     show: boolean;
-    onClose: () => any;
+    onClose: () => void;
 }
 
 interface SidebarItem {
@@ -86,7 +86,7 @@ export default function GuildSettingsPage({ guildId, show, onClose }: GuildSetti
                                         <div className={styles["section-header"]}>
                                             <h2 className="h2">{header}</h2>
                                         </div>
-                                        {sidebarItems[header].map((item: SidebarItem, index: number) => {
+                                        {sidebarItems[header].map((item: SidebarItem) => {
                                             return (
                                                 <SidebarItem isActive={item.id == activeItem} key={item.id} onClick={() => setActiveItem(item.id)}>{item.element}</SidebarItem>
                                             );
@@ -125,7 +125,7 @@ export default function GuildSettingsPage({ guildId, show, onClose }: GuildSetti
     )
 }
 
-function SidebarItem({ isActive, children, onClick }: { isActive: boolean, children: ReactNode, onClick: () => any }) {
+function SidebarItem({ isActive, children, onClick }: { isActive: boolean, children: ReactNode, onClick: () => void }) {
     return (
         <div className={`${styles["sidebar-item-container"]} ${isActive ? styles["sidebar-item-container-active"] : ""}`} onClick={onClick}>
             {children}

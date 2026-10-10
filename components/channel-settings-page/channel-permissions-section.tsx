@@ -6,7 +6,6 @@ import Checkbox from "../checkbox/checkbox";
 import { checkPermission, denyPermission, getPermissionStatus } from "@/helpers/permissions.helper";
 import { Permissions } from "@/enums/permissions.enum";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { Channel } from "@/interfaces/channel";
 import { PermissionOverwrite } from "@/interfaces/permission-ovewrite";
 import { PermissionOverwriteTargetType } from "@/enums/permission-overwrite-target-type.enum";
 import { useSyncChannel, useUpdatePermissionOverwrite } from "@/hooks/mutations";
@@ -18,7 +17,6 @@ import { HiSlash } from "react-icons/hi2";
 import { MdClose } from "react-icons/md";
 import ButtonTertiary from "../buttons/button-tertiary";
 import ButtonSuccess from "../buttons/button-success";
-import { permission } from "process";
 import UserAvatar from "../user-avatar/user-avatar";
 import { useContextMenu } from "@/contexts/context-menu.context";
 import { ContextMenuType } from "@/enums/context-menu-type.enum";
@@ -558,7 +556,8 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
     function setChannelPrivate() {
         if (!channel) return;
 
-        const everyoneOW = channel?.permissionOverwrites.find(ow => ow.targetId === guild!.id)!;
+        const everyoneOW = channel?.permissionOverwrites.find(ow => ow.targetId === guild!.id);
+        if (!everyoneOW) return;
         everyoneOW.deny = denyPermission(BigInt(everyoneOW.deny), Permissions.VIEW_CHANNELS).toString();
     }
 
@@ -669,7 +668,7 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
                                         }}
                                         onContextMenu={(e) => {
                                             e.preventDefault();
-                                            if (ow.targetId === channel.guildId) return;
+                                            if (ow.targetId === channel.guildId || !target) return;
                                             showMenu(e, ContextMenuType.REMOVE_PERMISSION_OVERWRITE, { channel, target, targetType: ow.targetType })
                                         }}
                                     >

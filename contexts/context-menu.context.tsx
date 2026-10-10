@@ -1,12 +1,28 @@
 import ContextMenu from "@/components/context-menu/context-menu";
 import { ContextMenuType } from "@/enums/context-menu-type.enum";
+import { PermissionOverwriteTargetType } from "@/enums/permission-overwrite-target-type.enum";
+import { Channel } from "@/interfaces/channel";
 import ContextMenuState from "@/interfaces/context-menu-state";
+import { Guild } from "@/interfaces/guild";
+import { GuildMember } from "@/interfaces/guild-member";
+import Relationship from "@/interfaces/relationship";
+import { Role } from "@/interfaces/role";
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 
+export interface ContextMenuDataMap {
+    [ContextMenuType.USER]: Relationship;
+    [ContextMenuType.CHANNEL_CATEGORY]: { categoryId: string, guildId: string };
+    [ContextMenuType.CHANNEL_BUTTON]: { channelId: string, guildId: string };
+    [ContextMenuType.GUILD_SIDEBAR]: Guild;
+    [ContextMenuType.REMOVE_PERMISSION_OVERWRITE]: { channel: Channel, target: Role | GuildMember, targetType: PermissionOverwriteTargetType };
+    [ContextMenuType.USER_CONTACT]: never;
+    [ContextMenuType.USER_VC]: never;
+};
+
 interface ContextMenuContextType {
     menuState: ContextMenuState | undefined;
-    showMenu: (evt: React.MouseEvent, type: ContextMenuType, data: any) => void;
+    showMenu: <T extends ContextMenuType>(evt: React.MouseEvent, type: T, data: ContextMenuDataMap[T]) => void;
     hideMenu: () => void;
 }
 
@@ -26,7 +42,7 @@ const ClickTrapOverlay = styled.div`
 export function ContextMenuProvider({ children }: { children: ReactNode }) {
     const [menuState, setMenuState] = useState<ContextMenuState | undefined>();
     const menuRef = useRef<HTMLDivElement>(null!);
-    function showMenu(evt: React.MouseEvent, type: ContextMenuType, data: any) {
+    function showMenu<T extends ContextMenuType>(evt: React.MouseEvent, type: T, data: ContextMenuDataMap[T]) {
         evt.preventDefault();
         setMenuState({
             x: evt.clientX,
@@ -34,7 +50,7 @@ export function ContextMenuProvider({ children }: { children: ReactNode }) {
             visible: true,
             type: type,
             data: data
-        });
+        } as ContextMenuState);
     };
 
     function hideMenu() {

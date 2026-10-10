@@ -5,15 +5,9 @@ import { useUserTypingStore } from "@/app/stores/user-typing-store";
 import SidebarContentContainer from "@/components/guild-sidebar/sidebar-content-container";
 import SidebarHeader from "@/components/guild-sidebar/sidebar-header";
 import UserAvatar from "@/components/user-avatar/user-avatar";
-import { DM_CHANNELS_CACHE } from "@/constants/query-keys";
 import { ChannelType } from "@/enums/channel-type.enum";
-import { getDMChannels } from "@/services/channels/channels.service";
-import { getRelationships } from "@/services/relationships/relationships.service";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { userAgent } from "next/server";
-import { Fragment, ReactNode, useEffect, useState } from "react";
+import { Fragment } from "react";
 import styled from "styled-components";
 
 const Container = styled.div`
@@ -25,12 +19,6 @@ const MenuContainer = styled.div`
     display: flex;
     flex-direction: column;
     gap: 2px;
-    `
-
-const MenuItemSelected = styled.div`
-    background: var(--background-modifier-selected);
-    color: var(--interactive-hover);
-
     `
 
 const MenuItem = styled.div`
@@ -219,7 +207,7 @@ export default function MeSidebarContent() {
             <SidebarContentContainer>
                 <Container>
                     <MenuContainer>
-                        {router && menuItems.map((item, index) => {
+                        {router && menuItems.map((item) => {
                             return (
                                 <MenuItem key={item.id} className={`${pathname === item.path ? "menu-item-active" : ""}`} onClick={() => router.push(item.path)}>
                                     {item.menuItem}

@@ -1,13 +1,10 @@
 "use client"
 import { useGuildsStore } from "@/app/stores/guilds-store";
-import { useDMChannelsQuery, useGuildDetailQuery } from "@/hooks/queries";
-import { Guild } from "@/interfaces/guild";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Page() {
     const { guildId } = useParams();
-    const router = useRouter();
 
     // const { isPending, data: guild } = useGuildDetailQuery(guildId ? guildId.toString() : '');
     const {getGuild} = useGuildsStore();

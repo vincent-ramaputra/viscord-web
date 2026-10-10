@@ -11,7 +11,7 @@ export const INVITE_DURATIONS = {
 }
 
 export function getInviteKeyByValue(value?: number | null) {
-  return Object.entries(INVITE_DURATIONS).find(([_, v]) => v === value)?.[0];
+  return Object.entries(INVITE_DURATIONS).find(([, v]) => v === value)?.[0];
 }
 
 export function isKeyOfInviteDuration(key: string) {

@@ -7,8 +7,8 @@ export class RegisterError extends ErrorResponse {
     password?: string;
     dateOfBirth?: string;
 
-    constructor(obj: any) {
+    constructor(obj: Partial<RegisterError>) {
         super();
-        obj && Object.assign(this, obj);
+        Object.assign(this, obj);
     }
 }

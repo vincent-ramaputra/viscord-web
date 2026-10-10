@@ -1,17 +1,13 @@
 "use client"
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
-import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store";
-import Tooltip from "@/components/tooltip/tooltip";
+import { useGetUserProfile } from "@/app/stores/user-profiles-store";
 import UserAvatar from "@/components/user-avatar/user-avatar";
 import { useContextMenu } from "@/contexts/context-menu.context";
 import { ContextMenuType } from "@/enums/context-menu-type.enum";
-import { RelationshipType, RelationshipTypeString } from "@/enums/relationship-type.enum";
+import { RelationshipType } from "@/enums/relationship-type.enum";
 import { UserStatus, UserStatusString } from "@/enums/user-status.enum";
 import Relationship from "@/interfaces/relationship";
-import { acceptFriendRequest, declineFriendRequest } from "@/services/relationships/relationships.service";
-import { ReactNode, useContext } from "react";
-import { IoMdMore } from "react-icons/io";
-import { MdCheck, MdClose } from "react-icons/md";
+import { ReactNode } from "react";
 import styled from "styled-components";
 
 const UserListItemContainer = styled.div`
@@ -52,7 +48,7 @@ const UsernameText = styled.div`
 `
 
 export default function RelationshipListItem({ relationship, children }: { relationship: Relationship, children: ReactNode }) {
-    const { showMenu, hideMenu } = useContextMenu();
+    const { showMenu } = useContextMenu();
     const { isUserOnline } = useUserPresenceStore();
     const user = useGetUserProfile(relationship.user.id);
     

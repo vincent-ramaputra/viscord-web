@@ -1,14 +1,11 @@
 
-import { Fragment, ReactNode, useEffect, useMemo, useState } from "react"
+import { ReactNode, useEffect, useState } from "react"
 import styles from "./styles.module.css"
-import { useLogoutMutation } from "@/hooks/mutations"
 import styled from "styled-components"
-import { Channel } from "@/interfaces/channel"
 import { FaTrash } from "react-icons/fa6"
 import { ChannelType } from "@/enums/channel-type.enum"
 import { PiHash } from "react-icons/pi"
 import { ModalType } from "@/enums/modal-type.enum"
-import { useRouter } from "next/navigation"
 import { useModal } from "@/contexts/modal.context"
 import { ChannelOverviewSection } from "./channel-overview-section"
 import { useGuildsStore } from "@/app/stores/guilds-store"
@@ -20,7 +17,7 @@ interface ChannelSettingsPageProps {
     guildId: string;
     channelId: string
     show: boolean;
-    onClose: () => any;
+    onClose: () => void;
 }
 
 interface SidebarItem {
@@ -63,6 +60,8 @@ export default function ChannelSettingsPage({ channelId, guildId, show, onClose 
         setActiveItem(sidebarItems[0].id)
     }, [show])
 
+    if (!channel) return;
+
     return (
         <AnimatePresence>
             {show && <motion.div
@@ -89,7 +88,7 @@ export default function ChannelSettingsPage({ channelId, guildId, show, onClose 
                                         {channel.type === ChannelType.Voice && <p>Voice Channel</p>}
                                     </h2>}
                                 </div>
-                                {sidebarItems.map((item: SidebarItem, index: number) => {
+                                {sidebarItems.map((item: SidebarItem) => {
                                     return (
                                         <SidebarItem isActive={item.id == activeItem} key={item.id} onClick={() => setActiveItem(item.id)}>{item.element}</SidebarItem>
                                     );
@@ -131,7 +130,7 @@ export default function ChannelSettingsPage({ channelId, guildId, show, onClose 
     )
 }
 
-function SidebarItem({ isActive, children, onClick }: { isActive: boolean, children: ReactNode, onClick: () => any }) {
+function SidebarItem({ isActive, children, onClick }: { isActive: boolean, children: ReactNode, onClick: () => void }) {
     return (
         <div className={`${styles["sidebar-item-container"]} ${isActive ? styles["sidebar-item-container-active"] : ""}`} onClick={onClick}>
             {children}

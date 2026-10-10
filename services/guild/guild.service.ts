@@ -3,7 +3,6 @@ import { api } from "../api";
 import { AxiosError, HttpStatusCode } from "axios";
 import { Response } from "@/interfaces/response";
 import { CreateGuildDto } from "@/interfaces/dto/create-guild.dto";
-import { formatDynamicAPIAccesses } from "next/dist/server/app-render/dynamic-rendering";
 import { AssignRoleDTO } from "@/interfaces/dto/assign-role.dto";
 import { GuildMember } from "@/interfaces/guild-member";
 import { Role } from "@/interfaces/role";

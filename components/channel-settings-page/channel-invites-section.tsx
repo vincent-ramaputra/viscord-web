@@ -1,12 +1,11 @@
 import { Invite } from "@/interfaces/invite";
-import { getChannelInvites, updatePermissionOverwrite } from "@/services/channels/channels.service";
+import { getChannelInvites } from "@/services/channels/channels.service";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import ButtonDanger from "../buttons/button-danger";
-import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store";
+import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import UserAvatar from "../user-avatar/user-avatar";
-import { IoMdClose } from "react-icons/io";
-import { MdClose, MdDragIndicator } from "react-icons/md";
+import { MdClose } from "react-icons/md";
 import { deleteInvite } from "@/services/invites/invites.service";
 import { ModalType } from "@/enums/modal-type.enum";
 import { useModal } from "@/contexts/modal.context";
@@ -164,7 +163,7 @@ export function ChannelInvitesSection({ channelId, guildId }: ChannelInvitesSect
         <div className="flex flex-col gap-[16px] w-full relative">
             <div className="flex flex-col">
                 <Header>Invites</Header>
-                <DescriptionText>Here's a list of all active invite links You can revoke any one or&nbsp;<a onClick={() => openModal(ModalType.CREATE_INVITE, { channelId, guildId })}>create one</a>.</DescriptionText>
+                <DescriptionText>Here&apos;s a list of all active invite links You can revoke any one or&nbsp;<a onClick={() => openModal(ModalType.CREATE_INVITE, { channelId, guildId })}>create one</a>.</DescriptionText>
                 <div>
                     <ButtonDanger>Pause Invites</ButtonDanger>
                 </div>

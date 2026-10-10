@@ -1,14 +1,12 @@
 import styled from "styled-components"
 import TextInputSecondary from "../text-input/text-input-secondary"
 import { Channel } from "@/interfaces/channel"
-import { useRef, useState } from "react"
+import { useState } from "react"
 import ButtonTertiary from "../buttons/button-tertiary"
 import ButtonSuccess from "../buttons/button-success"
-import { useGuildsQuery } from "@/hooks/queries"
 import { useGuildsStore } from "@/app/stores/guilds-store"
 import { updateChannel } from "@/services/channels/channels.service"
 import { MdInfo } from "react-icons/md"
-import { error } from "console"
 
 const Header = styled.h2`
     font-weight: bold;

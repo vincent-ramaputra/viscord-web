@@ -1,7 +1,7 @@
 "use client"
 
 import styles from "./styles.module.css"
-import { createContext, Dispatch, Fragment, ReactNode, SetStateAction, useContext, useEffect, useState } from "react";
+import { Fragment, ReactNode } from "react";
 import MeSidebarContent from "@/components/sidebar/me-sidebar";
 import styled from "styled-components";
 
@@ -17,17 +17,6 @@ const SidebarContainer = styled.div`
 `
 
 export default function HomeLayout({ children }: HomeLayoutProps) {
-    const [isSettingOpen, setIsSettingOpen] = useState(false);
-
-    useEffect(() => {
-        // if (isSettingOpen) {
-        //     setPrevTitle(document.title);
-        //     document.title = "Discord | Settings";
-        // }
-        // else {
-        //     document.title = prevTitle;
-        // }
-    }, [isSettingOpen])
 
     return (
         <Fragment>

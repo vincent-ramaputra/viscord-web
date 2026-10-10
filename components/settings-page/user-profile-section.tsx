@@ -1,16 +1,13 @@
-import { useGuildsStore } from "@/app/stores/guilds-store"
 import styled from "styled-components"
 import TextInputSecondary from "../text-input/text-input-secondary"
 import { useMemo, useRef, useState } from "react"
 import ButtonPrimary from "../buttons/button-primary"
-import { GuildCard } from "../guild-card/guild-card"
 import ButtonTertiary from "../buttons/button-tertiary"
 import ButtonSuccess from "../buttons/button-success"
-import { useUpdateGuildMutation, useUpdateUserProfileMutation } from "@/hooks/mutations"
+import { useUpdateUserProfileMutation } from "@/hooks/mutations"
 import { MdInfo } from "react-icons/md"
-import { useCurrentUserQuery } from "@/hooks/queries"
 import { useCurrentUserStore } from "@/app/stores/current-user-store"
-import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store"
+import { useUserProfileStore } from "@/app/stores/user-profiles-store"
 import ButtonSecondary from "../buttons/button-secondary"
 import { UserProfile } from "@/interfaces/user-profile"
 import ColorThief from "colorthief"
@@ -22,24 +19,6 @@ const Header = styled.h2`
     margin-bottom: 4px;
 `
 
-const DescriptionText = styled.p`
-    font-size: 14px;
-    gap: 4px;
-    margin-top: 8px;
-    margin-bottom: 20px;
-    line-height: 18px;
-
-    a {
-        color: var(--text-link);
-        font-weight: var(--font-weight-regular);
-        cursor: pointer;
-
-        &:hover {
-        text-decoration: underline;
-        }
-    }
-`
-
 const Label = styled.h4`
     margin-bottom: 8px;
     font-weight: var(--font-weight-medium);
@@ -49,13 +28,6 @@ const Separator = styled.div`
     border-bottom: 1px solid var(--border-subtle);
     margin: 32px 0;
 `
-
-const SettingsDescription = styled.p`
-    color: var(--header-secondary);
-    font-size: var(--text-sm);
-    margin-bottom: 8px;
-`
-
 
 const SaveChangesOverlay = styled.div`
     position: absolute;
@@ -232,7 +204,7 @@ export function UserProfileSection() {
 
         return false;
     }, [profile, updatedProfile]);
-    const { mutateAsync: updateProfile, isPending, error } = useUpdateUserProfileMutation();
+    const { mutateAsync: updateProfile, isPending } = useUpdateUserProfileMutation();
 
     function resetChanges() {
         setUpdatedProfile(profile);

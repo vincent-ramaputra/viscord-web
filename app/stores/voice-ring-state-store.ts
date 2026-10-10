@@ -11,7 +11,7 @@ interface VoiceRingStoreState {
     batchUpdateVoiceRingState: (state: VoiceRingState[]) => void;
 }
 
-export const useVoiceRingStateStore = create<VoiceRingStoreState>((set, get) => ({
+export const useVoiceRingStateStore = create<VoiceRingStoreState>((set) => ({
     voiceRingStates: new Map(),
     setVoiceRingStates: (voiceRingStates: VoiceRingMap) => set({ voiceRingStates }),
     updateVoiceRingState: (voiceRingState: VoiceRingState) => {

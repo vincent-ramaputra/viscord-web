@@ -7,9 +7,8 @@ import ButtonPrimary from "../buttons/button-primary";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import { IoMdArrowBack } from "react-icons/io";
 import { Guild } from "@/interfaces/guild";
-import { MdClose, MdDragIndicator } from "react-icons/md";
+import { MdClose } from "react-icons/md";
 import { Role } from "@/interfaces/role";
-import { useStopSound } from "@/app/stores/audio-store";
 import { getRoleColor, hexToNumber, numberToHex } from "@/helpers/color.helper";
 import Checkbox from "../checkbox/checkbox";
 import { Permissions } from "@/enums/permissions.enum";
@@ -148,15 +147,6 @@ const ActionsColumn = styled.div`
     display: flex;
     align-items: center;
     flex: 1;
-`
-
-const Divider = styled.div`
-    min-height: 1px;
-    max-height: 1px;
-    background-color: var(--border-container);
-    width: 100%;
-    min-width: 100%;
-    margin: 16px 0;
 `
 
 const RoleIconContainer = styled.div`

@@ -1,9 +1,9 @@
 "use client"
-import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { Socket } from "socket.io-client";
 import { useQueryClient } from "@tanstack/react-query";
 import Relationship from "@/interfaces/relationship";
-import { FRIEND_ADDED_EVENT, FRIEND_REMOVED_EVENT, FRIEND_REQUEST_RECEIVED_EVENT, GET_VOICE_STATES_EVENT, GUILD_UPDATE_EVENT, MESSAGE_RECEIVED_EVENT, USER_PRESENCE_UPDATE_EVENT, USER_PROFILE_UPDATE_EVENT, USER_TYPING_EVENT, VOICE_RING_CANCEL, VOICE_RING_DISMISS_EVENT, VOICE_RING_EVENT, VOICE_UPDATE_EVENT } from "@/constants/events";
+import { FRIEND_ADDED_EVENT, FRIEND_REMOVED_EVENT, FRIEND_REQUEST_RECEIVED_EVENT, GET_VOICE_STATES_EVENT, GUILD_UPDATE_EVENT, MESSAGE_RECEIVED_EVENT, USER_PRESENCE_UPDATE_EVENT, USER_PROFILE_UPDATE_EVENT, USER_TYPING_EVENT, VOICE_UPDATE_EVENT } from "@/constants/events";
 import { MESSAGES_CACHE, RELATIONSHIPS_CACHE } from "@/constants/query-keys";
 import { Message } from "@/interfaces/message";
 import { HttpStatusCode } from "axios";
@@ -11,8 +11,8 @@ import { refreshToken } from "@/services/auth/auth.service";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { useUserTypingStore } from "@/app/stores/user-typing-store";
 import { VoiceState } from "@/interfaces/voice-state";
-import { getVoiceStateKey,  useVoiceStateStore } from "@/app/stores/voice-state-store";
-import { VoiceEventDTO } from "@/interfaces/dto/voice-event.dto";
+import { getVoiceStateKey, useVoiceStateStore } from "@/app/stores/voice-state-store";
+import { VoiceEventReceivedDTO } from "@/interfaces/dto/voice-event.dto";
 import { VoiceEventType } from "@/enums/voice-event-type";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import { useSocketStore } from "@/app/stores/socket-store";
@@ -21,7 +21,6 @@ import { useChannelsStore } from "@/app/stores/channels-store";
 import { GuildUpdateDTO } from "@/interfaces/dto/guild-update.dto";
 import { GuildUpdateType } from "@/enums/guild-update-type.enum";
 import { useGuildsStore } from "@/app/stores/guilds-store";
-import { Channel } from "@/interfaces/channel";
 import { GuildMember } from "@/interfaces/guild-member";
 import { UserProfile } from "@/interfaces/user-profile";
 import { UserPresenceUpdateDTO } from "@/interfaces/dto/user-presence-update.dto";
@@ -45,13 +44,14 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     const [isConnected, setIsConnected] = useState(false);
 
     const queryClient = useQueryClient();
-    const { presenceMap, updatePresence } = useUserPresenceStore();
-    const { userProfiles, upsertUserProfile } = useUserProfileStore();
+    const { updatePresence } = useUserPresenceStore();
+    const { upsertUserProfile } = useUserProfileStore();
     const { handleTypingStart, handleTypingStop } = useUserTypingStore();
     const { updateVoiceState, removeVoiceState, setVoiceStates } = useVoiceStateStore();
 
 
-    function handleFriendReceived(payload: Relationship) {;
+    function handleFriendReceived(payload: Relationship) {
+        ;
         upsertUserProfile(payload.user);
         queryClient.setQueryData<Relationship[]>([RELATIONSHIPS_CACHE], (old) => {
             if (!old) {
@@ -87,7 +87,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     function handleMessageReceived(payload: Message) {
         handleTypingStop(payload.channelId, payload.senderId);
         const { getChannel, updateChannel } = useChannelsStore.getState();
-        const { upsertChannel, getGuild, getChannel: getGuildChannel } = useGuildsStore.getState();
+        const { upsertChannel, getChannel: getGuildChannel } = useGuildsStore.getState();
 
         const channel = getChannel(payload.channelId);
         if (channel) {
@@ -120,7 +120,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         handleTypingStart(payload.channelId, payload.userId);
     };
 
-    const handleVoiceStateUpdate = useCallback(async (event: VoiceEventDTO) => {
+    const handleVoiceStateUpdate = useCallback(async (event: VoiceEventReceivedDTO) => {
         const user = useCurrentUserStore.getState().user;
         const { channelId } = useMediasoupStore.getState();
         if (event.type === VoiceEventType.VOICE_LEAVE) {
@@ -152,7 +152,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
             case GuildUpdateType.MEMBER_JOIN: upsertMember(dto.guildId, dto.data); break;
             case GuildUpdateType.MEMBER_LEAVE: removeMember(dto.guildId, dto.data); break;
             case GuildUpdateType.CHANNEL_DELETE: deleteChannel(dto.guildId, dto.data); break;
-            case GuildUpdateType.CHANNEL_UPDATE: upsertChannel(dto.guildId, (dto.data as Channel).id, dto.data); break;
+            case GuildUpdateType.CHANNEL_UPDATE: upsertChannel(dto.guildId, dto.data.id, dto.data); break;
             case GuildUpdateType.MEMBERS_UPDATE: {
                 for (const member of (dto.data as GuildMember[])) {
                     upsertMember(dto.guildId, member);
@@ -185,7 +185,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
             setIsConnected(false);
         };
 
-        const handleConnectError = (error: any) => {
+        const handleConnectError = (error: Error & { description?: unknown }) => {
             // console.log('Socket connection error:', error.description);
             if (error.description === HttpStatusCode.Unauthorized) {
                 refreshToken();

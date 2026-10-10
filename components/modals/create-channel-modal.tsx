@@ -2,7 +2,6 @@ import Checkbox from "@/components/checkbox/checkbox";
 import Modal from "@/components/modals/modal";
 import ButtonPrimary from "@/components/buttons/button-primary";
 import TextInputSecondary from "@/components/text-input/text-input-secondary";
-import { useModal } from "@/contexts/modal.context";
 import { Channel } from "@/interfaces/channel";
 import { ReactNode, useState } from "react";
 import { FaLock } from "react-icons/fa6";
@@ -12,12 +11,7 @@ import styled from "styled-components";
 import ButtonSecondary from "@/components/buttons/button-secondary";
 import { CreateChannelDTO } from "@/interfaces/dto/create-channel.dto";
 import { ChannelType } from "@/enums/channel-type.enum";
-import { createGuildChannel } from "@/services/channels/channels.service";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { GUILDS_CACHE } from "@/constants/query-keys";
-import { Guild } from "@/interfaces/guild";
-import { useGuildsStore } from "@/app/stores/guilds-store";
 import { useCreateGuildChannelMutation } from "@/hooks/mutations";
 
 const ContentContainer = styled.div`

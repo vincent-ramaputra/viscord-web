@@ -6,7 +6,7 @@ export function numberToHex(color: number) {
 }
 
 export function hexToNumber(colorHex: string) {
-    const [_, color] = colorHex.split("#")
+    const [, color] = colorHex.split("#")
     return parseInt(color, 16);
 }
 

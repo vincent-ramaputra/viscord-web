@@ -24,6 +24,7 @@ import { ImPhoneHangUp } from "react-icons/im";
 import { VoiceRingState } from "@/interfaces/voice-ring-state";
 import ColorThief from "colorthief";
 import { useVoice } from "@/hooks/use-voice";
+import { UserData } from "@/interfaces/user-data";
 
 
 const UserProfileHeader = styled.div`
@@ -74,7 +75,7 @@ const CallHeaderContainer = styled.div`
     overflow: hidden;
 `
 
-function HeaderActionButton({ children, onClick, tooltipText }: { children: ReactNode, onClick?: () => any, tooltipText: string }) {
+function HeaderActionButton({ children, onClick, tooltipText }: { children: ReactNode, onClick?: () => void, tooltipText: string }) {
     const [isHovering, setIsHovering] = useState(false);
 
 
@@ -89,7 +90,7 @@ function HeaderActionButton({ children, onClick, tooltipText }: { children: Reac
     )
 }
 
-function SearchBar({ channel }: { channel: Channel }) {
+function SearchBar({ }: { channel: Channel }) {
     return <input />;
 }
 
@@ -244,7 +245,6 @@ function CallHeader({ channel }: { channel: Channel }) {
     const [isHovering, setIsHovering] = useState(false);
     const { user } = useCurrentUserStore();
     const { getUserProfile } = useUserProfileStore();
-    const voiceStates = useChannelVoiceStates(channel.id);
     const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const { join, leave } = useVoice();
 
@@ -256,6 +256,10 @@ function CallHeader({ channel }: { channel: Channel }) {
 
     async function handleLeaveVoiceCall() {
         leave();
+    }
+
+    if (!user) {
+        return <></>;
     }
 
     return (
@@ -300,8 +304,6 @@ function CallHeaderTop({
     onJoinCall: () => void;
 }) {
     const [isHoveringName, setIsHoveringName] = useState(false);
-    const { getUserProfile } = useUserProfileStore();
-    const recipientProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const isTyping = useIsUserTyping(channel.id, recipient.id);
 
     return (
@@ -449,7 +451,6 @@ function VideoView({
 
 function VoiceOnlyView({
     channel,
-    isHovering
 }: {
     channel: Channel;
     isHovering: boolean;
@@ -620,7 +621,7 @@ function CallFooter({
 }: {
     show: boolean;
     channel: Channel;
-    user: any;
+    user: UserData;
     onJoinCall: () => void;
     onLeaveCall: () => void;
 }) {
@@ -660,8 +661,6 @@ function CallFooter({
 function CallFooterWithGradient({
     show,
     isInCall,
-    voiceStates,
-    user,
     onJoinCall,
     onLeaveCall,
     screenShareProducer,
@@ -669,7 +668,7 @@ function CallFooterWithGradient({
     show: boolean;
     isInCall: boolean;
     voiceStates: VoiceState[];
-    user: any;
+    user: UserData;
     onJoinCall: () => void;
     onLeaveCall: () => void;
     screenShareProducer?: Producer;
@@ -693,15 +692,13 @@ function CallFooterWithGradient({
 function CallFooterSimple({
     show,
     isInCall,
-    voiceStates,
-    user,
     onJoinCall,
     onLeaveCall
 }: {
     show: boolean;
     isInCall: boolean;
     voiceStates: VoiceState[];
-    user: any;
+    user: UserData;
     onJoinCall: () => void;
     onLeaveCall: () => void;
 }) {

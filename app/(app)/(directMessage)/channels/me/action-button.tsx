@@ -27,7 +27,7 @@ const ActionButtonContainer = styled.div`
     }
 `
 
-export function ActionButton({ className, children, onClick, tooltipText }: { className?: string, children?: ReactNode, onClick?: () => any, tooltipText: string }) {
+export function ActionButton({ className, children, onClick, tooltipText }: { className?: string, children?: ReactNode, onClick?: () => void, tooltipText: string }) {
     const [isHovering, setIsHovering] = useState(false)
     return (
         <ActionButtonContainer onClick={onClick} className={`relative ${className}`} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>

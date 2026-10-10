@@ -5,7 +5,7 @@ export interface TextLinkProps {
     text: string
     href: string
     fontSize?: number
-    onClick?: () => any
+    onClick?: () => void 
 }
 
 export default function TextLink({text, href, fontSize=14, onClick}: TextLinkProps) {

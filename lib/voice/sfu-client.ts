@@ -2,9 +2,9 @@ import { io, Socket } from "socket.io-client";
 import { ClientToServerEvents, ServerToClientEvents } from "./sfu-protocol";
 
 type RequestEvent = {
-    [K in keyof ClientToServerEvents]: Parameters<ClientToServerEvents[K]> extends [...unknown[], (res: any) => void] ? K : never
+    [K in keyof ClientToServerEvents]: Parameters<ClientToServerEvents[K]> extends [...unknown[], (res: never) => void] ? K : never
 }[keyof ClientToServerEvents];
-type RequestArgs<E extends RequestEvent> = Parameters<ClientToServerEvents[E]> extends [...infer A, any] ? A : never;
+type RequestArgs<E extends RequestEvent> = Parameters<ClientToServerEvents[E]> extends [...infer A, unknown] ? A : never;
 type RequestResult<E extends RequestEvent> = Parameters<ClientToServerEvents[E]> extends [...unknown[], (res: infer R) => void] ? NonNullable<R> : never;
 
 type SendEvent = Exclude<keyof ClientToServerEvents, RequestEvent>
@@ -14,7 +14,7 @@ type ListenEvent = keyof ServerToClientEvents;
 
 export class SfuClient {
     private readonly socket: Socket<ServerToClientEvents, ClientToServerEvents>;
-    private rejectConnect?: (reason?: any) => void;
+    private rejectConnect?: (reason?: unknown) => void;
     
     constructor(url: string, ticket: string) {
         this.socket = io(url, {
@@ -48,6 +48,7 @@ export class SfuClient {
         if (!this.socket.connected) {
             throw new Error(`SFU request ${event} failed: not connected`);
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const res = await this.socket.timeout(5000).emitWithAck(event, ...(args as any));
 
         if (res == null) {
@@ -64,8 +65,10 @@ export class SfuClient {
     }
 
     on<E extends ListenEvent>(event: E, handler: ServerToClientEvents[E]): () => void {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.socket.on(event, handler as any);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const unsubscribe = () => this.socket.off(event, handler as any);
         return unsubscribe;
     }

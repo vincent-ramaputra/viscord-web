@@ -1,5 +1,4 @@
 import { ChannelType } from "@/enums/channel-type.enum";
-import { Guild } from "./guild";
 import { UserProfile } from "./user-profile";
 import { UserChannelState } from "./user-channel-state";
 import { PermissionOverwrite } from "./permission-ovewrite";

@@ -3,7 +3,6 @@ import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { SettingsSectionHeader } from "./settings-page";
 import { MAX_VOLUME, MIN_VOLUME } from "@/constants/app-config";
-import Tooltip from "../tooltip/tooltip";
 
 interface TabItem {
     id: string;
@@ -48,7 +47,7 @@ export function MediaSettingsSection() {
         }
     ];
 
-    const [selectedTab, setSelectedTab] = useState<TabItem>(tabItems[0]);
+    const [selectedTab] = useState<TabItem>(tabItems[0]);
     return (
         <div className="flex gap-[32px] flex-col w-full">
             <SettingsSectionHeader>Voice & Video</SettingsSectionHeader>

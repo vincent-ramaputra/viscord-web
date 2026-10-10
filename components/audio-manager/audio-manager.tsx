@@ -15,7 +15,7 @@ const soundMap: Record<SoundType, { src: string; loop: boolean }> = {
 };
 
 export default function AudioManager() {
-  const audioRefs = useRef<Record<SoundType, HTMLAudioElement>>({} as any);
+  const audioRefs = useRef<Record<SoundType, HTMLAudioElement>>({} as Record<SoundType, HTMLAudioElement>);
 
   useEffect(() => {
     for (const [type, { src, loop }] of Object.entries(soundMap) as [SoundType, { src: string; loop: boolean }][]) {

@@ -1,8 +1,7 @@
 "use client";
 
 import { UserProfile } from "@/interfaces/user-profile";
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, Dispatch, SetStateAction } from "react";
-import { useAppState } from "./app-state.context";
+import React, { createContext, useContext, useState, ReactNode, useCallback } from "react";
 
 type PresenceMap = Record<string, boolean>;
 type UserProfileMap = Record<string, UserProfile>;

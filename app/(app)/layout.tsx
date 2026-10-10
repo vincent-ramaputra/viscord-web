@@ -1,11 +1,8 @@
 "use client"
 
 import styles from "./styles.module.css"
-import { createContext, Dispatch, Fragment, ReactNode, SetStateAction, useContext, useEffect, useState } from "react";
+import { Fragment, ReactNode, useEffect, useState } from "react";
 import UserArea from "@/components/user-area/user-area";
-import SettingsPage from "@/components/settings-page/settings-page";
-import { isSet } from "util/types";
-import { useMessagesQuery } from "@/hooks/queries";
 import { FaCirclePlus, FaCompass } from "react-icons/fa6";
 import { HiDownload } from "react-icons/hi";
 import Tooltip from "@/components/tooltip/tooltip";
@@ -13,12 +10,9 @@ import styled from "styled-components";
 import { usePathname, useRouter } from "next/navigation";
 import { GuildSummary } from "@/interfaces/guild-summary";
 import { ContextMenuProvider } from "@/contexts/context-menu.context";
-import AppStateProvider, { useAppState } from "@/contexts/app-state.context";
 import SocketProvider, { useSocket } from "@/contexts/socket.context";
-import { UserPresenceProvider, useUserPresence } from "@/contexts/user-presence.context";
 import { CLIENT_READY_EVENT, GET_USERS_PRESENCE_EVENT, SUBSCRIBE_EVENTS, USER_PRESENCE_UPDATE_EVENT, USER_PROFILE_UPDATE_EVENT } from "@/constants/events";
 import { UserProfile } from "@/interfaces/user-profile";
-import { unique } from "next/dist/build/utils";
 import { useGetUserProfile, useUserProfileStore } from "../stores/user-profiles-store";
 import { useChannelsStore, useGetDMChannels } from "../stores/channels-store";
 import { Channel } from "@/interfaces/channel";
@@ -26,11 +20,8 @@ import UserAvatar from "@/components/user-avatar/user-avatar";
 import { VoiceAudioRenderer } from "@/components/voice-audio-renderer/voice-audio-renderer";
 import { VoiceRingManager } from "@/components/voice-ring-manager/voice-ring-manager";
 import { ClientReadyResponseDTO } from "@/interfaces/dto/client-ready-response.dto";
-import { useAuth } from "@/contexts/auth.context";
-import { refreshToken } from "@/services/auth/auth.service";
 import { useCurrentUserStore } from "../stores/current-user-store";
 import { useUserPresenceStore } from "../stores/user-presence-store";
-import { PiGithubLogoBold } from "react-icons/pi";
 import { BsGithub } from "react-icons/bs";
 import { ModalProvider, useModal } from "@/contexts/modal.context";
 import { ModalType } from "@/enums/modal-type.enum";
@@ -303,14 +294,13 @@ function GuildListSidebar() {
 
 function AppInitializer({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
-    const [isFriendsStatusLoaded, setIsFriendsStatusLoaded] = useState(false);
     const { socket, isReady } = useSocket();
     // const { data: relationships } = useRelationshipsQuery({ enabled: !!user });
     // const { data: dmChannels } = useDMChannelsQuery({ enabled: !!user })
     const { setUserProfiles } = useUserProfileStore();
     const { setPresenceMap, updatePresence } = useUserPresenceStore();
     const { setChannels } = useChannelsStore();
-    const { setCurrentUser, isAuthorized } = useCurrentUserStore();
+    const { setCurrentUser } = useCurrentUserStore();
     const { setGuilds } = useGuildsStore();
 
 
@@ -331,8 +321,8 @@ function AppInitializer({ children }: { children: ReactNode }) {
 
             const userProfiles: UserProfile[] = [currentUser.profile].concat(data.relationships?.map(rel => rel.user) ?? []);
             const dmRecipients = data.dmChannels ? data.dmChannels
-                .map(channel => channel.recipients?.find(rep => rep.id !== currentUser.id)!)
-                .filter(Boolean) : [];
+                .map(channel => channel.recipients?.find(rep => rep.id !== currentUser.id))
+                .filter(rep => rep !== undefined) : [];
 
             const uniqueUsers = new Map<string, UserProfile>();
             [...userProfiles, ...dmRecipients, currentUser.profile, ...Array.from(guildsMap.values()).flatMap(guild => guild.members.map(m => m.profile))].forEach(user => {
@@ -341,8 +331,8 @@ function AppInitializer({ children }: { children: ReactNode }) {
                 }
             });
 
-            let userProfilesMap: Map<string, UserProfile> = new Map();
-            for (let [key, value] of uniqueUsers) {
+            const userProfilesMap: Map<string, UserProfile> = new Map();
+            for (const [key, value] of uniqueUsers) {
                 eventSubscriptions.push({ event: USER_PROFILE_UPDATE_EVENT, targetId: value.id });
                 eventSubscriptions.push({ event: USER_PRESENCE_UPDATE_EVENT, targetId: value.id });
                 userProfilesMap.set(key, value);
@@ -411,7 +401,7 @@ function AppInitializer({ children }: { children: ReactNode }) {
 }
 
 
-export default function HomeLayout({ children, sidebar }: HomeLayoutProps) {
+export default function HomeLayout({ children }: HomeLayoutProps) {
     // if (!isAuthorized) {
     //     return <div></div>;
     // }

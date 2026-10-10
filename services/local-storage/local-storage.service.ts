@@ -1,5 +1,5 @@
 
-export function setItem(key: string, value: any) {
+export function setItem(key: string, value: unknown) {
     localStorage.setItem(key, JSON.stringify(value));
 }
 

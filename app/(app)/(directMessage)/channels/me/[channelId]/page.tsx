@@ -1,6 +1,5 @@
 "use client"
 import { useChannelsStore, } from "@/app/stores/channels-store";
-import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { useTypingUsersFromChannel } from "@/app/stores/user-typing-store";
 import { LoadingIndicator } from "@/components/loading-indicator/loading-indicator";
@@ -13,7 +12,7 @@ import { Message } from "@/interfaces/message";
 import { sendTypingStatus } from "@/services/channels/channels.service";
 import { dateToShortDate } from "@/utils/date.utils";
 import { useParams } from "next/navigation"
-import { Fragment, KeyboardEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { Fragment, KeyboardEvent, useEffect, useRef, useState } from "react";
 import { useChannelReadState } from "@/hooks/use-channel-read-state";
 import { FaCirclePlus } from "react-icons/fa6";
 import styled from "styled-components";
@@ -150,7 +149,7 @@ const LastReadDividerLine = styled.div`
 
 
 
-function TextInputItem({ channel, onSubmit }: { channel: Channel, onSubmit: (message: SendMessageInput) => any }) {
+function TextInputItem({ channel, onSubmit }: { channel: Channel, onSubmit: (message: SendMessageInput) => void }) {
     const [inputHeight, setInputHeight] = useState(LINE_HEIGHT + VERTICAL_PADDING)
     const [isTypingStatusCooldown, setTypingStatusCooldown] = useState(false);
 
@@ -203,7 +202,7 @@ function formatTyping(names: string[]) {
 
 export default function Page() {
     const { channelId } = useParams();
-    const { getChannel, updateChannel } = useChannelsStore();
+    const { getChannel } = useChannelsStore();
     // const [channel, setChannel] = useState<Channel>(getChannel(channelId as string)!);
     const [attachments, setAttachments] = useState<File[]>([]);
     const channel = getChannel(channelId as string);
@@ -219,7 +218,6 @@ export default function Page() {
 
         return groups;
     }, {} as Record<string, Message[]>);
-    const { user } = useCurrentUserStore();
     const { getUserProfile } = useUserProfileStore();
     const typingUsers = useTypingUsersFromChannel(channelId as string);
     const { mutate: sendMessage } = useSendMessageMutation();

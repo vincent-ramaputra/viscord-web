@@ -1,4 +1,4 @@
-import { ChangeEvent, Dispatch, SetStateAction, useState } from "react";
+import { ChangeEvent, useState } from "react";
 import Modal from "./modal";
 import styled from "styled-components";
 import Image from "next/image";
@@ -6,11 +6,9 @@ import { FaChevronRight } from "react-icons/fa6";
 import TextInput from "../text-input/text-input";
 import ButtonPrimary from "../buttons/button-primary";
 import Link from "next/link";
-import { QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { CreateGuildDto } from "@/interfaces/dto/create-guild.dto";
 import { createGuild } from "@/services/guild/guild.service";
-import { GUILDS_CACHE } from "@/constants/query-keys";
-import { Guild } from "@/interfaces/guild";
 import { useGuildsStore } from "@/app/stores/guilds-store";
 
 const ModalContentContainer = styled.div`
@@ -101,16 +99,13 @@ export function CreateGuildModal({ onClose }: { onClose: () => void }) {
     const [serverName, setServerName] = useState('');
     const [activeContent, setActiveContent] = useState<ModalContent>(ModalContent.Main);
     const [icon, setIcon] = useState<File>()
-    const [errorMessage, setErrorMessage] = useState<string>();
 
-    const queryClient = useQueryClient();
     const { upsertGuild: addGuild } = useGuildsStore();
 
-    const { mutate: createGuildMutation, isPending } = useMutation({
+    const { mutate: createGuildMutation } = useMutation({
         mutationFn: (dto: CreateGuildDto) => createGuild(dto),
         onSuccess: (response) => {
             if (!response.success) {
-                setErrorMessage(response.message as string);
                 return;
             }
 
@@ -118,9 +113,6 @@ export function CreateGuildModal({ onClose }: { onClose: () => void }) {
 
             onClose();
         },
-        onError: (error) => {
-            setErrorMessage("Unknown error occurred");
-        }
     })
 
     function handleChangeIcon(e: ChangeEvent<HTMLInputElement>) {
@@ -132,10 +124,8 @@ export function CreateGuildModal({ onClose }: { onClose: () => void }) {
 
     function handleCreateGuild() {
         if (!serverName) {
-            setErrorMessage("Server name cannot be empty");
             return;
         }
-        setErrorMessage(undefined);
         createGuildMutation({ name: serverName, iconImage: icon })
     }
 
@@ -184,7 +174,7 @@ export function CreateGuildModal({ onClose }: { onClose: () => void }) {
                         label="Server Name"
                         onChange={setServerName}
                         value={serverName} />
-                    <p className="mt-[8px] mb-[4px] text-[12px] text-[var(--text-muted)] font-normal">By creating a server, you agree to Viscord's <Link href="" className="text-[var(--text-link)]">Community's Guildlines</Link></p>
+                    <p className="mt-[8px] mb-[4px] text-[12px] text-[var(--text-muted)] font-normal">By creating a server, you agree to Viscord&apos;s <Link href="" className="text-[var(--text-link)]">Community&apos;s Guildlines</Link></p>
                 </div>
                 <ModalFooterContainer>
                     <div className="w-full flex justify-between">

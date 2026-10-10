@@ -6,5 +6,5 @@ export interface CreateProducerDTO {
     kind: MediaKind;
     rtpParameters: RtpParameters;
     paused: boolean;
-    appData: any;
+    appData: { mediaTag: 'mic' | 'screen' };
 }

@@ -1,7 +1,6 @@
 "use client"
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styles from './styles.module.css'
-import ButtonPrimary from "../buttons/button-primary";
 
 export interface TextAreaProps {
     label: string
@@ -12,7 +11,7 @@ export interface TextAreaProps {
     placeholder?: string
     children?: ReactNode
 
-    onChange: (val: string) => any
+    onChange: (val: string) => void 
 }
 
 export default function TextArea({children, label, placeholder, isRequired = false, helper, value, onChange, errorMessage}: TextAreaProps) {
