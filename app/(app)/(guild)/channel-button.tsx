@@ -185,7 +185,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     const { openModal } = useModal();
     const { openSettings } = useSettingsOverlay();
     const voiceStates = useChannelVoiceStates(channel.id);
-    const { activeSpeakers } = useMediasoupStore();
+    const activeSpeakers = useMediasoupStore(s => s.activeSpeakers);
     const { join, channelId: voiceChannelId } = useVoice();
     const user = useCurrentUserStore(s => s.user);
     const isInThisCall = voiceChannelId === channel.id;

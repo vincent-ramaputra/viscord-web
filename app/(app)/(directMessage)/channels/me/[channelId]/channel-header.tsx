@@ -373,7 +373,8 @@ function CallContent({
     channel: Channel;
     isHovering: boolean;
 }) {
-    const { consumers, producers } = useMediasoupStore();
+    const consumers = useMediasoupStore(s => s.consumers);
+    const producers = useMediasoupStore(s => s.producers);
     const screenShareConsumers = Array.from(consumers.values()).filter(c => c.appData.mediaTag === 'screen');
     const screenShareProducer = Array.from(producers.values()).find(c => c.appData.mediaTag === 'screen');
     const hasScreenShare = screenShareConsumers.length > 0 || screenShareProducer;
@@ -402,7 +403,9 @@ function VideoView({
     channel: Channel;
     isHovering: boolean;
 }) {
-    const { consumers, producers, activeSpeakers } = useMediasoupStore();
+    const consumers = useMediasoupStore(s => s.consumers);
+    const producers = useMediasoupStore(s => s.producers);
+    const activeSpeakers = useMediasoupStore(s => s.activeSpeakers);
     const { getUserProfile } = useUserProfileStore();
     const voiceRings = useVoiceRingStateStore(useShallow(s => {
         return Array.from(s.voiceRingStates.entries())
@@ -462,7 +465,7 @@ function VoiceOnlyView({
 }) {
     const user = useCurrentUserStore(s => s.user);
     const { getUserProfile } = useUserProfileStore();
-    const { activeSpeakers } = useMediasoupStore();
+    const activeSpeakers = useMediasoupStore(s => s.activeSpeakers);
     const voiceRings = useVoiceRingStateStore(useShallow(s => {
         return Array.from(s.voiceRingStates.entries())
             .filter(([key]) => key.startsWith(channel.id))
@@ -634,7 +637,8 @@ function CallFooter({
     onJoinCall: () => void;
     onLeaveCall: () => void;
 }) {
-    const { consumers, producers } = useMediasoupStore();
+    const consumers = useMediasoupStore(s => s.consumers);
+    const producers = useMediasoupStore(s => s.producers);
     const voiceStates = useChannelVoiceStates(channel.id);
     const { channelId } = useVoice();
     const screenShareConsumers = Array.from(consumers.values()).filter(c => c.appData.mediaTag === 'screen');
