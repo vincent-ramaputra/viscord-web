@@ -132,7 +132,7 @@ function getChannelPath(channelId: string) {
 export function VoiceRingManager() {
     const { voiceRingStates } = useVoiceRingStateStore();
     const { getUserProfile } = useUserProfileStore();
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const pathname = usePathname();
     const router = useRouter();
     const { join } = useVoice();

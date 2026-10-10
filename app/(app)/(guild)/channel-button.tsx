@@ -187,7 +187,7 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     const voiceStates = useChannelVoiceStates(channel.id);
     const { activeSpeakers } = useMediasoupStore();
     const { join, channelId: voiceChannelId } = useVoice();
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const isInThisCall = voiceChannelId === channel.id;
     // Read before the voice state map below, which shadows `user` with each participant's profile.
     const currentUserId = user?.id;

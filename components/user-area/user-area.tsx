@@ -197,7 +197,7 @@ function Voice() {
 }
 
 export default function UserArea() {
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const [isHovering, setIsHovering] = useState(false);
     const [showProfileCard, setShowProfileCard] = useState(false);
     const profileCardRef = useRef<HTMLDivElement>(null!)

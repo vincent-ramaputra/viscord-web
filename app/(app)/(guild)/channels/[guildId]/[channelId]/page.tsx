@@ -246,7 +246,7 @@ function formatTyping(names: string[]) {
 
 export default function Page() {
     const { guildId, channelId } = useParams();
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const { getGuild } = useGuildsStore();
     const guild = getGuild(guildId as string);
     const channel = guild?.channels.find(ch => ch.id == channelId);

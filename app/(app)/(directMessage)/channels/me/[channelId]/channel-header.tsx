@@ -244,7 +244,7 @@ function UserTile({ user, showDisplayName, isSpeaking, isMuted = false, isDeafen
 // Main CallHeader component
 function CallHeader({ channel }: { channel: Channel }) {
     const [isHovering, setIsHovering] = useState(false);
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const { getUserProfile } = useUserProfileStore();
     const recipient: UserProfile = getUserProfile(channel.recipients![0].id) || channel.recipients![0];
     const { join, leave } = useVoice();
@@ -460,7 +460,7 @@ function VoiceOnlyView({
     channel: Channel;
     isHovering: boolean;
 }) {
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const { getUserProfile } = useUserProfileStore();
     const { activeSpeakers } = useMediasoupStore();
     const voiceRings = useVoiceRingStateStore(useShallow(s => {

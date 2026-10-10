@@ -298,7 +298,7 @@ function AppInitializer({ children }: { children: ReactNode }) {
     const { setUserProfiles } = useUserProfileStore();
     const { setPresenceMap, updatePresence } = useUserPresenceStore();
     const setChannels = useChannelsStore(s => s.setChannels);
-    const { setCurrentUser } = useCurrentUserStore();
+    const setCurrentUser = useCurrentUserStore(s => s.setCurrentUser);
     const { setGuilds } = useGuildsStore();
 
 

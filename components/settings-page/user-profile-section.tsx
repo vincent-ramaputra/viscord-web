@@ -193,7 +193,7 @@ export const UserProfilePreviewCard = ({ user }: { user: UserProfile }) => {
     );
 }
 export function UserProfileSection() {
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const {getUserProfile} = useUserProfileStore();
     const profile = getUserProfile(user!.id)!;
     const [updatedProfile, setUpdatedProfile] = useState(profile);

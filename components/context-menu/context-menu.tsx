@@ -153,7 +153,7 @@ function ChannelCategoryContextMenu({ categoryId, guildId }: { categoryId: strin
     const { getGuild } = useGuildsStore();
     const guild = getGuild(guildId)!;
     const category = guild.channels.find(ch => ch.id === categoryId)!;
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild, category);
 
     return (
@@ -190,7 +190,7 @@ function ChannelButtonContextMenu({ channelId, guildId }: { channelId: string, g
     const guild = getGuild(guildId)!;
     const channel = guild.channels.find(ch => ch.id === channelId)!;
     const parent = guild.channels.find(ch => ch.id === channel.parent?.id);
-    const { user } = useCurrentUserStore();
+    const user = useCurrentUserStore(s => s.user);
     const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild, channel, parent);
 
     return (
