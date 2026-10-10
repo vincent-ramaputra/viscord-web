@@ -1,4 +1,4 @@
-import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store";
+import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import ButtonPrimary from "@/components/buttons/button-primary";
 import { RELATIONSHIPS_CACHE } from "@/constants/query-keys";
 import Relationship from "@/interfaces/relationship";
@@ -106,7 +106,7 @@ export function AddFriendTab() {
                     })
                 }
             },
-            onError: (err) => {
+            onError: () => {
                 setResponseText("An error occurred while sending the friend request.");
                 setResponseSuccess(false);
             }

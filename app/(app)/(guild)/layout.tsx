@@ -3,12 +3,10 @@
 import SidebarContentContainer from "@/components/guild-sidebar/sidebar-content-container";
 import SidebarHeader from "@/components/guild-sidebar/sidebar-header";
 import { ChannelType } from "@/enums/channel-type.enum";
-import { Channel } from "@/interfaces/channel";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, ReactNode, useEffect, useRef, useState } from "react";
 import { FaAngleDown, FaGear } from "react-icons/fa6";
 import styled from "styled-components";
-import { Router } from "next/router";
 import { ChannelCategory } from "./channel-category";
 import styles from "./styles.module.css"
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
@@ -18,10 +16,8 @@ import { ContextMenuType } from "@/enums/context-menu-type.enum";
 import { useGuildsStore } from "@/app/stores/guilds-store";
 import { Guild } from "@/interfaces/guild";
 import { LuLogOut } from "react-icons/lu";
-import { useLeaveGuildMutation } from "@/hooks/mutations";
 import { useModal } from "@/contexts/modal.context";
 import { ModalType } from "@/enums/modal-type.enum";
-import { UserPresenceProvider } from "@/contexts/user-presence.context";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
 import { Permissions } from "@/enums/permissions.enum";
 import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
@@ -234,7 +230,7 @@ export default function Page({ children }: { children: ReactNode }) {
                                     return checkPermission(permission, Permissions.VIEW_CHANNELS);
                                 });
 
-                                return <ChannelCategory key={channel.id} channel={channel} children={visibleChannels}></ChannelCategory>
+                                return <ChannelCategory key={channel.id} category={channel} channels={visibleChannels}></ChannelCategory>
                             })}
                         </div>
                     </SidebarContentContainer>

@@ -1,3 +1,4 @@
+import { VoiceStateData } from "@/interfaces/dto/voice-event.dto";
 import { VoiceState } from "@/interfaces/voice-state";
 import { useMemo } from "react";
 import { create } from "zustand";
@@ -9,7 +10,7 @@ export type VoiceStatePatch = Partial<Pick<VoiceState, 'isMuted' | 'isDeafened'>
 interface VoiceStateStoreState {
     voiceStates: Map<string, VoiceState>;
     setVoiceStates: (voiceStates: VoiceStateMap) => void;
-    updateVoiceState: (voiceState: VoiceState) => void;
+    updateVoiceState: (voiceState: VoiceStateData) => void;
     removeVoiceState: (channelId: string, userId: string) => void;
     getVoiceState: (channelId: string, userId: string) => void;
 }
@@ -17,7 +18,7 @@ interface VoiceStateStoreState {
 export const useVoiceStateStore = create<VoiceStateStoreState>((set, get) => ({
     voiceStates: new Map(),
     setVoiceStates: (voiceStates: VoiceStateMap) => set({ voiceStates }),
-    updateVoiceState: (voiceState: VoiceState) => {
+    updateVoiceState: (voiceState: VoiceStateData) => {
         set(state => {
             const newVoiceStates = new Map(state.voiceStates);
             const oldVoiceState = newVoiceStates.get(

@@ -4,7 +4,7 @@ import Tooltip from "../tooltip/tooltip";
 
 interface TransparentButtonProps {
     children: ReactNode
-    onClick?: () => any
+    onClick?: () => void
     isLoading?: boolean
     tooltip?: string
     tooltipPosition?: "top" | "bottom" | "left" | "right"

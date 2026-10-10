@@ -1,4 +1,4 @@
-import { CURRENT_USER_CACHE, GUILDS_CACHE, MESSAGES_CACHE, RELATIONSHIPS_CACHE } from "@/constants/query-keys";
+import { CURRENT_USER_CACHE, MESSAGES_CACHE, RELATIONSHIPS_CACHE } from "@/constants/query-keys";
 import { RelationshipType } from "@/enums/relationship-type.enum";
 import { SendMessageInput } from "@/interfaces/dto/create-message.dto";
 import Relationship from "@/interfaces/relationship";
@@ -9,26 +9,22 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Message } from "@/interfaces/message";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { MessageStatus } from "@/enums/message-status.enum";
-import { useChannelsStore, useGetChannel } from "@/app/stores/channels-store";
+import { useChannelsStore } from "@/app/stores/channels-store";
 import { useGuildsStore } from "@/app/stores/guilds-store";
 import { createDMChannel, createGuildChannel, deleteChannel, deletePermissionOverwrite, syncChannel, updatePermissionOverwrite } from "@/services/channels/channels.service";
 import { CreateChannelDTO } from "@/interfaces/dto/create-channel.dto";
-import { Guild } from "@/interfaces/guild";
 import { joinGuild } from "@/services/invites/invites.service";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { assignRoleMembers, createRole, deleteRole, leaveGuild, updateGuild, updateMember, updateRole } from "@/services/guild/guild.service";
 import { AssignRoleDTO } from "@/interfaces/dto/assign-role.dto";
 import { UpdateMemberDTO } from "@/interfaces/dto/update-member.dto";
 import { Role } from "@/interfaces/role";
-import { PermissionOverwrite } from "@/interfaces/permission-ovewrite";
 import { updatePermissionOverwriteDTO } from "@/interfaces/dto/update-permission-overwrite.dto";
-import { Channel } from "@/interfaces/channel";
 import { UpdateGuildDTO } from "@/interfaces/dto/update-guild.dto";
 import { DeleteRoleDTO } from "@/interfaces/dto/delete-role.dto";
 import { UpdateUserProfileDto } from "@/interfaces/dto/update-user-profile.dto";
 import { updateUserProfile } from "@/services/user-profiles/user-profiles.service";
 import { LoginDTO } from "@/interfaces/dto/login.dto";
-import { CreateAttachmentDTO } from "@/interfaces/dto/create-attachment.dto";
 import { uploadToPresignedUrl } from "@/services/s3/s3.service";
 import { useUploadProgressStore } from "@/app/stores/upload-progress-store";
 
@@ -419,7 +415,7 @@ export function useDeletePermissionOverwrite() {
 export function useUpdateGuildMutation() {
     return useMutation({
         mutationFn: (dto: UpdateGuildDTO) => updateGuild(dto),
-        onSuccess: (response, dto) => {
+        onSuccess: (response) => {
             if (!response.success) throw new Error(response.message as string);
 
             const { upsertGuild } = useGuildsStore.getState();

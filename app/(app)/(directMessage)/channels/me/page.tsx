@@ -1,20 +1,14 @@
 "use client"
 import ButtonPrimary from "@/components/buttons/button-primary";
 import styled from "styled-components";
-import { FormEvent, Fragment, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import { UserStatus, UserStatusString } from "@/enums/user-status.enum";
+import { ComponentType, Fragment, ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import Relationship from "@/interfaces/relationship";
-import { acceptFriendRequest, addFriend, declineFriendRequest, getRelationships } from "@/services/relationships/relationships.service";
 import { RelationshipType } from "@/enums/relationship-type.enum";
 import TextInput from "@/components/text-input/text-input";
-import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RELATIONSHIPS_CACHE } from "@/constants/query-keys";
-import { useDMChannelsQuery, useRelationshipsQuery } from "@/hooks/queries";
-import { useRouter } from "next/navigation";
+import { useRelationshipsQuery } from "@/hooks/queries";
 import { AddFriendTab } from "./add-friend-tab";
 import { AllFriendsTab, OnlineFriendsTab, PendingRequestsTab } from "./relationships-tab";
 import ContentHeader from "@/app/(app)/content-header";
-import { useUserPresence } from "@/contexts/user-presence.context";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
 
 const HeaderMain = styled.div`
@@ -97,10 +91,16 @@ const FriendListContainer = styled.div`
     }
 
 `
-interface TabItem<T> {
+
+interface TabButtonProps {
+    onClick?: () => void;
+    className?: string
+    children: ReactNode
+}
+interface TabItem {
     id: string
     // filter: (rel: Relationship) => boolean
-    type: T
+    type: ComponentType<TabButtonProps>
     show: () => boolean
     button: ReactNode
 }
@@ -109,7 +109,7 @@ export default function FriendListPage() {
     const [searchText, setSearchText] = useState('');
     const { presenceMap } = useUserPresenceStore();
     const { data: relationships } = useRelationshipsQuery();
-    const filterButtons: TabItem<any>[] = [
+    const filterButtons: TabItem[] = [
         {
             id: "online",
             show: () => true,
@@ -146,7 +146,7 @@ export default function FriendListPage() {
         }
     ];
 
-    const [activeTab, setActiveTab] = useState<TabItem<any>>(filterButtons[0]);
+    const [activeTab, setActiveTab] = useState<TabItem>(filterButtons[0]);
 
     const filterFunction = useCallback((rel: Relationship) => {
         if (activeTab.id === 'online') {

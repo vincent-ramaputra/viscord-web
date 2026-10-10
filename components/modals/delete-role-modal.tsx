@@ -1,16 +1,10 @@
 
 import Modal from "@/components/modals/modal";
-import { Channel } from "@/interfaces/channel";
-import { ReactNode, useState } from "react";
 import { MdClose } from "react-icons/md";
 import styled from "styled-components";
 import ButtonSecondary from "@/components/buttons/button-secondary";
-import { ChannelType } from "@/enums/channel-type.enum";
-import { useRouter } from "next/navigation";
 import ButtonDanger from "../buttons/button-danger";
-import { useGetGuild } from "@/app/stores/guilds-store";
-import { useDeleteGuildChannelMutation, useDeleteRoleMutation } from "@/hooks/mutations";
-import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
+import { useDeleteRoleMutation } from "@/hooks/mutations";
 import { Role } from "@/interfaces/role";
 
 const ContentContainer = styled.div`
@@ -63,27 +57,6 @@ const ContentBody = styled.div`
     }
 `
 
-const RadioButtonContainer = styled.div`
-    padding: 12px 16px;
-    display: flex;
-    cursor: pointer;
-    gap: 8px;
-    align-items: center;
-    border-radius: var(--rounded-lg);
-
-    &:hover, &.selected {
-        background: var(--background-mod-subtle);
-    }
-
-    margin-bottom: 4px;
-`
-
-const RadioInput = styled.div`
-    height: 24px;
-    width: 24px;
-    border-radius: calc(infinity * 1px);
-`
-
 const ContentSection = styled.div`
     margin-bottom: 20px;
     line-height: 1.25;
@@ -105,16 +78,10 @@ const ContentFooter = styled.div`
 `
 
 export function DeleteRoleModal({ role, onClose }: { role: Role, onClose: () => void }) {
-    const [error, setError] = useState<string | undefined>(undefined);
-    const router = useRouter();
     const { mutateAsync: deleteRole, isPending } = useDeleteRoleMutation();
 
     async function handleCreateChannel() {
-        const response = await deleteRole({ roleId: role.id, guildId: role.guildId });
-        if (!response.success) {
-            setError(response.message as string);
-            return;
-        }
+        await deleteRole({ roleId: role.id, guildId: role.guildId });
 
         onClose();
     }

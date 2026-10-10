@@ -3,12 +3,14 @@ import ChannelSettingsPage from "@/components/channel-settings-page/channel-sett
 import GuildSettingsPage from "@/components/guild-settings-page.tsx/guild-settings-page";
 import SettingsPage from "@/components/settings-page/settings-page";
 import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { ReactNode, useEffect } from "react";
 
 
 
 export function SettingsOverlayProvider({ children }: { children: ReactNode }) {
     const { metadata, closeSettings } = useSettingsOverlay();
+    const channelSettings = metadata?.type === SettingsOverlayType.CHANNEL_SETTINGS ? metadata.data: undefined;
+    const guildSettings = metadata?.type === SettingsOverlayType.GUILD_SETTINGS ? metadata.data: undefined;
 
     function closeSettingsKeyListener(event: KeyboardEvent) {
         if (event.key === "Escape") {
@@ -28,8 +30,8 @@ export function SettingsOverlayProvider({ children }: { children: ReactNode }) {
         <div>
             {children}
             <SettingsPage show={metadata?.type === SettingsOverlayType.SETTINGS} onClose={closeSettings} />
-            <ChannelSettingsPage channelId={metadata?.data?.channelId} guildId={metadata?.data?.guildId} show={metadata?.type === SettingsOverlayType.CHANNEL_SETTINGS} onClose={closeSettings} />
-            <GuildSettingsPage guildId={metadata?.data?.guildId} show={metadata?.type === SettingsOverlayType.GUILD_SETTINGS} onClose={closeSettings} />
+            <ChannelSettingsPage channelId={channelSettings?.channelId ?? ''} guildId={channelSettings?.guildId ?? ''} show={metadata?.type === SettingsOverlayType.CHANNEL_SETTINGS} onClose={closeSettings} />
+            <GuildSettingsPage guildId={guildSettings?.guildId ?? ''} show={metadata?.type === SettingsOverlayType.GUILD_SETTINGS} onClose={closeSettings} />
         </div>
     )
 }

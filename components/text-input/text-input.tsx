@@ -1,7 +1,6 @@
 "use client"
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styles from './styles.module.css'
-import ButtonPrimary from "../buttons/button-primary";
 
 export interface TextInputProps {
     label: string
@@ -13,7 +12,7 @@ export interface TextInputProps {
     placeholder?: string
     children?: ReactNode
 
-    onChange: (val: string) => any
+    onChange: (val: string) => void
 }
 
 export default function TextInput({children, label, type = "text", placeholder, isRequired = false, helper, value, onChange, errorMessage}: TextInputProps) {

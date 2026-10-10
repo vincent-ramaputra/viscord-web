@@ -1,7 +1,6 @@
 
 import Modal from "@/components/modals/modal";
 import { Channel } from "@/interfaces/channel";
-import { ReactNode, useState } from "react";
 import { MdClose } from "react-icons/md";
 import styled from "styled-components";
 import ButtonSecondary from "@/components/buttons/button-secondary";
@@ -41,7 +40,6 @@ const ContentHeader = styled.div`
     }
 `
 
-
 const ContentBody = styled.div`
     padding: 8px 16px 0 24px;
 
@@ -60,27 +58,6 @@ const ContentBody = styled.div`
         font-weight: var(--font-weight-medium);
         margin-bottom: 8px;
     }
-`
-
-const RadioButtonContainer = styled.div`
-    padding: 12px 16px;
-    display: flex;
-    cursor: pointer;
-    gap: 8px;
-    align-items: center;
-    border-radius: var(--rounded-lg);
-
-    &:hover, &.selected {
-        background: var(--background-mod-subtle);
-    }
-
-    margin-bottom: 4px;
-`
-
-const RadioInput = styled.div`
-    height: 24px;
-    width: 24px;
-    border-radius: calc(infinity * 1px);
 `
 
 const ContentSection = styled.div`
@@ -104,18 +81,13 @@ const ContentFooter = styled.div`
 `
 
 export function DeleteChannelModal({ channel, onClose }: { channel: Channel, onClose: () => void }) {
-    const [error, setError] = useState<string | undefined>(undefined);
     const router = useRouter();
     const { closeSettings } = useSettingsOverlay();
     const guild = useGetGuild(channel.guildId);
     const { mutateAsync: deleteChannel, isPending } = useDeleteGuildChannelMutation(channel.guildId);
 
     async function handleCreateChannel() {
-        const response = await deleteChannel(channel.id);
-        if (!response.success) {
-            setError(response.message as string);
-            return;
-        }
+        await deleteChannel(channel.id);
 
         const remainingChannels = guild?.channels.filter(ch => ch.id !== channel.id && ch.type === ChannelType.Text) ?? [];
 

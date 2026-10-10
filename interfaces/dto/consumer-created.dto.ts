@@ -6,5 +6,5 @@ export interface ConsumerCreatedDTO {
     userId: string;
     kind: 'audio' | 'video';
     rtpParameters: RtpParameters;
-    appData: any;
+    appData: { mediaTag: 'mic' | 'screen' };
 }

@@ -1,9 +1,6 @@
-import { Fragment, ReactNode, useEffect, useState } from "react"
+import { ReactNode, useState } from "react"
 import styles from "./styles.module.css"
-import TextInput from "../text-input/text-input"
 import { LuLogOut } from "react-icons/lu"
-import { FaSignOutAlt } from "react-icons/fa"
-import { VscSignOut } from "react-icons/vsc"
 import IconTwitter from "../social-media/twitter"
 import Link from "next/link"
 import IconInstagram from "../social-media/instagram"
@@ -17,11 +14,10 @@ import { MediaSettingsSection } from "./media-settings-section"
 import styled from "styled-components"
 import { AnimatePresence, motion } from "framer-motion"
 import { UserProfileSection } from "./user-profile-section"
-import { useAuth } from "@/contexts/auth.context"
 
 interface SettingsPageProps {
     show: boolean
-    onClose: () => any
+    onClose: () => void
 }
 
 interface SidebarItem {
@@ -36,10 +32,8 @@ export const SettingsSectionHeader = styled.h3`
 `
 
 export default function SettingsPage({ show, onClose }: SettingsPageProps) {
-    const [searchText, setSearchText] = useState("")
     const headers: string[] = ["User Settings", "Billing Settings", "App Settings", "Activity Settings"];
     const { mutateAsync: logoutMutation } = useLogoutMutation();
-    const { } = useAuth();
 
     const sidebarItems: Record<string, SidebarItem[]> = {
         "User Settings": [
@@ -210,7 +204,7 @@ export default function SettingsPage({ show, onClose }: SettingsPageProps) {
                                         <div className={styles["section-header"]}>
                                             <h2>{header}</h2>
                                         </div>
-                                        {sidebarItems[header].map((item: SidebarItem, index: number) => {
+                                        {sidebarItems[header].map((item: SidebarItem) => {
                                             return (
                                                 <SidebarItem isActive={item.id == activeItem} key={item.id} onClick={() => setActiveItem(item.id)}>{item.element}</SidebarItem>
                                             );
@@ -267,7 +261,7 @@ export default function SettingsPage({ show, onClose }: SettingsPageProps) {
     )
 }
 
-function SidebarItem({ isActive, children, onClick }: { isActive: boolean, children: ReactNode, onClick: () => any }) {
+function SidebarItem({ isActive, children, onClick }: { isActive: boolean, children: ReactNode, onClick: () => void }) {
     return (
         <div className={`${styles["sidebar-item-container"]} ${isActive ? styles["sidebar-item-container-active"] : ""}`} onClick={onClick}>
             {children}

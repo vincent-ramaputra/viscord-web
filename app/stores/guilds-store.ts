@@ -3,8 +3,6 @@ import { Channel } from "@/interfaces/channel";
 import { Guild } from "@/interfaces/guild";
 import { GuildMember } from "@/interfaces/guild-member";
 import { Role } from "@/interfaces/role";
-import { UserProfile } from "@/interfaces/user-profile";
-import { IoMdReturnLeft } from "react-icons/io";
 import { create } from "zustand";
 
 type GuildMap = Map<string, Guild>;
@@ -138,7 +136,7 @@ export const useGuildsStore = create<GuildStoreState>((set, get) => ({
                 ? {
                     ...existingMember,
                     ...Object.fromEntries(
-                        Object.entries(member).filter(([_, v]) => v !== undefined)
+                        Object.entries(member).filter(([, v]) => v !== undefined)
                     ),
                 }
                 : member;
@@ -200,7 +198,7 @@ export const useGuildsStore = create<GuildStoreState>((set, get) => ({
                 ? {
                     ...existingRole,
                     ...Object.fromEntries(
-                        Object.entries(role).filter(([_, v]) => v !== undefined)
+                        Object.entries(role).filter(([, v]) => v !== undefined)
                     ),
                 }
                 : role;

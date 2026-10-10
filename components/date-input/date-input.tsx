@@ -6,7 +6,7 @@ import styles from './styles.module.css'
 export interface DateInputProps {
     label: string;
     isRequired?: boolean
-    onChange: (date: Date) => any
+    onChange: (date: Date) => void
     errorMessage?: string | null
 }
 
@@ -25,9 +25,9 @@ const months = [
     "December",
 ];
 
-const days = Array.from({ length: 31 }, (_, i) => i + 1);
+const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
 
-const years = [...Array(150).keys()].map((i) => (new Date().getFullYear()) - i - 3);
+const years = [...Array(150).keys()].map((i) => String((new Date().getFullYear()) - i - 3));
 
 export default function DateInput({ label, isRequired = false, onChange, errorMessage }: DateInputProps) {
     const [month, setMonth] = useState("");
@@ -40,7 +40,7 @@ export default function DateInput({ label, isRequired = false, onChange, errorMe
                 const date = new Date(`${month}-${day}-${year}`);
                 onChange(date);
             } catch (error) {
-                
+                console.error(error)
             }
         }
     }, [month, year, day])

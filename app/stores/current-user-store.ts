@@ -10,7 +10,7 @@ interface CurrentUserStoreState {
     updateStatus: (status: UserStatus) => void;
 }
 
-export const useCurrentUserStore = create<CurrentUserStoreState>((set, get) => ({
+export const useCurrentUserStore = create<CurrentUserStoreState>((set) => ({
     isAuthorized: false,
     user: null,
     setIsAuthorized: (isAuthorized: boolean) => set({ isAuthorized }),

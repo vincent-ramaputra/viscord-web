@@ -1,4 +1,3 @@
-import { UserData } from "@/interfaces/user-data";
 import styles from "./styles.module.css"
 import { FaCircle } from "react-icons/fa";
 import { UserStatus } from "@/enums/user-status.enum";
@@ -6,10 +5,6 @@ import { MdCircle, MdDoNotDisturbOn, MdOutlineCircle } from "react-icons/md";
 import { PiMoonFill } from "react-icons/pi";
 import { Fragment } from "react";
 import { UserProfile } from "@/interfaces/user-profile";
-import { useRelationshipsQuery } from "@/hooks/queries";
-import { useContextMenu } from "@/contexts/context-menu.context";
-import { ContextMenuType } from "@/enums/context-menu-type.enum";
-import { useUserPresence } from "@/contexts/user-presence.context";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
 
 // Discord-style typing pill: twice as wide as the status dot, same height,

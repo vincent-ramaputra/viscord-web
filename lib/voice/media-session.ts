@@ -39,10 +39,10 @@ export class MediaSession {
         this.audioProducerPaused = audioProducerPaused;
     }
 
-    static async start(sfuClient: SfuClient, { userId, channelId, audioConsumerPaused, audioProducerPaused}: { userId: string, channelId: string, audioConsumerPaused: boolean, audioProducerPaused: boolean}, events: MediaSessionEvents) {
+    static async start(sfuClient: SfuClient, { userId, channelId, audioConsumerPaused, audioProducerPaused }: { userId: string, channelId: string, audioConsumerPaused: boolean, audioProducerPaused: boolean }, events: MediaSessionEvents) {
         const session = new MediaSession(sfuClient, userId, channelId, events, audioConsumerPaused, audioProducerPaused);
         try {
-            const { rtpCapabilities } = await sfuClient.request(JOIN_ROOM, {isMuted: audioProducerPaused, isDeafened: audioConsumerPaused});
+            const { rtpCapabilities } = await sfuClient.request(JOIN_ROOM, { isMuted: audioProducerPaused, isDeafened: audioConsumerPaused });
             if (session.closed) throw new Error("Session closed");
 
             const device = new Device();
@@ -97,11 +97,16 @@ export class MediaSession {
         });
 
         this.sendTransport?.on('produce', async ({ kind, rtpParameters, appData }, callback, errback) => {
+            const mediaTag = appData.mediaTag;
+            if (mediaTag !== 'mic' && mediaTag !== 'screen') {
+                errback(new Error(`Unknown mediaTag: ${String(mediaTag)}`))
+                return;
+            }
             try {
                 const response = await this.sfuClient.request(CREATE_PRODUCER, {
                     kind,
                     rtpParameters,
-                    appData,
+                    appData: { mediaTag },
                     channelId: this.channelId,
                     // this handler runs for every producer; only the mic follows the mute state
                     paused: appData?.mediaTag === 'mic' && this.audioProducerPaused,
@@ -203,7 +208,7 @@ export class MediaSession {
         if (!this.sendTransport) throw new Error(`sendTransport is ${typeof this.sendTransport}`)
 
         // zeroRtpOnPause: send no RTP at all while muted instead of silent packets
-        const producer = await this.sendTransport.produce({ track, stopTracks: false, zeroRtpOnPause: true, appData: { mediaTag: 'mic'} });
+        const producer = await this.sendTransport.produce({ track, stopTracks: false, zeroRtpOnPause: true, appData: { mediaTag: 'mic' } });
         if (this.closed) throw new Error("Session closed");
 
         this.producers.set(producer.id, producer);

@@ -1,6 +1,6 @@
 import Tooltip from "@/components/tooltip/tooltip";
 import { Channel } from "@/interfaces/channel";
-import { ReactNode, useState } from "react";
+import { useState } from "react";
 import { FaAngleDown, FaPlus } from "react-icons/fa6";
 import styled from "styled-components";
 import ChannelButton from "./channel-button";
@@ -60,15 +60,15 @@ const ChildrenContainer = styled.div`
     flex-direction: column;
 `
 
-export function ChannelCategory({ channel, children }: { channel: Channel, children: Channel[] }) {
+export function ChannelCategory({ category, channels }: { category: Channel, channels: Channel[] }) {
     const { openModal } = useModal();
     const [collapse, setCollapse] = useState(false);
     const [hoverAddChannel, setHoverAddChannel] = useState(false);
     const pathname = usePathname();
     const { showMenu } = useContextMenu();
-    const guild = useGetGuild(channel.guildId)!;
+    const guild = useGetGuild(category.guildId)!;
     const { user } = useCurrentUserStore();
-    const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild, channel);
+    const effectivePermission = getEffectivePermission(guild.members.find(m => m.userId === user!.id)!, guild, category);
 
     return (
         <Container >
@@ -77,14 +77,14 @@ export function ChannelCategory({ channel, children }: { channel: Channel, child
                     onClick={() => setCollapse(!collapse)}
                     onContextMenu={(e) => {
                         e.stopPropagation();
-                        showMenu(e, ContextMenuType.CHANNEL_CATEGORY, { categoryId: channel.id, guildId: channel.guildId })
+                        showMenu(e, ContextMenuType.CHANNEL_CATEGORY, { categoryId: category.id, guildId: category.guildId })
                     }}>
-                    <p>{channel.name}</p>
+                    <p>{category.name}</p>
                     <ToggleIcon className={`${collapse ? 'item-collapse' : ''}`}><FaAngleDown size={10} /></ToggleIcon>
                 </CategoryToggleContainer>
                 {checkPermission(effectivePermission, Permissions.MANAGE_CHANNELS) && <div className="relative">
                     <CreateChannelButton
-                        onClick={() => openModal(ModalType.CREATE_CHANNEL, { category: channel, guildId: channel.guildId })}
+                        onClick={() => openModal(ModalType.CREATE_CHANNEL, { category: category, guildId: category.guildId })}
                         onMouseEnter={() => setHoverAddChannel(true)}
                         onMouseLeave={() => setHoverAddChannel(false)}>
                         <FaPlus size={13} />
@@ -98,7 +98,7 @@ export function ChannelCategory({ channel, children }: { channel: Channel, child
                 </div>}
             </CategoryContainer>
             <ChildrenContainer>
-                {children.map(ch => {
+                {channels.map(ch => {
                     return (
                         <ChannelButton collapse={collapse && !pathname.includes(ch.id)} key={ch.id} channel={ch} />
                     )

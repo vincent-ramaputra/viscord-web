@@ -1,5 +1,3 @@
-import ChannelSettingsPage from "@/components/channel-settings-page/channel-settings-page";
-import GuildSettingsPage from "@/components/guild-settings-page.tsx/guild-settings-page";
 import { AddRoleMembersModal } from "@/components/modals/add-role-members-modal";
 import { CreateCategoryModal } from "@/components/modals/create-category-modal";
 import { CreateChannelModal } from "@/components/modals/create-channel-modal";
@@ -9,17 +7,34 @@ import { DeleteChannelModal } from "@/components/modals/delete-channel-modal";
 import { DeleteRoleModal } from "@/components/modals/delete-role-modal";
 import { LeaveGuildModal } from "@/components/modals/leave-guild-modal";
 import { RemovePermissionOverwriteModal } from "@/components/modals/remove-permission-overwrite.modal";
-import SettingsPage from "@/components/settings-page/settings-page";
 import { ModalType } from "@/enums/modal-type.enum";
+import { PermissionOverwriteTargetType } from "@/enums/permission-overwrite-target-type.enum";
+import { Channel } from "@/interfaces/channel";
+import { GuildMember } from "@/interfaces/guild-member";
+import { Role } from "@/interfaces/role";
 import { createContext, ReactNode, useContext, useState } from "react";
 
-interface ModalMetadata {
-    type: ModalType;
-    data?: any;
-}
+export interface ModalDataMap {
+    [ModalType.CREATE_GUILD]: never;
+    [ModalType.CREATE_INVITE]: { channelId: string, guildId: string };
+    [ModalType.CREATE_CHANNEL]: { category?: Channel, guildId: string };
+    [ModalType.LEAVE_GUILD]: { guildId: string };
+    [ModalType.DELETE_CHANNEL]: { channel: Channel };
+    [ModalType.REMOVE_PERMISSION_OVERWRITE]: { channel: Channel, target: GuildMember | Role, targetType: PermissionOverwriteTargetType };
+    [ModalType.ADD_ROLE_MEMBERS]: { guildId: string, roleId: string };
+    [ModalType.CREATE_CATEGORY]: { guildId: string };
+    [ModalType.DELETE_ROLE]: { role: Role };
+};
+
+type ModalMetadata = {
+    [K in ModalType]: {
+        type: K;
+        data: ModalDataMap[K];
+    }
+}[ModalType];
 
 interface ModalContextType {
-    openModal: (type: ModalType, data?: any) => void;
+    openModal: <T extends ModalType>(type: T, data?: ModalDataMap[T]) => void;
     closeModal: () => void;
 }
 
@@ -32,8 +47,8 @@ export function useModal() {
 export function ModalProvider({ children }: { children: ReactNode }) {
     const [modal, setModal] = useState<ModalMetadata | null>(null);
 
-    function openModal(type: ModalType, data?: any) {
-        setModal({ type, data });
+    function openModal<T extends ModalType>(type: ModalType, data?: ModalDataMap[T]) {
+        setModal({ type, data } as ModalMetadata);
     }
 
     function closeModal() {

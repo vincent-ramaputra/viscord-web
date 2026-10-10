@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 export interface DropdownProps {
     placeholder?: string;
-    values: any[];
+    values: string[];
     value: string;
     onChange: (val: string) => void;
 }
@@ -14,7 +14,7 @@ export interface DropdownProps {
 export default function Dropdown({ placeholder = "", values, value, onChange }: DropdownProps) {
     const [showDropdown, setShowDropdown] = useState(false);
     const [input, setInput] = useState(value);
-    const filteredResult = values.filter((item) => item.toString().toLowerCase().includes(input.toString().toLowerCase()));
+    const filteredResult = values.filter((item) => item.toLowerCase().includes(input.toString().toLowerCase()));
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

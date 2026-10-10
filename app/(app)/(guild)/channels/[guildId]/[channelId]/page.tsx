@@ -1,13 +1,12 @@
 "use client"
 import { useMessagesQuery } from "@/hooks/queries";
-import { useParams, useRouter } from "next/navigation";
-import { Fragment, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "next/navigation";
+import { Fragment, KeyboardEvent, useMemo, useRef, useState } from "react";
 import { useChannelReadState } from "@/hooks/use-channel-read-state";
 import styled from "styled-components";
 import { GuildChannelHeader } from "./header";
 import { SendMessageInput } from "@/interfaces/dto/create-message.dto";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
-import { MessageStatus } from "@/enums/message-status.enum";
 import { Message } from "@/interfaces/message";
 import MessageItem from "@/components/message-item/message-item";
 import AttachmentUploadList from "@/components/attachment-upload-list/attachment-upload-list";
@@ -18,11 +17,11 @@ import { Channel } from "@/interfaces/channel";
 import { LINE_HEIGHT, MAX_LINE_COUNT, VERTICAL_PADDING } from "@/constants/user-interface";
 import { sendTypingStatus } from "@/services/channels/channels.service";
 import { LoadingIndicator } from "@/components/loading-indicator/loading-indicator";
-import { useIsUserTyping, useTypingUsersFromChannel, useUserTypingStore } from "@/app/stores/user-typing-store";
+import { useTypingUsersFromChannel, useUserTypingStore } from "@/app/stores/user-typing-store";
 import UserAvatar from "@/components/user-avatar/user-avatar";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
 import { useGuildsStore } from "@/app/stores/guilds-store";
-import { useAcknowledgeGuildMessageMutation, useAcknowledgeMessageMutation, useSendMessageMutation } from "@/hooks/mutations";
+import { useAcknowledgeGuildMessageMutation, useSendMessageMutation } from "@/hooks/mutations";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
 import { Permissions } from "@/enums/permissions.enum";
 import { Role } from "@/interfaces/role";
@@ -206,7 +205,7 @@ function LastReadDivider() {
     )
 }
 
-function TextInputItem({ channel, onSubmit }: { channel: Channel, onSubmit: (message: SendMessageInput) => any }) {
+function TextInputItem({ channel, onSubmit }: { channel: Channel, onSubmit: (message: SendMessageInput) => void }) {
     const [inputHeight, setInputHeight] = useState(LINE_HEIGHT + VERTICAL_PADDING)
     const [isTypingStatusCooldown, setTypingStatusCooldown] = useState(false);
 
@@ -248,7 +247,7 @@ function formatTyping(names: string[]) {
 export default function Page() {
     const { guildId, channelId } = useParams();
     const { user } = useCurrentUserStore();
-    const { getGuild, getChannel } = useGuildsStore();
+    const { getGuild } = useGuildsStore();
     const guild = getGuild(guildId as string);
     const channel = guild?.channels.find(ch => ch.id == channelId);
     const { data: messages } = useMessagesQuery(channelId! as string);
@@ -272,7 +271,7 @@ export default function Page() {
     const [showMemberList, setShowMemberList] = useState(true);
     const typingUsers = useTypingUsersFromChannel(channelId as string);
     const { isUserTyping } = useUserTypingStore();
-    const { presenceMap, isUserOnline } = useUserPresenceStore();
+    const {  isUserOnline } = useUserPresenceStore();
     const allowedMembers = guild?.members.filter(member => {
         const parent = guild.channels.find(ch => ch.id === channel?.parent?.id);
         const effectivePermission = getEffectivePermission(member, guild, channel, parent);

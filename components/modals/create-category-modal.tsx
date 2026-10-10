@@ -1,20 +1,14 @@
-import { GUILDS_CACHE } from "@/constants/query-keys";
 import { ChannelType } from "@/enums/channel-type.enum";
 import { CreateChannelDTO } from "@/interfaces/dto/create-channel.dto";
-import { Guild } from "@/interfaces/guild";
-import { createGuildChannel } from "@/services/channels/channels.service";
-import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import Modal from "./modal";
 import styled from "styled-components";
 import TextInputSecondary from "../text-input/text-input-secondary";
 import { MdClose } from "react-icons/md";
-import { PiHash } from "react-icons/pi";
 import { FaLock } from "react-icons/fa6";
 import Checkbox from "../checkbox/checkbox";
 import ButtonSecondary from "../buttons/button-secondary";
 import ButtonPrimary from "../buttons/button-primary";
-import { useRouter } from "next/navigation";
 import { useCreateGuildChannelMutation } from "@/hooks/mutations";
 
 const ContentContainer = styled.div`
@@ -46,12 +40,6 @@ const ContentHeader = styled.div`
     }
 `
 
-const ChannelCategoryText = styled.p`
-    font-size: var(--text-xs);
-    color: var(--header-secondary);
-    line-height: var(--line-height-tight);
-`
-
 const ContentBody = styled.div`
     padding: 8px 16px 0 24px;
 
@@ -78,14 +66,6 @@ const ContentSection = styled.div`
     p {
         font-size: var(--text-sm);
     }
-`
-
-const ChannelNameInputIcon = styled.span`
-    width: 34px;
-    height: 34px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 `
 
 const ContentFooter = styled.div`

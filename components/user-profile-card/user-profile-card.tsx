@@ -1,14 +1,12 @@
 import { UserProfile } from "@/interfaces/user-profile"
 import styled from "styled-components";
-import UserAvatar, { UserStatusIcon } from "../user-avatar/user-avatar";
-import { PiPencilSimple } from "react-icons/pi";
+import { UserStatusIcon } from "../user-avatar/user-avatar";
 import { RiPencilFill } from "react-icons/ri";
 import { UserStatus, UserStatusString } from "@/enums/user-status.enum";
-import { FaAngleRight, FaCopy } from "react-icons/fa6";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { FaAngleRight } from "react-icons/fa6";
+import { useLayoutEffect, useRef, useState } from "react";
 import ColorThief from "colorthief";
 import { updateStatus } from "@/services/user-profiles/user-profiles.service";
-import { useUpdateCurrentUser } from "@/hooks/queries";
 import { IoIosCopy } from "react-icons/io";
 import Tooltip from "../tooltip/tooltip";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";

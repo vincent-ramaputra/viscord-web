@@ -9,7 +9,7 @@ export interface TextInputProps {
     placeholder?: string
     leftElement?: ReactNode
     rightElement?: ReactNode
-    onChange: (val: string) => any
+    onChange: (val: string) => void
     error?: boolean
 }
 
@@ -36,12 +36,9 @@ const Container = styled.div`
 export default function TextInputSecondary({ leftElement, rightElement, type = "text", placeholder, value, onChange, error }: TextInputProps) {
     const [focus, setFocus] = useState(false);
     const helperTextContainerRef = useRef<HTMLDivElement>(null!);
-    const [maxHeight, setMaxHeight] = useState("0px");
 
     useEffect(() => {
         if (helperTextContainerRef.current) {
-            const scrollHeight = helperTextContainerRef.current.scrollHeight;
-            setMaxHeight(focus ? `${scrollHeight}px` : "0px");
         }
     }, [focus])
 

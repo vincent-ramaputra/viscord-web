@@ -1,6 +1,4 @@
-import { UserStatus } from "@/enums/user-status.enum";
 import { UserProfile } from "@/interfaces/user-profile";
-import { statsBuffer } from "framer-motion";
 import { create } from "zustand";
 
 type UserProfileMap = Map<string, UserProfile>;

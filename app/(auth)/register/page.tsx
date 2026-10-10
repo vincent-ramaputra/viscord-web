@@ -5,7 +5,7 @@ import TextLink from '@/components/text-link/text-link'
 import ButtonPrimary from "@/components/buttons/button-primary"
 import DateInput from "@/components/date-input/date-input"
 import Checkbox from "@/components/checkbox/checkbox"
-import { FormEvent, useEffect, useRef, useState } from "react"
+import { FormEvent, useRef, useState } from "react"
 import { MIN_AGE_REQUIREMENT, MIN_PASSWORD_LENGTH } from "@/constants/validations"
 import { RegisterDTO } from "@/interfaces/dto/register.dto"
 import { register } from "@/services/auth/auth.service"

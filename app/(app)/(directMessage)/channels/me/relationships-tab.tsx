@@ -4,20 +4,13 @@ import Relationship from "@/interfaces/relationship";
 import { Fragment } from "react";
 import styled from "styled-components";
 import { ActionButton, ActionContainer } from "./action-button";
-import { createDMChannel } from "@/services/channels/channels.service";
 import RelationshipListItem from "../relationship-list-item";
 import { RelationshipType } from "@/enums/relationship-type.enum";
 import { MdCheck, MdClose } from "react-icons/md";
-import { useDMChannelsQuery } from "@/hooks/queries";
 import { IoMdMore } from "react-icons/io";
-import { useAuth } from "@/contexts/auth.context";
-import { acceptFriendRequest, declineFriendRequest } from "@/services/relationships/relationships.service";
-import { useQueryClient } from "@tanstack/react-query";
-import { RELATIONSHIPS_CACHE } from "@/constants/query-keys";
 import { useRouter } from "next/navigation";
 import { useAcceptFriendRequestMutation, useCreateDMChannelMutation, useDeleteRelationshipMutation } from "@/hooks/mutations";
 import { useChannelsStore } from "@/app/stores/channels-store";
-import { useCurrentUserStore } from "@/app/stores/current-user-store";
 
 const FilterTypeContainer = styled.div`
     padding: 16px 0;
@@ -73,12 +66,11 @@ export function OnlineFriendsTab({ relationships }: { relationships: Relationshi
 
 export function AllFriendsTab({ relationships }: { relationships: Relationship[] }) {
     const { getFriendChannel } = useChannelsStore();
-    const { user } = useCurrentUserStore();
 
     return (
         <Fragment>
             <FilterTypeContainer>{`All friends — ${relationships.length}`}</FilterTypeContainer>
-            {relationships.map((rel, index) => {
+            {relationships.map((rel) => {
                 return (
                     <RelationshipListItem relationship={rel} key={rel.id}>
                         {rel.type === RelationshipType.Friends &&

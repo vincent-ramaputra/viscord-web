@@ -3,12 +3,10 @@ import { BsMicFill, BsMicMuteFill } from "react-icons/bs";
 import { LuHeadphoneOff, LuHeadphones } from "react-icons/lu";
 import { FaGear } from "react-icons/fa6";
 import TransparentButton from "../transparent-button/transparent-button";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import UserAvatar from "../user-avatar/user-avatar";
 import { CurrentUserProfileCard } from "../user-profile-card/user-profile-card";
-import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
-import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
 import styled from "styled-components";
 import { useGetChannel } from "@/app/stores/channels-store";
@@ -202,8 +200,7 @@ export default function UserArea() {
     const [isHovering, setIsHovering] = useState(false);
     const [showProfileCard, setShowProfileCard] = useState(false);
     const profileCardRef = useRef<HTMLDivElement>(null!)
-    const { getUserProfile } = useUserProfileStore();
-    const { isDeafened, isMuted, isMicOff, toggleDeafened, toggleMute } = useVoice();
+    const { isDeafened, isMicOff, toggleDeafened, toggleMute } = useVoice();
     const { channelId } = useMediasoupStore();
     const { openSettings } = useSettingsOverlay();
 

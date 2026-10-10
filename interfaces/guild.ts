@@ -1,7 +1,6 @@
 import { Channel } from "./channel";
 import { GuildMember } from "./guild-member";
 import { Role } from "./role";
-import { UserProfile } from "./user-profile";
 
 export interface Guild {
     id: string;

@@ -1,33 +1,14 @@
 import styled from "styled-components";
 import Modal from "./modal";
 import { useGuildsStore } from "@/app/stores/guilds-store";
-import { MdClose } from "react-icons/md";
-import { ChannelType } from "@/enums/channel-type.enum";
-import { PiHash } from "react-icons/pi";
 import TextInputSecondary from "../text-input/text-input-secondary";
-import TextInput from "../text-input/text-input";
-import { HiMagnifyingGlass } from "react-icons/hi2";
-import { useEffect, useState } from "react";
-import { useChannelsStore } from "@/app/stores/channels-store";
+import { useState } from "react";
 import UserAvatar from "../user-avatar/user-avatar";
 import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store";
 import ButtonSecondary from "../buttons/button-secondary";
-import ButtonSuccess from "../buttons/button-success";
 import ButtonPrimary from "../buttons/button-primary";
-import { Invite } from "@/interfaces/invite";
-import { createOrGetInvite } from "@/services/channels/channels.service";
-import { getInviteKeyByValue, INVITE_DURATIONS, isKeyOfInviteDuration } from "@/constants/guilds";
-import { MINUTE_IN_SECONDS } from "@/constants/time";
-import { sendMessage } from "@/services/messages/messages.service";
-import { Channel } from "@/interfaces/channel";
 import { useAssignRoleMembers } from "@/hooks/mutations";
-import ButtonTertiary from "../buttons/button-tertiary";
-import { useQueryClient } from "@tanstack/react-query";
-import { MESSAGES_CACHE } from "@/constants/query-keys";
-import Dropdown from "../dropdown/dropdown";
-import { CreateInviteDto } from "@/interfaces/dto/create-invite.dto";
 import Checkbox from "../checkbox/checkbox";
-import { m } from "framer-motion";
 
 interface AddRoleMembersModalProps   {
     roleId: string;
@@ -113,12 +94,6 @@ const ContentFooter = styled.div`
     justify-content: flex-end;
     gap: 8px;
     border-top: 1px solid var(--border-container);
-`
-
-const SelectedMemberContainer = styled.div`
-    margin: 2px;
-    padding: 2px 4px;
-
 `
 
 export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembersModalProps) {

@@ -1,12 +1,10 @@
 "use client"
 
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/auth.context";
-import React, { ReactNode, Suspense, useEffect, useState } from "react";
-import SocketProvider, { useSocket } from "@/contexts/socket.context";
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import React, { useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AudioManager from "@/components/audio-manager/audio-manager";
 import { useAppSettingsStore } from "./stores/app-settings-store";
 
@@ -22,20 +20,6 @@ const geistMono = Geist_Mono({
 
 
 const queryClient = new QueryClient();
-
-const soundMap = {
-  ring: '/sounds/ringtone.mp3',
-  mention: '/sounds/mention.mp3',
-  message: '/sounds/message.mp3',
-  call: '/sounds/call.mp3',
-};
-
-if (process.env.NODE_ENV === "development") {
-  const whyDidYouRender = require("@welldone-software/why-did-you-render");
-  whyDidYouRender(React, {
-    trackAllPureComponents: true,
-  });
-}
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
 

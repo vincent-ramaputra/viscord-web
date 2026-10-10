@@ -1,4 +1,4 @@
-import { useGetUserProfile, useUserProfileStore } from "@/app/stores/user-profiles-store";
+import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { getVoiceRingKey, useVoiceRingStateStore } from "@/app/stores/voice-ring-state-store";
 import { UserProfile } from "@/interfaces/user-profile";
 import { VoiceRingState } from "@/interfaces/voice-ring-state";

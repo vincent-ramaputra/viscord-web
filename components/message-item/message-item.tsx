@@ -2,9 +2,8 @@ import { Message } from "@/interfaces/message";
 import styled from "styled-components";
 import UserAvatar from "../user-avatar/user-avatar";
 import { UserProfile } from "@/interfaces/user-profile";
-import { dateToAMPM, datetoFullDateString } from "@/utils/date.utils";
+import { dateToAMPM } from "@/utils/date.utils";
 import { ReactNode, useState } from "react";
-import Tooltip from "../tooltip/tooltip";
 import { MessageStatus } from "@/enums/message-status.enum";
 import { useContextMenu } from "@/contexts/context-menu.context";
 import { useRelationshipsQuery } from "@/hooks/queries";
@@ -111,7 +110,7 @@ function getTimePoint(date: Date) {
     return `${formattedDate},`;
 }
 
-function Time({ date, children, className }: { date: Date, children: ReactNode, className?: string }) {
+function Time({ children, className }: { children: ReactNode, className?: string }) {
     return (
         <div className="relative">
             <TimeText
@@ -276,7 +275,7 @@ export default function MessageItem({ sender, message, isSubsequent = false, gui
                                     showMenu(e, ContextMenuType.USER, relationship)
                                 }
                             }}>{sender.displayName}</SenderNameText>
-                        <Time date={message.createdAt} className="active">{getTimePoint(message.createdAt)} {time}</Time>
+                        <Time className="active">{getTimePoint(message.createdAt)} {time}</Time>
                     </SubsequentMessageHelper>
                 }
                 <ContentText className={`${message.status !== undefined && message.status === MessageStatus.Pending ? 'pending' : message.status !== undefined && message.status === MessageStatus.Error ? 'error' : ''}`}>{message.content}</ContentText>

@@ -1,6 +1,5 @@
 import { useGuildsStore } from "@/app/stores/guilds-store";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
-import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import ColorThief from "colorthief";
 import { useRef, useState } from "react";
 import styled from "styled-components";
