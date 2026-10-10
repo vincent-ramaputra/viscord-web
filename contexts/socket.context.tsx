@@ -1,5 +1,5 @@
 "use client"
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Socket } from "socket.io-client";
 import { useQueryClient } from "@tanstack/react-query";
 import Relationship from "@/interfaces/relationship";
@@ -213,8 +213,11 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     }, []);
 
 
+    // A new object every render would re-render every useSocket() consumer whenever the provider renders.
+    const value = useMemo(() => ({ socket, isReady: isConnected }), [socket, isConnected]);
+
     return (
-        <SocketContext.Provider value={{ socket, isReady: isConnected }}>
+        <SocketContext.Provider value={value}>
             {children}
         </SocketContext.Provider>
     );
