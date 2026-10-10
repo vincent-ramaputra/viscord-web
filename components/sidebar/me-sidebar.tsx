@@ -1,11 +1,10 @@
 "use client"
-import { useChannelsStore } from "@/app/stores/channels-store";
+import { useGetDMChannels } from "@/app/stores/channels-store";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { useUserTypingStore } from "@/app/stores/user-typing-store";
 import SidebarContentContainer from "@/components/guild-sidebar/sidebar-content-container";
 import SidebarHeader from "@/components/guild-sidebar/sidebar-header";
 import UserAvatar from "@/components/user-avatar/user-avatar";
-import { ChannelType } from "@/enums/channel-type.enum";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment } from "react";
 import styled from "styled-components";
@@ -155,8 +154,7 @@ export default function MeSidebarContent() {
     const router = useRouter();
     const { getUserProfile } = useUserProfileStore();
     const { isUserTyping } = useUserTypingStore();
-    const { channels } = useChannelsStore();
-    const dmChannels = Array.from(channels.values()).filter(c => c.type === ChannelType.DM);
+    const dmChannels = useGetDMChannels();
 
 
     const menuItems = [

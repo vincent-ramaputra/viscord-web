@@ -27,9 +27,14 @@ export const useChannelsStore = create<ChannelsStoreState>((set, get) => ({
         return get().channels.get(channelId);
     },
     getFriendChannel: (userId: string) => {
-        return Array.from(get().channels.values()).find(ch => ch.recipients!.find(r => r.id === userId))
+        return findFriendChannel(get().channels, userId);
     }
 }))
+
+// Pure, so components can select the `channels` Map and look up during render.
+export function findFriendChannel(channels: ChannelMap, userId: string) {
+    return Array.from(channels.values()).find(ch => ch.recipients?.some(r => r.id === userId));
+}
 
 export const useGetChannel = (channelId: string) => {
     return useChannelsStore(state => state.getChannel(channelId))

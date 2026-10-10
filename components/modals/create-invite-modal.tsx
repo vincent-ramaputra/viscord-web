@@ -8,7 +8,7 @@ import TextInputSecondary from "../text-input/text-input-secondary";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import { useEffect, useRef, useState } from "react";
 import { getInviteURL } from "@/utils/url.utils";
-import { useChannelsStore } from "@/app/stores/channels-store";
+import { useGetDMChannels } from "@/app/stores/channels-store";
 import UserAvatar from "../user-avatar/user-avatar";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
 import ButtonSecondary from "../buttons/button-secondary";
@@ -204,7 +204,7 @@ export function CreateInviteModal({ channelId, guildId, onClose }: CreateInviteM
     const guild = getGuild(guildId);
     const channel = guild?.channels.find(ch => ch.id === channelId);
     const [search, setSearch] = useState('');
-    const { channels } = useChannelsStore();
+    const channels = useGetDMChannels();
     const [invite, setInvite] = useState<Invite | undefined>();
     // Only built once the invite has loaded, which also keeps window out of any server render.
     const inviteLink = invite ? getInviteURL(invite.code) : '';
@@ -270,7 +270,7 @@ export function CreateInviteModal({ channelId, guildId, onClose }: CreateInviteM
                     </SearchContainer>
                 </ContentHeader>
                 <RelationshipContainer>
-                    {Array.from(channels.values()).filter(ch => ch.type === ChannelType.DM).map(ch => {
+                    {channels.map(ch => {
                         return <RelationshipItem key={ch.id} channel={ch} inviteLink={inviteLink} />
                     })}
                 </RelationshipContainer>

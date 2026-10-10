@@ -297,7 +297,7 @@ function AppInitializer({ children }: { children: ReactNode }) {
     const { socket, isReady } = useSocket();
     const { setUserProfiles } = useUserProfileStore();
     const { setPresenceMap, updatePresence } = useUserPresenceStore();
-    const { setChannels } = useChannelsStore();
+    const setChannels = useChannelsStore(s => s.setChannels);
     const { setCurrentUser } = useCurrentUserStore();
     const { setGuilds } = useGuildsStore();
 

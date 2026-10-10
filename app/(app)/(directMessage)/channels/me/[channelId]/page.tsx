@@ -202,10 +202,9 @@ function formatTyping(names: string[]) {
 
 export default function Page() {
     const { channelId } = useParams();
-    const { getChannel } = useChannelsStore();
     const [attachments, setAttachments] = useState<File[]>([]);
-    const channel = getChannel(channelId as string);
-    const { data: messages } = useMessagesQuery(channelId! as string);
+    const channel = useChannelsStore(s => s.getChannel(channelId as string));
+    const { data: messages } = useMessagesQuery(channelId as string);
     const groupedMessages = messages?.reduce((groups, message) => {
         const key = message.createdAt.toLocaleDateString();
 
