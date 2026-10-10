@@ -200,8 +200,7 @@ function RelationshipItem({ channel, inviteLink }: { channel: Channel, inviteLin
 }
 
 export function CreateInviteModal({ channelId, guildId, onClose }: CreateInviteModalProps) {
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId);
+    const guild = useGuildsStore(s => s.getGuild(guildId));
     const channel = guild?.channels.find(ch => ch.id === channelId);
     const [search, setSearch] = useState('');
     const channels = useGetDMChannels();

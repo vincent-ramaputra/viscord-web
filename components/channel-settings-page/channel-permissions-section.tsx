@@ -363,9 +363,8 @@ const AddTargetMenuOverlay = styled.div`
 `
 
 function AddTargetMenu({ channelId, guildId, onClose, onAddTarget }: { channelId: string, guildId: string, onClose: () => void, onAddTarget: (target: Role | GuildMember, targetType: PermissionOverwriteTargetType) => void }) {
-    const { getGuild } = useGuildsStore();
+    const guild = useGuildsStore(s => s.getGuild(guildId));
     const { getUserProfile } = useUserProfileStore();
-    const guild = getGuild(guildId);
     const channel = guild?.channels.find(channel => channel.id === channelId);
     const [searchText, setSearchText] = useState('');
     const filteredRoles = guild?.roles.filter(role => !channel?.permissionOverwrites.find(ow => ow.targetId === role.id) && role.name.toLowerCase().includes(searchText.toLowerCase())) ?? [];
@@ -458,10 +457,9 @@ interface PermissionSection {
 }
 
 export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermissionsSectionProps) {
-    const { getGuild } = useGuildsStore();
+    const guild = useGuildsStore(s => s.getGuild(guildId));
     const { getUserProfile } = useUserProfileStore();
     const { showMenu } = useContextMenu();
-    const guild = getGuild(guildId);
     const channel = guild?.channels.find(channel => channel.id === channelId);
     const permissionOverwrites = (channel?.isSynced ? guild?.channels.find(ch => ch.id === channel.parent?.id)?.permissionOverwrites : channel?.permissionOverwrites) ?? [];
     const everyoneOW: PermissionOverwrite | undefined = permissionOverwrites.find(ow => ow.targetId === guild?.id);

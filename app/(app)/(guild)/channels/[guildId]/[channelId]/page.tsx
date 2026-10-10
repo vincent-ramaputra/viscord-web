@@ -247,8 +247,7 @@ function formatTyping(names: string[]) {
 export default function Page() {
     const { guildId, channelId } = useParams();
     const user = useCurrentUserStore(s => s.user);
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId as string);
+    const guild = useGuildsStore(s => s.getGuild(guildId as string));
     const channel = guild?.channels.find(ch => ch.id == channelId);
     const { data: messages } = useMessagesQuery(channelId! as string);
     const { mutate: sendMessage } = useSendMessageMutation(guildId as string);

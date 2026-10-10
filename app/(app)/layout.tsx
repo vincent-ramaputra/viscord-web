@@ -102,8 +102,7 @@ export function GuildIcon({ children, guildSummary, onClick }: { children: React
     const router = useRouter();
     const [isHovering, setIsHovering] = useState(false);
     const targetPath = `/channels/${guildSummary.id}`;
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildSummary.id);
+    const guild = useGuildsStore(s => s.getGuild(guildSummary.id));
     const hasUnread = !!(guild?.channels.find(ch => ch.userChannelState.unreadCount > 0));
     const isActive = pathName.includes(targetPath);
 
@@ -238,7 +237,7 @@ function UnreadDMChannel({ channel }: { channel: Channel }) {
 
 function GuildListSidebar() {
     const { openModal } = useModal();
-    const { guilds } = useGuildsStore();
+    const guilds = useGuildsStore(s => s.guilds);
 
     const pathname = usePathname();
     const dmChannels = useGetDMChannels();
@@ -299,7 +298,7 @@ function AppInitializer({ children }: { children: ReactNode }) {
     const { setPresenceMap, updatePresence } = useUserPresenceStore();
     const setChannels = useChannelsStore(s => s.setChannels);
     const setCurrentUser = useCurrentUserStore(s => s.setCurrentUser);
-    const { setGuilds } = useGuildsStore();
+    const setGuilds = useGuildsStore(s => s.setGuilds);
 
 
     useEffect(() => {

@@ -192,10 +192,9 @@ export default function ChannelButton({ channel, collapse }: { channel: Channel,
     // Read before the voice state map below, which shadows `user` with each participant's profile.
     const currentUserId = user?.id;
     const { getUserProfile } = useUserProfileStore();
-    const { getChannel, getGuild } = useGuildsStore();
-    const guild = getGuild(channel.guildId)!;
+    const guild = useGuildsStore(s => s.getGuild(channel.guildId))!;
     const member = guild.members.find(m => m.userId === user!.id);
-    const parent = channel.parent ? getChannel(channel.parent.id) : undefined;
+    const parent = channel.parent ? guild.channels.find(ch => ch.id === channel.parent!.id) : undefined;
     const effectivePermission = member ? getEffectivePermission(member, guild, channel, parent) : 0n;
     const everyoneOW = channel.isSynced && parent
         ? parent!.permissionOverwrites.find(ow => ow.targetId === channel.guildId)

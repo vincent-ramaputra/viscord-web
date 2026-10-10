@@ -106,8 +106,7 @@ interface GuildProfileSectionProps {
 
 
 export function GuildProfileSection({ guildId }: GuildProfileSectionProps) {
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId)!;
+    const guild = useGuildsStore(s => s.getGuild(guildId))!;
     const [guildName, setGuildName] = useState(guild.name);
     const [nameError, setNameError] = useState<string | null>(null);
     const haveChanges = useMemo(() => {
@@ -115,7 +114,7 @@ export function GuildProfileSection({ guildId }: GuildProfileSectionProps) {
 
         return false;
     }, [guild, guildName]);
-    const {mutateAsync: updateGuild, isPending} = useUpdateGuildMutation();
+    const { mutateAsync: updateGuild, isPending } = useUpdateGuildMutation();
 
     function resetChanges() {
         setGuildName(guild.name);
@@ -128,7 +127,7 @@ export function GuildProfileSection({ guildId }: GuildProfileSectionProps) {
         }
 
         try {
-            await updateGuild({guildId, name: guildName});
+            await updateGuild({ guildId, name: guildName });
         } catch (error) {
             setNameError(getErrorMessage(error));
             return;
@@ -150,7 +149,7 @@ export function GuildProfileSection({ guildId }: GuildProfileSectionProps) {
                         <TextInputSecondary error={nameError !== null} onChange={(v) => setGuildName(v)} value={guildName} />
                     </div>
                 </div>
-                {nameError && <ErrorMessage><MdInfo size={14}/>{nameError}</ErrorMessage>}
+                {nameError && <ErrorMessage><MdInfo size={14} />{nameError}</ErrorMessage>}
                 <Separator />
                 <div>
                     <Label>Icon</Label>
@@ -158,7 +157,7 @@ export function GuildProfileSection({ guildId }: GuildProfileSectionProps) {
                     <ButtonPrimary>Change Icon</ButtonPrimary>
                 </div>
                 <Separator />
-                <GuildCard guildId={guildId}/>
+                <GuildCard guildId={guildId} />
             </div>
             <SaveChangesOverlay className={haveChanges ? 'active' : ''}>
                 <SaveChangesContainer>

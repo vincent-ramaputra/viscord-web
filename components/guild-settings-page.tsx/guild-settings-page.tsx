@@ -28,8 +28,7 @@ export const SettingsSectionHeader = styled.h2`
 `
 
 export default function GuildSettingsPage({ guildId, show, onClose }: GuildSettingsPageProps) {
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId);
+    const guild = useGuildsStore(s => s.getGuild(guildId));
     const sidebarItems: Record<string, SidebarItem[]> = {
         [guild?.name ?? 'Server']: [
             {
@@ -51,7 +50,7 @@ export default function GuildSettingsPage({ guildId, show, onClose }: GuildSetti
             },
             {
                 id: 'invites',
-                page: <GuildInvitesSection guildId={guildId}/>,
+                page: <GuildInvitesSection guildId={guildId} />,
                 element: <p>Invites</p>
             },
         ]

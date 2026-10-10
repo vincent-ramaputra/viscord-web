@@ -100,7 +100,7 @@ export function CreateGuildModal({ onClose }: { onClose: () => void }) {
     const [activeContent, setActiveContent] = useState<ModalContent>(ModalContent.Main);
     const [icon, setIcon] = useState<File>()
 
-    const { upsertGuild: addGuild } = useGuildsStore();
+    const addGuild = useGuildsStore(s => s.upsertGuild);
 
     const { mutate: createGuildMutation } = useMutation({
         mutationFn: (dto: CreateGuildDto) => createGuild(dto),

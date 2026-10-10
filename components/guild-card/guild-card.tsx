@@ -85,8 +85,7 @@ const MemberInfoContainer = styled.div`
 `
 
 export function GuildCard({ guildId }: GuildCardProps) {
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId);
+    const guild = useGuildsStore(s => s.getGuild(guildId));
     const { isUserOnline } = useUserPresenceStore();
     const [bannerColor, setBannerColor] = useState('black');
     const iconRef = useRef<HTMLImageElement>(null!);
@@ -115,14 +114,14 @@ export function GuildCard({ guildId }: GuildCardProps) {
 
     const initials = guild.name.split(' ').map(s => s[0]).join(' ');
     const onlineUserCount = guild.members.filter(m => isUserOnline(m.userId)).length;
-    const formattedEstablishedDate =  new Date(guild.createdAt).toLocaleString("en-US", {
+    const formattedEstablishedDate = new Date(guild.createdAt).toLocaleString("en-US", {
         month: "short",
         year: "numeric",
     });
 
     return (
         <CardContainer>
-            <BannerContainer style={{backgroundColor: bannerColor}}/>
+            <BannerContainer style={{ backgroundColor: bannerColor }} />
             <ProfileContainer>
                 <IconLayout>
                     <IconContainer>

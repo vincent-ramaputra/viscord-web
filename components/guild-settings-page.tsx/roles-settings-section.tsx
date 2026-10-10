@@ -740,8 +740,7 @@ function EditRolesScreen({ guild, initialRoleId, onScreenBack }: { guild: Guild,
 }
 
 export function RoleSettingsSection({ guildId }: RoleSettingsSectionProps) {
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId);
+    const guild = useGuildsStore(s => s.getGuild(guildId));
     const defaultPermissionsRole = guild?.roles.find(role => role.id === guildId);
     const [searchText, setSearchText] = useState('');
     const [screen, setScreen] = useState<'main' | 'edit-roles'>('main');

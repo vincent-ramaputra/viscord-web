@@ -11,7 +11,7 @@ import { useAssignRoleMembers } from "@/hooks/mutations";
 import Checkbox from "../checkbox/checkbox";
 import { getErrorMessage } from "@/utils/error.utils";
 
-interface AddRoleMembersModalProps   {
+interface AddRoleMembersModalProps {
     roleId: string;
     guildId: string;
     onClose: () => void;
@@ -98,8 +98,7 @@ const ContentFooter = styled.div`
 `
 
 export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembersModalProps) {
-    const { getGuild } = useGuildsStore();
-    const guild = getGuild(guildId)!;
+    const guild = useGuildsStore(s => s.getGuild(guildId))!;
     const role = guild.roles.find(role => role.id === roleId)!;
     const [searchText, setSearchText] = useState('');
     const { getUserProfile } = useUserProfileStore();
@@ -108,7 +107,7 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
         return !(member.roles.find(roleId => roleId === role.id)) && (profile.username.includes(searchText) || profile.displayName.includes(searchText));
     })
     const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-    const {mutateAsync: assignRoleMembers, isPending} = useAssignRoleMembers();
+    const { mutateAsync: assignRoleMembers, isPending } = useAssignRoleMembers();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     if (!guild) {
         onClose();
@@ -117,7 +116,7 @@ export function AddRoleMembersModal({ roleId, guildId, onClose }: AddRoleMembers
 
     async function handleAddMembers() {
         try {
-            await assignRoleMembers({assigneeIds: selectedMembers, guildId, roleId});
+            await assignRoleMembers({ assigneeIds: selectedMembers, guildId, roleId });
         } catch (error) {
             setErrorMessage(getErrorMessage(error));
             return;
