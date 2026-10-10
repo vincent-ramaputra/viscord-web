@@ -6,7 +6,7 @@ import { Response } from "@/interfaces/response";
 import { UserProfile } from "@/interfaces/user-profile";
 import { UpdateUserProfileDto } from "@/interfaces/dto/update-user-profile.dto";
 
-const ENDPOINT = process.env.NEXT_PUBLIC_API_URL + '/user-profiles'
+const ENDPOINT = '/user-profiles'
 
 export async function updateStatus(status: UserStatus) {
     try {
