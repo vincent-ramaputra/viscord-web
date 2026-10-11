@@ -62,12 +62,12 @@ const MemberName = styled.p`
 `
 
 export default function Page() {
-    const { guildId, channelId } = useParams();
+    const { guildId, channelId } = useParams<{guildId: string, channelId: string}>();
     const user = useCurrentUserStore(s => s.user);
-    const guild = useGuildsStore(s => s.getGuild(guildId as string));
+    const guild = useGuildsStore(s => s.getGuild(guildId));
     const channel = guild?.channels.find(ch => ch.id == channelId);
-    const { data: messages } = useMessagesQuery(channelId! as string);
-    const { mutateAsync: acknowledge } = useAcknowledgeGuildMessageMutation(guildId as string);
+    const { data: messages } = useMessagesQuery(channelId);
+    const { mutateAsync: acknowledge } = useAcknowledgeGuildMessageMutation(guildId);
     const userProfiles = useUserProfileStore(s => s.userProfiles);
     const [showMemberList, setShowMemberList] = useState(true);
     const typingUsersMap = useUserTypingStore(s => s.typingUsers);

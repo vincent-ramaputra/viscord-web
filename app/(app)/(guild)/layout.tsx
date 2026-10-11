@@ -163,8 +163,8 @@ function Header({ guild }: { guild: Guild }) {
 }
 
 export default function Page({ children }: { children: ReactNode }) {
-    const { guildId } = useParams();
-    const guild = useGuildsStore(s => s.getGuild(guildId as string));
+    const { guildId } = useParams<{guildId: string}>();
+    const guild = useGuildsStore(s => s.getGuild(guildId));
     const user = useCurrentUserStore(s => s.user);
     const member = guild?.members.find(member => member.userId === user!.id);
     const channelsWithoutParent = guild?.channels.filter(channel => {
