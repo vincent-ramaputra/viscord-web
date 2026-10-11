@@ -213,7 +213,8 @@ export function UserProfileSection() {
 
     async function onSaveChanges() {
         try {
-            await updateProfile({displayName: updatedProfile.displayName, bio: updatedProfile.bio, pronouns: updatedProfile.bio});
+            const { displayName, bio, pronouns } = updatedProfile;
+            await updateProfile({ displayName, bio, pronouns });
         } catch (error) {
             setNameError(getErrorMessage(error));
             return;
