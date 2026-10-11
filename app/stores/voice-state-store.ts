@@ -12,7 +12,7 @@ interface VoiceStateStoreState {
     setVoiceStates: (voiceStates: VoiceStateMap) => void;
     updateVoiceState: (voiceState: VoiceStateData) => void;
     removeVoiceState: (channelId: string, userId: string) => void;
-    getVoiceState: (channelId: string, userId: string) => void;
+    getVoiceState: (channelId: string, userId: string) => VoiceState | undefined;
 }
 
 export const useVoiceStateStore = create<VoiceStateStoreState>((set, get) => ({

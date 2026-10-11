@@ -6,12 +6,12 @@ import { useEffect } from "react";
 
 
 export default function ReceiveInvitePage() {
-    const { inviteCode } = useParams();
+    const { inviteCode } = useParams<{ inviteCode: string }>();
     const addGuild = useGuildsStore(s => s.upsertGuild);
     const router = useRouter();
 
     useEffect(() => {
-        joinGuild(inviteCode as string).then(result => {
+        joinGuild(inviteCode).then(result => {
             if (!result.ok) {
                 router.back()
                 return;

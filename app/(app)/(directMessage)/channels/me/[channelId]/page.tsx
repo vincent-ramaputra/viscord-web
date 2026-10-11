@@ -9,9 +9,9 @@ import { useAcknowledgeMessageMutation } from "@/hooks/mutations";
 
 
 export default function Page() {
-    const { channelId } = useParams();
-    const channel = useChannelsStore(s => s.getChannel(channelId as string));
-    const { data: messages } = useMessagesQuery(channelId as string);
+    const { channelId } = useParams<{channelId: string}>();
+    const channel = useChannelsStore(s => s.getChannel(channelId));
+    const { data: messages } = useMessagesQuery(channelId);
     const { mutateAsync: acknowledge } = useAcknowledgeMessageMutation();
 
     useEffect(() => {

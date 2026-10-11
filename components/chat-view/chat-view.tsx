@@ -182,7 +182,7 @@ function TextInputItem({ channel, onSubmit, placeholder }: { channel: Channel, o
 
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            const dto: SendMessageInput = { channelId: channel.id as string, content: text, mentions: [] as string[] };
+            const dto: SendMessageInput = { channelId: channel.id, content: text, mentions: [] };
             onSubmit(dto);
             onInputChanged('');
         }

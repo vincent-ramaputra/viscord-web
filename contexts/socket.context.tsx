@@ -21,7 +21,6 @@ import { useChannelsStore } from "@/app/stores/channels-store";
 import { GuildUpdateDTO } from "@/interfaces/dto/guild-update.dto";
 import { GuildUpdateType } from "@/enums/guild-update-type.enum";
 import { useGuildsStore } from "@/app/stores/guilds-store";
-import { GuildMember } from "@/interfaces/guild-member";
 import { UserProfile } from "@/interfaces/user-profile";
 import { UserPresenceUpdateDTO } from "@/interfaces/dto/user-presence-update.dto";
 import { playSound } from "@/app/stores/audio-store";
@@ -156,7 +155,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
             case GuildUpdateType.CHANNEL_DELETE: deleteChannel(dto.guildId, dto.data); break;
             case GuildUpdateType.CHANNEL_UPDATE: upsertChannel(dto.guildId, dto.data.id, dto.data); break;
             case GuildUpdateType.MEMBERS_UPDATE: {
-                for (const member of (dto.data as GuildMember[])) {
+                for (const member of (dto.data)) {
                     upsertMember(dto.guildId, member);
                 }
                 break;
