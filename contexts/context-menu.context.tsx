@@ -16,8 +16,6 @@ export interface ContextMenuDataMap {
     [ContextMenuType.CHANNEL_BUTTON]: { channelId: string, guildId: string };
     [ContextMenuType.GUILD_SIDEBAR]: Guild;
     [ContextMenuType.REMOVE_PERMISSION_OVERWRITE]: { channel: Channel, target: Role | GuildMember, targetType: PermissionOverwriteTargetType };
-    [ContextMenuType.USER_CONTACT]: never;
-    [ContextMenuType.USER_VC]: never;
 };
 
 interface ContextMenuActions {
