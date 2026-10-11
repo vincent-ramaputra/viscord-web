@@ -1,157 +1,22 @@
 "use client"
 import { useMessagesQuery } from "@/hooks/queries";
 import { useParams } from "next/navigation";
-import { Fragment, KeyboardEvent, useMemo, useRef, useState } from "react";
-import { useChannelReadState } from "@/hooks/use-channel-read-state";
+import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { GuildChannelHeader } from "./header";
-import { SendMessageInput } from "@/interfaces/dto/create-message.dto";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
-import { Message } from "@/interfaces/message";
-import MessageItem from "@/components/message-item/message-item";
-import AttachmentUploadList from "@/components/attachment-upload-list/attachment-upload-list";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
-import { dateToShortDate } from "@/utils/date.utils";
-import { FaCirclePlus } from "react-icons/fa6";
-import { Channel } from "@/interfaces/channel";
-import { LINE_HEIGHT, MAX_LINE_COUNT, VERTICAL_PADDING } from "@/constants/user-interface";
-import { sendTypingStatus } from "@/services/channels/channels.service";
-import { LoadingIndicator } from "@/components/loading-indicator/loading-indicator";
-import { useTypingUsersFromChannel, useUserTypingStore, isTypingIn } from "@/app/stores/user-typing-store";
+import { useUserTypingStore, isTypingIn } from "@/app/stores/user-typing-store";
 import UserAvatar from "@/components/user-avatar/user-avatar";
 import { useUserPresenceStore } from "@/app/stores/user-presence-store";
 import { useGuildsStore } from "@/app/stores/guilds-store";
-import { useAcknowledgeGuildMessageMutation, useSendMessageMutation } from "@/hooks/mutations";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
 import { Permissions } from "@/enums/permissions.enum";
 import { Role } from "@/interfaces/role";
 import { GuildMember } from "@/interfaces/guild-member";
 import { getRoleColor } from "@/helpers/color.helper";
-import { numberToHex } from "@/helpers/color.helper";
-
-const ChatContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    min-height: 0;
-    // margin-bottom: 40px;
-`
-
-const MessagesContainer = styled.div`
-    flex-grow: 1;
-    width: auto;
-    overflow-y: auto;
-    padding-top: 24px;
-    padding-bottom: 12px;
-    display: flex;
-    flex-direction: column-reverse;
-    overflow-anchor: auto;
-
-    &::-webkit-scrollbar {
-        width: 16px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        border: 4px solid rgba(0, 0, 0, 0);
-        background-clip: padding-box;
-        border-radius: 10px;
-        background-color: #888;
-    }
-`
-
-const ChatInputWrapper = styled.div`
-    padding: 0 8px;
-    margin-bottom: 24px;
-    position: relative;
-`
-
-const InputContainer = styled.div`
-    width: 100%;
-    background-color: var(--chat-background-default);
-    border-radius: 8px;
-    border: 1px solid var(--border-faint);
-`
-
-const TextInput = styled.textarea`
-    padding: 16px 0;
-    line-height: 22px;
-    flex-grow: 1;
-    background-color: initial;
-    margin-left: 10px;
-    min-height: 54px;
-    resize: none;
-    color: var(--text-normal);
-
-    &:focus {
-        outline: none;
-    }
-
-    &::placeholder {
-        color: var(--placeholder);
-    }
-
-    &::-ms-input-placeholder {
-        color: var(--placeholder);
-    }
-
-    &::-webkit-scrollbar {
-        width: 10px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        border: 3px solid rgba(0, 0, 0, 0);
-        background-clip: padding-box;
-        border-radius: 10px;
-        background-color: #888;
-    }
-`
-
-const UploadItemContainer = styled.div`
-    display: flex;
-    align-items: center;
-    padding: 10px 16px;
-    color: var(--interactive-normal);
-    cursor: pointer;
-    min-height: 54px;
-    
-    &:hover {
-        color: var(--interactive-hover);
-    }
-`
-
-const MessageDivider = styled.div`
-    height: 0;
-    border-top: 1px solid rgba(151, 151, 159, 0.12);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0 16px;
-    margin-top: 24px;
-    p {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-muted);   
-        background-color: var(--background-secondary);
-        padding: 0 4px;
-    }
-`
-
-const LastReadDividerLine = styled.div`
-    height: 0;
-    border-top: 1px solid var(--status-danger);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 6px 16px;
-    position: relative;
-    p {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--text-danger);   
-        background-color: var(--background-secondary);
-        padding: 0 4px;
-    }
-`
+import { ChatView } from "@/components/chat-view/chat-view";
+import { useAcknowledgeGuildMessageMutation } from "@/hooks/mutations";
 
 const MemberListContainer = styled.div`
     width: 264px;
@@ -196,80 +61,15 @@ const MemberName = styled.p`
     margin-right: 4px;
 `
 
-function LastReadDivider() {
-    return (
-        <LastReadDividerLine>
-            <span className="absolute flex right-0 text-[10px] leading-[13px] font-bold bg-[var(--status-danger)] rounded-sm px-[4px]">
-                NEW
-            </span>
-        </LastReadDividerLine>
-    )
-}
-
-function TextInputItem({ channel, onSubmit }: { channel: Channel, onSubmit: (message: SendMessageInput) => void }) {
-    const [inputHeight, setInputHeight] = useState(LINE_HEIGHT + VERTICAL_PADDING)
-    const [isTypingStatusCooldown, setTypingStatusCooldown] = useState(false);
-
-    function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            const dto: SendMessageInput = { channelId: channel.id as string, content: text, mentions: [] as string[] };
-            onSubmit(dto);
-            onInputChanged('');
-        }
-    }
-
-    function onInputChanged(text: string) {
-        setText(text);
-        const lineCount = 1 + (text.match(/\n/g) || []).length;
-        setInputHeight((lineCount > MAX_LINE_COUNT ? MAX_LINE_COUNT : lineCount) * LINE_HEIGHT + VERTICAL_PADDING);
-        if (!isTypingStatusCooldown) {
-            sendTypingStatus(channel.id);
-            setTypingStatusCooldown(true);
-            setTimeout(() => {
-                setTypingStatusCooldown(false);
-            }, 8000)
-        }
-    }
-
-    const [text, setText] = useState('');
-    return (
-        <TextInput value={text} onKeyDown={handleKeyDown} style={{ height: inputHeight }} onChange={(e) => onInputChanged(e.target.value)} placeholder={`Message #${channel.name}`} />
-
-    )
-}
-
-function formatTyping(names: string[]) {
-    if (names.length <= 0) return "";
-    if (names.length == 1) return names[0];
-    else return names.concat(", ");
-}
-
 export default function Page() {
     const { guildId, channelId } = useParams();
     const user = useCurrentUserStore(s => s.user);
     const guild = useGuildsStore(s => s.getGuild(guildId as string));
     const channel = guild?.channels.find(ch => ch.id == channelId);
     const { data: messages } = useMessagesQuery(channelId! as string);
-    const { mutate: sendMessage } = useSendMessageMutation(guildId as string);
-    const { mutateAsync: acknowledgeMessage } = useAcknowledgeGuildMessageMutation(guildId as string);
-    const { dividerAfterId } = useChannelReadState(channel, acknowledgeMessage);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [attachments, setAttachments] = useState<File[]>([]);
-    const groupedMessages = messages?.reduce((groups, message) => {
-        const key = message.createdAt.toLocaleDateString();
-
-        if (!groups[key]) {
-            groups[key] = [];
-        }
-
-        groups[key].push(message);
-
-        return groups;
-    }, {} as Record<string, Message[]>);
+    const { mutateAsync: acknowledge } = useAcknowledgeGuildMessageMutation(guildId as string);
     const userProfiles = useUserProfileStore(s => s.userProfiles);
     const [showMemberList, setShowMemberList] = useState(true);
-    const typingUsers = useTypingUsersFromChannel(channelId as string);
     const typingUsersMap = useUserTypingStore(s => s.typingUsers);
     const presenceMap = useUserPresenceStore(s => s.presenceMap);
     const allowedMembers = guild?.members.filter(member => {
@@ -304,24 +104,6 @@ export default function Page() {
         return groups;
     }, [allowedMembers, guild, presenceMap]);
 
-    // Each member's highest-role color, computed once here instead of in every message row.
-    const nameColors = useMemo(() => {
-        const colors = new Map<string, string>();
-        if (!guild) return colors;
-        for (const member of guild.members) {
-            const highestRole = guild.roles
-                .filter(role => member.roles.includes(role.id))
-                .sort((a, b) => b.position - a.position)[0];
-            if (highestRole) colors.set(member.userId, numberToHex(highestRole.color!));
-        }
-        return colors;
-    }, [guild]);
-
-    function handleSubmit(dto: SendMessageInput) {
-        sendMessage({ dto, attachments, clientId: crypto.randomUUID() });
-        setAttachments([]);
-    }
-
     if (!channel) {
         return <div>Channel not found</div>
     }
@@ -338,62 +120,7 @@ export default function Page() {
                 showMemberList={showMemberList}
                 onToggleMemberList={() => setShowMemberList(!showMemberList)} />
             <div className="flex flex-1 min-h-0">
-                <ChatContainer>
-                    <MessagesContainer>
-                        {groupedMessages && Object.keys(groupedMessages).map((key) => {
-                            const messages = groupedMessages[key];
-                            return (
-                                <Fragment key={key}>
-                                    {messages?.map(message => {
-                                        const index = messages.findIndex(m => m.id === message.id)
-                                        const prev = messages.at(index - 1);
-                                        const isSubsequent = index !== 0 && (message.createdAt.getMinutes() - prev!.createdAt.getMinutes()) < 5 && message.senderId === prev!.senderId;
-                                        return (
-                                            <Fragment key={message.id}>
-                                                {message.id === dividerAfterId && <LastReadDivider />}
-                                                <MessageItem
-                                                    message={message}
-                                                    isSubsequent={isSubsequent}
-                                                    sender={userProfiles.get(message.senderId)!}
-                                                    nameColor={nameColors.get(message.senderId)}
-                                                />
-                                            </Fragment>
-                                        )
-                                    }).reverse()}
-                                    <MessageDivider><p>{dateToShortDate(messages[0].createdAt)}</p></MessageDivider>
-                                </Fragment>)
-                        }).reverse()}
-                    </MessagesContainer>
-                    <ChatInputWrapper>
-                        <InputContainer>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                className="hidden"
-                                multiple
-                                onChange={(e) => {
-                                    const files = Array.from(e.target.files ?? []);
-                                    setAttachments(prev => [...prev, ...files]);
-                                    e.target.value = "";
-                                }} />
-                            <AttachmentUploadList files={attachments} onRemove={(i) => setAttachments(prev => prev.filter((_, j) => j !== i))} />
-                            <div className="flex">
-                                <UploadItemContainer onClick={() => fileInputRef.current?.click()}>
-                                    <FaCirclePlus size={20} />
-                                </UploadItemContainer>
-                                <TextInputItem channel={channel} onSubmit={handleSubmit} />
-                            </div>
-                        </InputContainer>
-                        {typingUsers.length > 0 &&
-                            <div className="ml-2 text-[12px] h-[24px] items-center flex absolute w-full">
-                                <span className="mr-2">
-                                    <LoadingIndicator></LoadingIndicator>
-                                </span>
-
-                                <span className="font-bold">{formatTyping(typingUsers.map(tu => userProfiles.get(tu.userId)!.displayName))}</span>&nbsp;is typing...
-                            </div>}
-                    </ChatInputWrapper>
-                </ChatContainer>
+                <ChatView messages={messages ?? []} channel={channel} guild={guild} acknowledge={acknowledge} textInputPlaceholder={`Message #${channel.name}`}/>
                 {showMemberList &&
                     <MemberListContainer>
                         {roleGroups.length > 0 && roleGroups.map(({ role, members }) => {
