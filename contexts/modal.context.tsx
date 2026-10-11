@@ -33,8 +33,10 @@ type ModalMetadata = {
     }
 }[ModalType];
 
+type ModalArgs<T extends ModalType> = [ModalDataMap[T]] extends [never] ? [] : [data: ModalDataMap[T]];
+
 interface ModalContextType {
-    openModal: <T extends ModalType>(type: T, data?: ModalDataMap[T]) => void;
+    openModal: <T extends ModalType>(type: T, ...args: ModalArgs<T>) => void;
     closeModal: () => void;
 }
 
@@ -47,8 +49,8 @@ export function useModal() {
 export function ModalProvider({ children }: { children: ReactNode }) {
     const [modal, setModal] = useState<ModalMetadata | null>(null);
 
-    function openModal<T extends ModalType>(type: ModalType, data?: ModalDataMap[T]) {
-        setModal({ type, data } as ModalMetadata);
+    function openModal<T extends ModalType>(type: T, ...args: ModalArgs<T>) {
+        setModal({ type, data: args[0] } as ModalMetadata);
     }
 
     function closeModal() {
