@@ -3,8 +3,7 @@
 import styles from "./styles.module.css"
 import { Fragment, ReactNode, useEffect, useState } from "react";
 import UserArea from "@/components/user-area/user-area";
-import { FaCirclePlus, FaCompass } from "react-icons/fa6";
-import { HiDownload } from "react-icons/hi";
+import { FaCirclePlus } from "react-icons/fa6";
 import Tooltip from "@/components/tooltip/tooltip";
 import styled from "styled-components";
 import { usePathname, useRouter } from "next/navigation";
@@ -277,12 +276,6 @@ function GuildListSidebar() {
             <div className="">
                 <GuildIcon guildSummary={{ id: 'create', name: 'Add a server' }} onClick={() => { openModal(ModalType.CREATE_GUILD) }}>
                     <FaCirclePlus size={20} />
-                </GuildIcon>
-                <GuildIcon guildSummary={{ id: 'discovery', name: 'Discover' }}>
-                    <FaCompass size={20} />
-                </GuildIcon>
-                <GuildIcon guildSummary={{ id: 'download', name: 'Download app' }}>
-                    <HiDownload size={20} />
                 </GuildIcon>
             </div>
         </div>
