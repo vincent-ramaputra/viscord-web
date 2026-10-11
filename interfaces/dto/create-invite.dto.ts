@@ -1,4 +1,4 @@
-export interface CreateInviteDto {
+export interface CreateInviteDTO {
     channelId?: string;
     guildId: string;
     maxAge: number | null;

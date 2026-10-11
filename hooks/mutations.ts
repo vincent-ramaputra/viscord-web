@@ -19,10 +19,10 @@ import { assignRoleMembers, createRole, deleteRole, leaveGuild, updateGuild, upd
 import { AssignRoleDTO } from "@/interfaces/dto/assign-role.dto";
 import { UpdateMemberDTO } from "@/interfaces/dto/update-member.dto";
 import { Role } from "@/interfaces/role";
-import { updatePermissionOverwriteDTO } from "@/interfaces/dto/update-permission-overwrite.dto";
+import { UpdatePermissionOverwriteDTO } from "@/interfaces/dto/update-permission-overwrite.dto";
 import { UpdateGuildDTO } from "@/interfaces/dto/update-guild.dto";
 import { DeleteRoleDTO } from "@/interfaces/dto/delete-role.dto";
-import { UpdateUserProfileDto } from "@/interfaces/dto/update-user-profile.dto";
+import { UpdateUserProfileDTO } from "@/interfaces/dto/update-user-profile.dto";
 import { updateUserProfile } from "@/services/user-profiles/user-profiles.service";
 import { LoginDTO } from "@/interfaces/dto/login.dto";
 import { uploadToPresignedUrl } from "@/services/s3/s3.service";
@@ -147,7 +147,7 @@ export function useSendMessageMutation(guildId?: string) {
                 channelId: dto.channelId,
                 content: dto.content,
                 mentions: dto.mentions,
-                is_pinned: false,
+                isPinned: false,
             };
 
             markChannelSent(guildId, dto.channelId, message.id);
@@ -331,7 +331,7 @@ export function useUpdateRole() {
 
 export function useUpdatePermissionOverwrite(parentId?: string) {
     return useMutation({
-        mutationFn: async (dto: updatePermissionOverwriteDTO) => unwrap(await updatePermissionOverwrite(dto)),
+        mutationFn: async (dto: UpdatePermissionOverwriteDTO) => unwrap(await updatePermissionOverwrite(dto)),
         onSuccess: (overwrite, dto) => {
             const { upsertChannel: updateChannel, getChannel } = useGuildsStore.getState();
             const channel = getChannel(dto.channelId);
@@ -406,7 +406,7 @@ export function useDeleteRoleMutation() {
 
 export function useUpdateUserProfileMutation() {
     return useMutation({
-        mutationFn: async (dto: UpdateUserProfileDto) => unwrap(await updateUserProfile(dto)),
+        mutationFn: async (dto: UpdateUserProfileDTO) => unwrap(await updateUserProfile(dto)),
         onSuccess: (userProfile) => {
             const { upsertUserProfile } = useUserProfileStore.getState();
 

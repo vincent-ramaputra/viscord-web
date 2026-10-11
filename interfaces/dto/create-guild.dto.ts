@@ -1,4 +1,4 @@
-export interface CreateGuildDto {
+export interface CreateGuildDTO {
     name: string;
     iconImage?: File;
 }

@@ -1,5 +1,5 @@
 import { Guild } from "@/interfaces/guild";
-import { CreateGuildDto } from "@/interfaces/dto/create-guild.dto";
+import { CreateGuildDTO } from "@/interfaces/dto/create-guild.dto";
 import { AssignRoleDTO } from "@/interfaces/dto/assign-role.dto";
 import { GuildMember } from "@/interfaces/guild-member";
 import { Role } from "@/interfaces/role";
@@ -11,7 +11,7 @@ import { request } from "../request";
 
 
 const ENDPOINT = `/guilds`
-export const createGuild = (dto: CreateGuildDto) => {
+export const createGuild = (dto: CreateGuildDTO) => {
     const formData = new FormData();
     if (dto.iconImage) {
         formData.append("icon", dto.iconImage);

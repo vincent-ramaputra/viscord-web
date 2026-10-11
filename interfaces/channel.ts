@@ -1,7 +1,7 @@
 import { ChannelType } from "@/enums/channel-type.enum";
 import { UserProfile } from "./user-profile";
 import { UserChannelState } from "./user-channel-state";
-import { PermissionOverwrite } from "./permission-ovewrite";
+import { PermissionOverwrite } from "./permission-overwrite";
 
 export interface Channel {
     id: string;

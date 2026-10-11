@@ -1,10 +1,10 @@
 import { Channel } from "@/interfaces/channel";
 import { CreateChannelDTO } from "@/interfaces/dto/create-channel.dto";
 import { UpdateChannelDTO } from "@/interfaces/dto/update-channel.dto";
-import { CreateInviteDto } from "@/interfaces/dto/create-invite.dto";
+import { CreateInviteDTO } from "@/interfaces/dto/create-invite.dto";
 import { Invite } from "@/interfaces/invite";
-import { PermissionOverwrite } from "@/interfaces/permission-ovewrite";
-import { updatePermissionOverwriteDTO } from "@/interfaces/dto/update-permission-overwrite.dto";
+import { PermissionOverwrite } from "@/interfaces/permission-overwrite";
+import { UpdatePermissionOverwriteDTO } from "@/interfaces/dto/update-permission-overwrite.dto";
 import { CreateVoiceTicketResponseDTO } from "@/interfaces/dto/create-voice-ticket-response.dto";
 import { request } from "../request";
 
@@ -53,13 +53,13 @@ export const ringChannelRecipients = (channelId: string) => request<void>({
     data: { channelId }
 });
 
-export const createOrGetInvite = (dto: CreateInviteDto) => request<Invite>({
+export const createOrGetInvite = (dto: CreateInviteDTO) => request<Invite>({
     method: 'POST',
     url: `${CHANNEL_ENDPOINT}/${dto.channelId}/invites`,
     data: dto
 });
 
-export const updatePermissionOverwrite = (dto: updatePermissionOverwriteDTO) => request<PermissionOverwrite>({
+export const updatePermissionOverwrite = (dto: UpdatePermissionOverwriteDTO) => request<PermissionOverwrite>({
     method: 'PUT',
     url: `${CHANNEL_ENDPOINT}/${dto.channelId}/permissions/${dto.targetId}`,
     data: dto
