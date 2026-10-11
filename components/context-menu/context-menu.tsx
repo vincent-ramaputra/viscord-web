@@ -12,7 +12,7 @@ import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
 import { useDeleteRelationshipMutation } from "@/hooks/mutations";
 import { useDMChannelsQuery } from "@/hooks/queries";
-import { Channel } from "@/interfaces/channel";
+import { GuildChannel } from "@/interfaces/channel";
 import { Guild } from "@/interfaces/guild";
 import { GuildMember } from "@/interfaces/guild-member";
 import Relationship from "@/interfaces/relationship";
@@ -74,7 +74,7 @@ function UserContextMenu({ relationship }: { relationship: Relationship }) {
             <div className="">
                 <ListItem>Profile</ListItem>
                 <ListItem onClick={async () => {
-                    const channel = channels?.find(ch => ch.recipients![0].id === relationship.user.id);
+                    const channel = channels?.find(ch => ch.recipients[0].id === relationship.user.id);
                     if (!channel) {
                         await createDMChannel(relationship.user.id);
                     }
@@ -107,7 +107,7 @@ function UserContextMenu({ relationship }: { relationship: Relationship }) {
     )
 }
 
-function RemovePermissionOverwriteContextMenu({ channel, target, targetType }: { channel: Channel, target: Role | GuildMember, targetType: PermissionOverwriteTargetType }) {
+function RemovePermissionOverwriteContextMenu({ channel, target, targetType }: { channel: GuildChannel, target: Role | GuildMember, targetType: PermissionOverwriteTargetType }) {
     const { openModal } = useModal();
     return (
         <Fragment>

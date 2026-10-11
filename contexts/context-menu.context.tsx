@@ -1,7 +1,7 @@
 import ContextMenu from "@/components/context-menu/context-menu";
 import { ContextMenuType } from "@/enums/context-menu-type.enum";
 import { PermissionOverwriteTargetType } from "@/enums/permission-overwrite-target-type.enum";
-import { Channel } from "@/interfaces/channel";
+import { GuildChannel } from "@/interfaces/channel";
 import ContextMenuState from "@/interfaces/context-menu-state";
 import { Guild } from "@/interfaces/guild";
 import { GuildMember } from "@/interfaces/guild-member";
@@ -15,7 +15,7 @@ export interface ContextMenuDataMap {
     [ContextMenuType.CHANNEL_CATEGORY]: { categoryId: string, guildId: string };
     [ContextMenuType.CHANNEL_BUTTON]: { channelId: string, guildId: string };
     [ContextMenuType.GUILD_SIDEBAR]: Guild;
-    [ContextMenuType.REMOVE_PERMISSION_OVERWRITE]: { channel: Channel, target: Role | GuildMember, targetType: PermissionOverwriteTargetType };
+    [ContextMenuType.REMOVE_PERMISSION_OVERWRITE]: { channel: GuildChannel, target: Role | GuildMember, targetType: PermissionOverwriteTargetType };
 };
 
 interface ContextMenuActions {

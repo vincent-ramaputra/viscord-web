@@ -1,4 +1,4 @@
-import { Channel } from "./channel";
+import { GuildChannel } from "./channel";
 import { GuildMember } from "./guild-member";
 import { Role } from "./role";
 
@@ -7,7 +7,7 @@ export interface Guild {
     name: string;
     ownerId: string;
     iconURL?: string;
-    channels: Channel[]
+    channels: GuildChannel[]
     createdAt: Date
     updatedAt: Date
     members: GuildMember[];

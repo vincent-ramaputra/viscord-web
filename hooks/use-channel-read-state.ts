@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Channel } from "@/interfaces/channel";
+import { BaseChannel } from "@/interfaces/channel";
 
 export type Acknowledge = (dto: { channelId: string, messageId: string }) => unknown;
 
@@ -10,7 +10,7 @@ export type Acknowledge = (dto: { channelId: string, messageId: string }) => unk
  * instead of on unmount, so reloads/closed tabs don't lose the read state and the
  * sidebar/guild pill don't count messages you're looking at.
  */
-export function useChannelReadState(channel: Channel | undefined, acknowledge: Acknowledge) {
+export function useChannelReadState(channel: BaseChannel | undefined, acknowledge: Acknowledge) {
     const lastMessageId = channel?.lastMessageId;
     const lastReadId = channel?.userChannelState.lastReadId;
 

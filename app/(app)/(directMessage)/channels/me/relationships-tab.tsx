@@ -1,5 +1,5 @@
 
-import { Channel } from "@/interfaces/channel";
+import { BaseChannel } from "@/interfaces/channel";
 import Relationship from "@/interfaces/relationship";
 import { Fragment } from "react";
 import styled from "styled-components";
@@ -23,7 +23,7 @@ const FilterTypeContainer = styled.div`
 `
 
 
-function MessageActionButton({ channel, relationship }: { channel?: Channel, relationship: Relationship }) {
+function MessageActionButton({ channel, relationship }: { channel?: BaseChannel, relationship: Relationship }) {
     const router = useRouter();
     const { mutateAsync: createDMChannel } = useCreateDMChannelMutation();
     return (

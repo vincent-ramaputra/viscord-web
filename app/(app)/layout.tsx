@@ -14,7 +14,7 @@ import { CLIENT_READY_EVENT, GET_USERS_PRESENCE_EVENT, SUBSCRIBE_EVENTS, USER_PR
 import { UserProfile } from "@/interfaces/user-profile";
 import { useGetUserProfile, useUserProfileStore } from "../stores/user-profiles-store";
 import { useChannelsStore, useGetDMChannels } from "../stores/channels-store";
-import { Channel } from "@/interfaces/channel";
+import { DMChannel } from "@/interfaces/channel";
 import UserAvatar from "@/components/user-avatar/user-avatar";
 import { VoiceAudioRenderer } from "@/components/voice-audio-renderer/voice-audio-renderer";
 import { VoiceRingManager } from "@/components/voice-ring-manager/voice-ring-manager";
@@ -206,8 +206,8 @@ const UnreadDMWrapper = styled.div`
     }
 `
 
-function UnreadDMChannel({ channel }: { channel: Channel }) {
-    const recipient = useGetUserProfile(channel.recipients![0].id);
+function UnreadDMChannel({ channel }: { channel: DMChannel }) {
+    const recipient = useGetUserProfile(channel.recipients[0].id);
     const router = useRouter();
     const [isHovering, setIsHovering] = useState(false);
     if (!recipient) {
@@ -311,7 +311,7 @@ function AppInitializer({ children }: { children: ReactNode }) {
 
             const userProfiles: UserProfile[] = [currentUser.profile].concat(data.relationships?.map(rel => rel.user) ?? []);
             const dmRecipients = data.dmChannels ? data.dmChannels
-                .map(channel => channel.recipients?.find(rep => rep.id !== currentUser.id))
+                .map(channel => channel.recipients.find(rep => rep.id !== currentUser.id))
                 .filter(rep => rep !== undefined) : [];
 
             const uniqueUsers = new Map<string, UserProfile>();
@@ -328,7 +328,7 @@ function AppInitializer({ children }: { children: ReactNode }) {
                 userProfilesMap.set(key, value);
             }
 
-            const channelMap: Map<string, Channel> = new Map();
+            const channelMap: Map<string, DMChannel> = new Map();
 
             if (data.dmChannels) {
                 for (const channel of data.dmChannels) {

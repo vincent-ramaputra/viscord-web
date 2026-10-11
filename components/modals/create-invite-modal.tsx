@@ -17,7 +17,7 @@ import ButtonPrimary from "../buttons/button-primary";
 import { Invite } from "@/interfaces/invite";
 import { createOrGetInvite } from "@/services/channels/channels.service";
 import { getInviteKeyByValue, INVITE_DURATIONS } from "@/constants/guilds";
-import { Channel } from "@/interfaces/channel";
+import { DMChannel } from "@/interfaces/channel";
 import { useSendMessageMutation } from "@/hooks/mutations";
 import ButtonTertiary from "../buttons/button-tertiary";
 import { useQueryClient } from "@tanstack/react-query";
@@ -164,12 +164,12 @@ const InviteLinkSettingActionButtons = styled.div`
     gap: 8px;
 `
 
-function RelationshipItem({ channel, inviteLink }: { channel: Channel, inviteLink: string }) {
+function RelationshipItem({ channel, inviteLink }: { channel: DMChannel, inviteLink: string }) {
     const queryClient = useQueryClient();
     const userProfiles = useUserProfileStore(s => s.userProfiles);
-    const { mutate: sendMessage, isPending, isSuccess } = useSendMessageMutation(channel.guildId);
+    const { mutate: sendMessage, isPending, isSuccess } = useSendMessageMutation();
 
-    const userId = channel.recipients![0].id;
+    const userId = channel.recipients[0].id;
     const user = userProfiles.get(userId);
 
     function onSendInvite() {

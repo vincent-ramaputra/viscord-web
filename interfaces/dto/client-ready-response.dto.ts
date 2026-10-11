@@ -1,4 +1,4 @@
-import { Channel } from "../channel";
+import { DMChannel } from "../channel";
 import { Guild } from "../guild";
 import Relationship from "../relationship";
 import { UserData } from "../user-data";
@@ -8,5 +8,5 @@ export interface ClientReadyResponseDTO {
     guilds?: Guild[];
     relationships?: Relationship[];
     presences: string[];
-    dmChannels?: Channel[];
+    dmChannels?: DMChannel[];
 }

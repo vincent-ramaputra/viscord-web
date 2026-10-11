@@ -1,22 +1,22 @@
 import { ChannelType } from "@/enums/channel-type.enum";
-import { Channel } from "@/interfaces/channel";
+import { DMChannel } from "@/interfaces/channel";
 import { create } from "zustand";
 import { useShallow } from "zustand/shallow";
 
-type ChannelMap = Map<string, Channel>;
+type ChannelMap = Map<string, DMChannel>;
 
 interface ChannelsStoreState {
     channels: ChannelMap;
     setChannels: (channels: ChannelMap) => void;
-    updateChannel: (channel: Channel) => void;
-    getChannel: (channelId: string) => Channel | undefined;
-    getFriendChannel: (userId: string) => Channel | undefined;
+    updateChannel: (channel: DMChannel) => void;
+    getChannel: (channelId: string) => DMChannel | undefined;
+    getFriendChannel: (userId: string) => DMChannel | undefined;
 }
 
 export const useChannelsStore = create<ChannelsStoreState>((set, get) => ({
     channels: new Map(),
     setChannels: (channels: ChannelMap) => set({ channels }),
-    updateChannel: (channel: Channel) => {
+    updateChannel: (channel: DMChannel) => {
         set(state => {
             const newChannels = new Map(state.channels);
             newChannels.set(channel.id, channel);
@@ -33,7 +33,7 @@ export const useChannelsStore = create<ChannelsStoreState>((set, get) => ({
 
 // Pure, so components can select the `channels` Map and look up during render.
 export function findFriendChannel(channels: ChannelMap, userId: string) {
-    return Array.from(channels.values()).find(ch => ch.recipients?.some(r => r.id === userId));
+    return Array.from(channels.values()).find(ch => ch.recipients.some(r => r.id === userId));
 }
 
 export const useGetChannel = (channelId: string) => {

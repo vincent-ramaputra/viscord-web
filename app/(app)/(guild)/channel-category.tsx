@@ -1,5 +1,5 @@
 import Tooltip from "@/components/tooltip/tooltip";
-import { Channel } from "@/interfaces/channel";
+import { GuildChannel } from "@/interfaces/channel";
 import { useState } from "react";
 import { FaAngleDown, FaPlus } from "react-icons/fa6";
 import styled from "styled-components";
@@ -60,7 +60,7 @@ const ChildrenContainer = styled.div`
     flex-direction: column;
 `
 
-export function ChannelCategory({ category, channels }: { category: Channel, channels: Channel[] }) {
+export function ChannelCategory({ category, channels }: { category: GuildChannel, channels: GuildChannel[] }) {
     const { openModal } = useModal();
     const [collapse, setCollapse] = useState(false);
     const [hoverAddChannel, setHoverAddChannel] = useState(false);

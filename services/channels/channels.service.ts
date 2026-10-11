@@ -1,4 +1,4 @@
-import { Channel } from "@/interfaces/channel";
+import { DMChannel, GuildChannel } from "@/interfaces/channel";
 import { CreateChannelDTO } from "@/interfaces/dto/create-channel.dto";
 import { UpdateChannelDTO } from "@/interfaces/dto/update-channel.dto";
 import { CreateInviteDTO } from "@/interfaces/dto/create-invite.dto";
@@ -13,18 +13,18 @@ const GUILD_ENDPOINT = '/guilds'
 const USER_ENDPOINT = '/users/me/channels'
 const CHANNEL_ENDPOINT = '/channels'
 
-export const getDMChannels = () => request<Channel[]>({
+export const getDMChannels = () => request<DMChannel[]>({
     method: 'GET',
     url: USER_ENDPOINT
 });
 
-export const createDMChannel = (recipientId: string) => request<Channel>({
+export const createDMChannel = (recipientId: string) => request<DMChannel>({
     method: 'POST',
     url: USER_ENDPOINT,
     data: { recipientId }
 });
 
-export const createGuildChannel = ({ guildId, ...body }: CreateChannelDTO) => request<Channel>({
+export const createGuildChannel = ({ guildId, ...body }: CreateChannelDTO) => request<GuildChannel>({
     method: 'POST',
     url: `${GUILD_ENDPOINT}/${guildId}/channels`,
     data: body
@@ -41,7 +41,7 @@ export const deleteChannel = (channelId: string) => request<void>({
     url: `${CHANNEL_ENDPOINT}/${channelId}`
 });
 
-export const updateChannel = (channelId: string, dto: UpdateChannelDTO) => request<Channel>({
+export const updateChannel = (channelId: string, dto: UpdateChannelDTO) => request<GuildChannel>({
     method: 'PATCH',
     url: `${CHANNEL_ENDPOINT}/${channelId}`,
     data: dto
@@ -70,7 +70,7 @@ export const deletePermissionOverwrite = (channelId: string, targetId: string) =
     url: `${CHANNEL_ENDPOINT}/${channelId}/permissions/${targetId}`
 });
 
-export const syncChannel = (channelId: string) => request<Channel>({
+export const syncChannel = (channelId: string) => request<GuildChannel>({
     method: 'POST',
     url: `${CHANNEL_ENDPOINT}/${channelId}/sync`
 });

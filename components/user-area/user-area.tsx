@@ -18,6 +18,7 @@ import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
 import { useVoice } from "@/hooks/use-voice";
 import { VoiceSessionStatus } from "@/lib/voice/voice-session";
+import { Channel } from "@/interfaces/channel";
 
 const Container = styled.div`
   width: 100%;
@@ -170,14 +171,20 @@ function Voice() {
     const channelId = useMediasoupStore(s => s.channelId);
     const dmChannel = useGetChannel(channelId!);
     const guildChannel = useGuildsStore(state => state.getChannel(channelId!));
-    const channel = (dmChannel ?? guildChannel)!;
+    const channel: Channel = (dmChannel ?? guildChannel)!;
     const router = useRouter();
     const { status, leave } = useVoice();
     const statusDisplay = STATUS_DISPLAY[status];
 
     function navigateToChannel() {
-        if (channel.type === ChannelType.DM) router.push(`/channels/me/${channelId}`);
-        else router.push(`/channels/${channel.guildId}`);
+        switch (channel.type) {
+            case ChannelType.DM:
+            case ChannelType.Group:
+                router.push(`/channels/me/${channelId}`);
+                break;
+            default:
+                router.push(`/channels/${channel.guildId}`);
+        }
     }
 
     async function handleLeaveVoiceCall() {

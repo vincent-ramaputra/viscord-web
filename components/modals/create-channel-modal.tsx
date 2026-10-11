@@ -2,7 +2,7 @@ import Checkbox from "@/components/checkbox/checkbox";
 import Modal from "@/components/modals/modal";
 import ButtonPrimary from "@/components/buttons/button-primary";
 import TextInputSecondary from "@/components/text-input/text-input-secondary";
-import { Channel } from "@/interfaces/channel";
+import { GuildChannel } from "@/interfaces/channel";
 import { ReactNode, useState } from "react";
 import { FaLock } from "react-icons/fa6";
 import { MdClose } from "react-icons/md";
@@ -158,7 +158,7 @@ function RadioButton({ children, isSelected, onClick }: { children: ReactNode, i
     );
 }
 
-export function CreateChannelModal({ guildId, category, onClose }: { guildId: string, category?: Channel, onClose: () => void }) {
+export function CreateChannelModal({ guildId, category, onClose }: { guildId: string, category?: GuildChannel, onClose: () => void }) {
     const [channel, setChannel] = useState<CreateChannelDTO>({ type: ChannelType.Text, parentId: category?.id, guildId, isPrivate: false, name: '' });
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const router = useRouter();
@@ -170,7 +170,7 @@ export function CreateChannelModal({ guildId, category, onClose }: { guildId: st
 
 
     async function handleCreateChannel() {
-        let created: Channel | null;
+        let created: GuildChannel | null;
         try {
             created = await createGuildChannel(channel);
         } catch (error) {

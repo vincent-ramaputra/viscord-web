@@ -3,17 +3,26 @@ import { UserProfile } from "./user-profile";
 import { UserChannelState } from "./user-channel-state";
 import { PermissionOverwrite } from "./permission-overwrite";
 
-export interface Channel {
+export interface BaseChannel {
     id: string;
-    name?: string;
-    type: ChannelType;
     createdAt: Date;
     updatedAt: Date;
-    parent?: Channel;
-    isSynced: boolean;
-    guildId: string;
-    recipients?: UserProfile[];
     lastMessageId?: string;
     userChannelState: UserChannelState;
+}
+
+export interface GuildChannel extends BaseChannel {
+    name?: string;
+    type: ChannelType.Category | ChannelType.Text | ChannelType.Voice;
+    parent?: GuildChannel;
+    isSynced: boolean;
+    guildId: string;
     permissionOverwrites: PermissionOverwrite[];
 }
+
+export interface DMChannel extends BaseChannel{
+    type: ChannelType.DM | ChannelType.Group;
+    recipients: UserProfile[];
+}
+
+export type Channel = GuildChannel | DMChannel;
