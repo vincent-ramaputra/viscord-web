@@ -178,6 +178,8 @@ function TextInputItem({ channel, onSubmit, placeholder }: { channel: Channel, o
     const [isTypingStatusCooldown, setTypingStatusCooldown] = useState(false);
 
     function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+        if (e.nativeEvent.isComposing) return;
+
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             const dto: SendMessageInput = { channelId: channel.id as string, content: text, mentions: [] as string[] };
