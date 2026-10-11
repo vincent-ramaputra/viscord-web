@@ -1,16 +1,12 @@
-import { MessageStatus } from "@/enums/message-status.enum"
-import { Attachment } from "./attachment"
+import { MessageDTO } from "./dto/message.dto"
 
-export interface Message {
-    id: string
-    senderId: string
-    content: string
-    channelId: string
-    isPinned: boolean
+export interface Message extends Omit<MessageDTO, 'createdAt' | 'updatedAt'> {
     createdAt: Date
     updatedAt: Date
-    mentions: string[]
-    attachments: Attachment[]
-    clientId?: string
-    status?: MessageStatus
 }
+
+export const toMessage = (dto: MessageDTO): Message => ({
+    ...dto,
+    createdAt: new Date(dto.createdAt),
+    updatedAt: new Date(dto.updatedAt)
+});

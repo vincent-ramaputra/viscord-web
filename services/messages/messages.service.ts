@@ -1,8 +1,8 @@
-import { Message } from "@/interfaces/message";
 import { CreateMessageDTO } from "@/interfaces/dto/create-message.dto";
 import { CreateAttachmentResponseDTO } from "@/interfaces/dto/create-attachment-response.dto";
 import { CreateAttachmentDTO } from "@/interfaces/dto/create-attachment.dto";
 import { requestRaw } from "../request";
+import { MessageDTO } from "@/interfaces/dto/message.dto";
 
 // message-service returns the message(s) directly, not wrapped in the
 // { status, message, data } envelope the NestJS services use, hence requestRaw.
@@ -12,12 +12,12 @@ const messagePath = (channelId: string, ...segments: string[]) => {
 
 const attachmentPath = (channelId: string) => `/channels/${channelId}/attachments`
 
-export const getMessages = (channelId: string) => requestRaw<Message[]>({
+export const getMessages = (channelId: string) => requestRaw<MessageDTO[]>({
     method: 'GET',
     url: messagePath(channelId)
 });
 
-export const sendMessage = (dto: CreateMessageDTO) => requestRaw<Message>({
+export const sendMessage = (dto: CreateMessageDTO) => requestRaw<MessageDTO>({
     method: 'POST',
     url: messagePath(dto.channelId),
     data: dto

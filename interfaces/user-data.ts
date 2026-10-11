@@ -5,7 +5,7 @@ export interface UserData {
 
     email: string;
 
-    dateOfBirth: Date;
+    dateOfBirth: string;
 
     profile: UserProfile;
 }

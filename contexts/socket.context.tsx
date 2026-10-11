@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Relationship from "@/interfaces/relationship";
 import { FRIEND_ADDED_EVENT, FRIEND_REMOVED_EVENT, FRIEND_REQUEST_RECEIVED_EVENT, GET_VOICE_STATES_EVENT, GUILD_UPDATE_EVENT, MESSAGE_RECEIVED_EVENT, USER_PRESENCE_UPDATE_EVENT, USER_PROFILE_UPDATE_EVENT, USER_TYPING_EVENT, VOICE_UPDATE_EVENT } from "@/constants/events";
 import { MESSAGES_CACHE, RELATIONSHIPS_CACHE } from "@/constants/query-keys";
-import { Message } from "@/interfaces/message";
+import { Message, toMessage } from "@/interfaces/message";
 import { HttpStatusCode } from "axios";
 import { refreshToken } from "@/services/auth/auth.service";
 import { useUserProfileStore } from "@/app/stores/user-profiles-store";
@@ -26,6 +26,7 @@ import { UserPresenceUpdateDTO } from "@/interfaces/dto/user-presence-update.dto
 import { playSound } from "@/app/stores/audio-store";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { voiceSession } from "@/lib/voice/voice-session";
+import { MessageDTO } from "@/interfaces/dto/message.dto";
 
 export interface SocketContextType {
     socket: Socket | undefined;
@@ -88,7 +89,8 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
         updatePresence(dto.userId, dto.isOnline);
     }
 
-    function handleMessageReceived(payload: Message) {
+    function handleMessageReceived(payload: MessageDTO) {
+        const message = toMessage(payload);
         handleTypingStop(payload.channelId, payload.senderId);
         const { getChannel, updateChannel } = useChannelsStore.getState();
         const { upsertChannel, getChannel: getGuildChannel } = useGuildsStore.getState();
@@ -108,9 +110,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
                 return [];
             }
 
-            payload.createdAt = new Date(payload.createdAt);
-
-            const newMessages = [...old, payload];
+            const newMessages = [...old, message];
             return newMessages;
         })
     }

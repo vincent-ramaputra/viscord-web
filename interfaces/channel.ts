@@ -5,8 +5,8 @@ import { PermissionOverwrite } from "./permission-overwrite";
 
 export interface BaseChannel {
     id: string;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
     lastMessageId?: string;
     userChannelState: UserChannelState;
 }

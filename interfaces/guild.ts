@@ -7,9 +7,9 @@ export interface Guild {
     name: string;
     ownerId: string;
     iconURL?: string;
-    channels: GuildChannel[]
-    createdAt: Date
-    updatedAt: Date
+    channels: GuildChannel[];
+    createdAt: string;
+    updatedAt: string;
     members: GuildMember[];
     roles: Role[];
 }
