@@ -21,29 +21,8 @@ export const useVoiceStateStore = create<VoiceStateStoreState>((set, get) => ({
     updateVoiceState: (voiceState: VoiceStateData) => {
         set(state => {
             const newVoiceStates = new Map(state.voiceStates);
-            const oldVoiceState = newVoiceStates.get(
-                getVoiceStateKey(voiceState.channelId, voiceState.userId)
-            );
 
-            let merged: VoiceState;
-
-            if (oldVoiceState) {
-                merged = new VoiceState(
-                    voiceState.userId ?? oldVoiceState.userId,
-                    voiceState.channelId ?? oldVoiceState.channelId,
-                    voiceState.isMuted ?? oldVoiceState.isMuted,
-                    voiceState.isDeafened ?? oldVoiceState.isDeafened
-                );
-            } else {
-                merged = new VoiceState(
-                    voiceState.userId,
-                    voiceState.channelId,
-                    voiceState.isMuted,
-                    voiceState.isDeafened
-                );
-            }
-
-            newVoiceStates.set(getVoiceStateKey(merged.channelId, merged.userId), merged);
+            newVoiceStates.set(getVoiceStateKey(voiceState.channelId, voiceState.userId), voiceState);
 
             return { voiceStates: newVoiceStates };
         });

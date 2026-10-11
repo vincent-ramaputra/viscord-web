@@ -142,7 +142,7 @@ export default function SocketProvider({ children }: { children: ReactNode }) {
     const handleGetVoiceStates = useCallback((payload: VoiceState[]) => {
         const map: Map<string, VoiceState> = new Map();
         for (const vs of payload) {
-            map.set(getVoiceStateKey(vs.channelId, vs.userId), new VoiceState(vs.userId, vs.channelId, vs.isMuted, vs.isDeafened));
+            map.set(getVoiceStateKey(vs.channelId, vs.userId), vs);
         }
         setVoiceStates(map);
     }, [setVoiceStates]);

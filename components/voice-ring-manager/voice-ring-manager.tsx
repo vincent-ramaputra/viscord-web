@@ -164,7 +164,7 @@ export function VoiceRingManager() {
 
     const onVoiceRing = (payload: VoiceRingState[]) => {
         const { user } = useCurrentUserStore.getState();
-        batchUpdateVoiceRingState(payload.map(p => new VoiceRingState(p.initiatorId, p.channelId, p.recipientId)));
+        batchUpdateVoiceRingState(payload);
         if (payload.find(vr => vr.initiatorId === user?.id)) {
             playSound('ring');
         }
