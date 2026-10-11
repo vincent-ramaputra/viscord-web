@@ -199,6 +199,13 @@ const Overlay = styled.div`
     justify-content: flex-end;
     align-items: flex-start;
 `
+
+type CallTileData =
+    | { kind: 'screen-consumer'; consumer: Consumer }
+    | { kind: 'screen-producer'; producer: Producer }
+    | { kind: 'ring'; ring: VoiceRingState }
+    | { kind: 'voice'; voiceState: VoiceState }
+
 function UserTile({ user, showDisplayName, isSpeaking, isMuted = false, isDeafened = false }: { user: UserProfile, showDisplayName: boolean, isSpeaking: boolean, isMuted?: boolean, isDeafened?: boolean }) {
     const imgRef = useRef<HTMLImageElement>(null!);
     const [bannerColor, setBannerColor] = useState<string | null>();
@@ -421,11 +428,11 @@ function VideoView({
     const [focusedTileKey, setFocusedTileKey] = useState<string | null>(null);
 
 
-    const tiles = [
-        ...screenShareConsumers,
-        ...(screenShareProducer ? [screenShareProducer] : []),
-        ...Array.from(voiceRings),
-        ...Array.from(voiceStates),
+    const tiles: CallTileData[] = [
+        ...screenShareConsumers.map((consumer): CallTileData => ({ kind: 'screen-consumer', consumer })),
+        ...(screenShareProducer ? [screenShareProducer] : []).map((producer): CallTileData => ({ kind: 'screen-producer', producer })),
+        ...voiceRings.map((ring): CallTileData => ({ kind: 'ring', ring })),
+        ...voiceStates.map((voiceState): CallTileData => ({ kind: 'voice', voiceState }))
     ];
     // If the focused tile goes away (they left, or stopped sharing), this is undefined and the grid shows again.
     const focusedTile = focusedTileKey ? tiles.find(tile => getTileKey(tile) === focusedTileKey) : undefined;
@@ -531,44 +538,35 @@ function CallTile({
     getUserProfile,
     onClick
 }: {
-    tile: Consumer | Producer | VoiceRingState | VoiceState;
+    tile: CallTileData;
     isHovering: boolean;
     activeSpeakers: Map<string, boolean>;
     voiceStates: VoiceState[];
     getUserProfile: (id: string) => UserProfile | undefined;
     onClick?: () => void;
 }) {
-    const [activeStream, setActiveStream] = useState<Consumer | undefined>();
     const activeStreamVideoRef = useRef<HTMLVideoElement>(null!);
     const producerVideoRef = useRef<HTMLVideoElement>(null!);
-    const { resumeConsumer } = useVoice();
+    const producer = tile.kind === 'screen-producer' ? tile.producer : undefined;
+    const consumer = tile.kind === 'screen-consumer' ? tile.consumer : undefined;
 
     useEffect(() => {
-        if (tile instanceof Consumer && tile.appData.mediaTag === 'screen') {
-            if (tile.paused) {
-                resumeConsumer(tile.id);
-            }
-            setActiveStream(tile);
-        }
-    }, [tile, resumeConsumer]);
-
-    useEffect(() => {
-        if (!activeStream) return;
-        const stream = new MediaStream([activeStream.track]);
+        if (!consumer) return;
+        const stream = new MediaStream([consumer.track]);
         activeStreamVideoRef.current.srcObject = stream;
-    }, [activeStream]);
+    }, [consumer]);
 
     useEffect(() => {
-        if (!(tile instanceof Producer)) return;
-        const stream = new MediaStream([tile.track!]);
+        if (!producer) return;
+        const stream = new MediaStream([producer.track!]);
         producerVideoRef.current.srcObject = stream;
-    }, [tile]);
+    }, [producer]);
 
-    if (tile instanceof Consumer) {
+    if (tile.kind === 'screen-consumer') {
         return (
             <Tile onClick={onClick}>
                 <video
-                    ref={activeStream?.id === tile.id ? activeStreamVideoRef : undefined}
+                    ref={consumer?.id === tile.consumer.id ? activeStreamVideoRef : undefined}
                     className="w-full h-full object-cover rounded-lg bg-black"
                     autoPlay
                 />
@@ -576,7 +574,7 @@ function CallTile({
         );
     }
 
-    if (tile instanceof Producer) {
+    if (tile.kind === 'screen-producer') {
         return (
             <Tile onClick={onClick}>
                 <video
@@ -588,9 +586,9 @@ function CallTile({
         );
     }
 
-    if (tile instanceof VoiceRingState) {
-        const user = getUserProfile(tile.recipientId);
-        const isSpeaking = (voiceStates.find(vs => vs.userId === tile.recipientId) && activeSpeakers.has(tile.recipientId)) ?? false;
+    if (tile.kind === 'ring') {
+        const user = getUserProfile(tile.ring.recipientId);
+        const isSpeaking = (voiceStates.find(vs => vs.userId === tile.ring.recipientId) && activeSpeakers.has(tile.ring.recipientId)) ?? false;
 
         if (user) {
             return (
@@ -601,9 +599,9 @@ function CallTile({
         }
     }
 
-    if (tile instanceof VoiceState) {
-        const user = getUserProfile(tile.userId);
-        const isSpeaking = (voiceStates.find(vs => vs.userId === tile.userId) && activeSpeakers.has(tile.userId)) ?? false;
+    if (tile.kind === 'voice') {
+        const user = getUserProfile(tile.voiceState.userId);
+        const isSpeaking = (voiceStates.find(vs => vs.userId === tile.voiceState.userId) && activeSpeakers.has(tile.voiceState.userId)) ?? false;
 
         if (user) {
             return (
@@ -612,8 +610,8 @@ function CallTile({
                         user={user}
                         isSpeaking={isSpeaking}
                         showDisplayName={isHovering}
-                        isMuted={tile.isMuted}
-                        isDeafened={tile.isDeafened}
+                        isMuted={tile.voiceState.isMuted}
+                        isDeafened={tile.voiceState.isDeafened}
                     />
                 </Tile>
             );
@@ -790,17 +788,20 @@ function CallJoinLeaveButton({
     );
 }
 
-function getTileKey(tile: Consumer | Producer | VoiceRingState | VoiceState): string {
-    if (tile instanceof Consumer || tile instanceof Producer) {
-        return tile.id;
+function getTileKey(tile: CallTileData): string {
+    switch (tile.kind) {
+        case 'screen-consumer':
+            return tile.consumer.id;
+        case 'screen-producer':
+            return tile.producer.id;
+        case 'ring':
+            return `ring-${tile.ring.recipientId}`;
+        case 'voice':
+            return `voice-${tile.voiceState.userId}`;
+        default:
+            const _exhaustive: never = tile;
+            return _exhaustive;
     }
-    if (tile instanceof VoiceRingState) {
-        return `ring-${tile.recipientId}`;
-    }
-    if (tile instanceof VoiceState) {
-        return `voice-${tile.userId}`;
-    }
-    return 'unknown';
 }
 
 
