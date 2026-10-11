@@ -153,13 +153,27 @@ function LastReadDivider() {
     )
 }
 
-function formatTyping(names: string[]) {
-    if (names.length <= 0) return "";
-    if (names.length == 1) return names[0];
-    else return names.join(", ");
+function formatTyping(names: string[]): { subject: string, verb: string } {
+    let subject = "";
+    let verb = ""
+    if (names.length == 0) { }
+    if (names.length == 1) {
+        subject = names[0];
+        verb = 'is typing...'
+    }
+    else if (names.length < 3) {
+        subject = names.join(" and ");
+        verb = "are typing..."
+    }
+    else {
+        subject = "Several people"
+        verb = "are typing..."
+    }
+
+    return { subject, verb };
 }
 
-function TextInputItem({ channel, onSubmit, placeholder }: { channel: Channel, onSubmit: (message: SendMessageInput) => void, placeholder: string}) {
+function TextInputItem({ channel, onSubmit, placeholder }: { channel: Channel, onSubmit: (message: SendMessageInput) => void, placeholder: string }) {
     const [inputHeight, setInputHeight] = useState(LINE_HEIGHT + VERTICAL_PADDING)
     const [isTypingStatusCooldown, setTypingStatusCooldown] = useState(false);
 
@@ -215,6 +229,11 @@ export function ChatView({ messages, channel, guild, acknowledge, textInputPlace
     const { dividerAfterId } = useChannelReadState(channel, acknowledge);
     const [attachments, setAttachments] = useState<File[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const typingNames = typingUsers.flatMap(tu => {
+        const profile = userProfiles.get(tu.userId);
+        return profile ? [profile.displayName] : []
+    })
+    const { subject, verb } = formatTyping(typingNames);
 
     const nameColors = useMemo(() => {
         const colors = new Map<string, string>();
@@ -280,16 +299,16 @@ export function ChatView({ messages, channel, guild, acknowledge, textInputPlace
                         <UploadItemContainer onClick={() => fileInputRef.current?.click()}>
                             <FaCirclePlus size={20} />
                         </UploadItemContainer>
-                        <TextInputItem channel={channel} onSubmit={handleSubmit} placeholder={textInputPlaceholder}/>
+                        <TextInputItem channel={channel} onSubmit={handleSubmit} placeholder={textInputPlaceholder} />
                     </div>
                 </InputContainer>
-                {typingUsers.length > 0 &&
+                {typingNames.length > 0 &&
                     <div className="ml-2 text-[12px] h-[24px] items-center flex absolute w-full">
                         <span className="mr-2">
                             <LoadingIndicator></LoadingIndicator>
                         </span>
 
-                        <span className="font-bold">{formatTyping(typingUsers.map(tu => userProfiles.get(tu.userId)!.displayName))}</span>&nbsp;is typing...
+                        <span className="font-bold">{subject}</span>&nbsp;{verb}
                     </div>}
             </ChatInputWrapper>
         </ChatContainer>
