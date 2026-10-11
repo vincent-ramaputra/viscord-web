@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Channel } from "@/interfaces/channel";
 
-type Acknowledge = (dto: { channelId: string, messageId: string }) => unknown;
+export type Acknowledge = (dto: { channelId: string, messageId: string }) => unknown;
 
 /**
  * Keeps the open channel marked as read, and returns where the "NEW" divider goes.
