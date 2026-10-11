@@ -1,7 +1,6 @@
 import { useAppSettingsStore } from "@/app/stores/app-settings-store";
 import { ReactNode, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { SettingsSectionHeader } from "./settings-page";
 import { MAX_VOLUME, MIN_VOLUME } from "@/constants/app-config";
 
 interface TabItem {
@@ -31,6 +30,11 @@ const Tab = styled.span`
         border-bottom: 1px solid var(--text-brand);
     }
 `
+const SettingsSectionHeader = styled.h2`
+    font-weight: bold;
+    font-size: 24px;
+`
+
 
 
 export function MediaSettingsSection() {
