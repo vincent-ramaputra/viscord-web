@@ -1,6 +1,6 @@
 import styled from "styled-components"
 import TextInputSecondary from "../text-input/text-input-secondary"
-import { Channel } from "@/interfaces/channel"
+import { GuildChannel } from "@/interfaces/channel"
 import { useState } from "react"
 import ButtonTertiary from "../buttons/button-tertiary"
 import ButtonSuccess from "../buttons/button-success"
@@ -69,7 +69,7 @@ const ErrorMessage = styled.p`
 
 
 interface ChannelOverviewSectionProps {
-    channel?: Channel
+    channel?: GuildChannel
 }
 
 export function ChannelOverviewSection({ channel }: ChannelOverviewSectionProps) {

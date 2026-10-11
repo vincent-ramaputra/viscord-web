@@ -1,7 +1,7 @@
 import ContentHeader from "@/app/(app)/content-header";
 import Tooltip from "@/components/tooltip/tooltip";
 import { ChannelType } from "@/enums/channel-type.enum";
-import { Channel } from "@/interfaces/channel";
+import { GuildChannel } from "@/interfaces/channel";
 import { ReactNode, useState } from "react";
 import { BsPinAngleFill } from "react-icons/bs";
 import { PiHash } from "react-icons/pi";
@@ -73,7 +73,7 @@ const SearchBarContainer = styled.div`
     width: 244px;
 `
 
-function SearchBar({ }: { channel: Channel }) {
+function SearchBar({ }: { channel: GuildChannel }) {
     return (
         <SearchBarContainer>
             {/* <TextInputSecondary
@@ -87,7 +87,7 @@ function SearchBar({ }: { channel: Channel }) {
     );
 }
 
-export function GuildChannelHeader({ channel, showMemberList, onToggleMemberList }: { channel: Channel, showMemberList: boolean, onToggleMemberList: () => void }) {
+export function GuildChannelHeader({ channel, showMemberList, onToggleMemberList }: { channel: GuildChannel, showMemberList: boolean, onToggleMemberList: () => void }) {
     const [, setIsHoveringName] = useState(false);
 
     return (

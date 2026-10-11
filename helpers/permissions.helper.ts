@@ -1,6 +1,6 @@
 import { PermissionOverwriteTargetType } from "@/enums/permission-overwrite-target-type.enum";
 import { ALL_PERMISSIONS } from "@/enums/permissions.enum";
-import { Channel } from "@/interfaces/channel";
+import { GuildChannel } from "@/interfaces/channel";
 import { Guild } from "@/interfaces/guild";
 import { GuildMember } from "@/interfaces/guild-member";
 import { PermissionOverwrite } from "@/interfaces/permission-overwrite";
@@ -46,7 +46,7 @@ export function applyChannelOverwrites(basePermission: bigint, overwrites: Permi
     return effective;
 }
 
-export function getEffectivePermission(member: GuildMember, guild: Guild, channel?: Channel, parent?: Channel): bigint {
+export function getEffectivePermission(member: GuildMember, guild: Guild, channel?: GuildChannel, parent?: GuildChannel): bigint {
     if (guild.ownerId === member.userId) {
         return ALL_PERMISSIONS;
     }

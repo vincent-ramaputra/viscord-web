@@ -1,5 +1,5 @@
 import { ChannelType } from "@/enums/channel-type.enum";
-import { Channel } from "@/interfaces/channel";
+import { GuildChannel } from "@/interfaces/channel";
 import { Guild } from "@/interfaces/guild";
 import { GuildMember } from "@/interfaces/guild-member";
 import { Role } from "@/interfaces/role";
@@ -9,7 +9,7 @@ type GuildMap = Map<string, Guild>;
 
 // Backend omits userChannelState on some responses (e.g. create/join guild), but the UI reads it unguarded.
 // Default it here, at the store boundary, so every channel in the store satisfies the Channel type.
-function normalizeChannel(channel: Channel): Channel {
+function normalizeChannel(channel: GuildChannel): GuildChannel {
     return { ...channel, userChannelState: channel.userChannelState ?? { unreadCount: 0, mentionCount: 0 } };
 }
 
@@ -23,8 +23,8 @@ interface GuildStoreState {
     upsertGuild: (guild: Guild) => void;
     removeGuild: (guildId: string) => void;
     getGuild: (guildId: string) => Guild | undefined;
-    getChannel: (channelId: string) => Channel | undefined;
-    upsertChannel: (guildId: string, channelId: string, channel: Channel) => void;
+    getChannel: (channelId: string) => GuildChannel | undefined;
+    upsertChannel: (guildId: string, channelId: string, channel: GuildChannel) => void;
     deleteChannel: (guildId: string, channelId: string) => void;
     updateChannelLastRead: (guildId: string, channelId: string, messageId: string) => void;
     upsertMember: (guildId: string, member: GuildMember) => void;

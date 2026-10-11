@@ -1,5 +1,5 @@
 import Modal from "@/components/modals/modal";
-import { Channel } from "@/interfaces/channel";
+import { BaseChannel } from "@/interfaces/channel";
 import { MdClose } from "react-icons/md";
 import styled from "styled-components";
 import ButtonSecondary from "@/components/buttons/button-secondary";
@@ -82,7 +82,7 @@ const ContentFooter = styled.div`
     gap: 8px;
 `
 
-export function RemovePermissionOverwriteModal({ channel, target, targetType, onClose }: { channel: Channel, target: Role | GuildMember, targetType: PermissionOverwriteTargetType, onClose: () => void }) {
+export function RemovePermissionOverwriteModal({ channel, target, targetType, onClose }: { channel: BaseChannel, target: Role | GuildMember, targetType: PermissionOverwriteTargetType, onClose: () => void }) {
     const profile = useUserProfileStore(state =>
         targetType === PermissionOverwriteTargetType.MEMBER ? state.getUserProfile((target as GuildMember).userId) : undefined);
     const { mutateAsync: deletePermissionOverwrite, isPending } = useDeletePermissionOverwrite();

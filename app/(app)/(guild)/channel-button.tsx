@@ -14,7 +14,7 @@ import { Permissions } from "@/enums/permissions.enum";
 import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
 import { useVoice } from "@/hooks/use-voice";
-import { Channel } from "@/interfaces/channel";
+import { GuildChannel } from "@/interfaces/channel";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment, MouseEvent, useEffect, useState } from "react";
 import { FaLock } from "react-icons/fa6";
@@ -176,7 +176,7 @@ function EditChannelButton({ onClick }: { onClick: (e: MouseEvent<HTMLDivElement
     )
 }
 
-export default function ChannelButton({ channel, collapse }: { channel: Channel, collapse: boolean }) {
+export default function ChannelButton({ channel, collapse }: { channel: GuildChannel, collapse: boolean }) {
     const [hover, setHover] = useState(false);
     const pathname = usePathname();
     const router = useRouter();

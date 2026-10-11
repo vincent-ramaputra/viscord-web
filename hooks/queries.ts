@@ -8,7 +8,7 @@ import { Message } from "@/interfaces/message"
 import { getRelationships } from "@/services/relationships/relationships.service";
 import { getCurrentUserData } from "@/services/users/users.service";
 import Relationship from "@/interfaces/relationship";
-import { Channel } from "@/interfaces/channel";
+import { DMChannel } from "@/interfaces/channel";
 import { UserData } from "@/interfaces/user-data";
 import { unwrap } from "@/services/request";
 
@@ -34,7 +34,7 @@ export function useUpdateCurrentUser() {
     return updateCurrentUser;
 }
 
-export function useDMChannelsQuery(options?: Omit<UseQueryOptions<Channel[], Error>, "queryKey" | "queryFn">) {
+export function useDMChannelsQuery(options?: Omit<UseQueryOptions<DMChannel[], Error>, "queryKey" | "queryFn">) {
     return useQuery({
         ...options,
         staleTime: Infinity,

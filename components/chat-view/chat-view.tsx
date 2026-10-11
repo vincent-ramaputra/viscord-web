@@ -3,7 +3,7 @@ import { Fragment, KeyboardEvent, useMemo, useRef, useState } from "react"
 import styled from "styled-components"
 import MessageItem from "../message-item/message-item"
 import { Acknowledge, useChannelReadState } from "@/hooks/use-channel-read-state"
-import { Channel } from "@/interfaces/channel"
+import { BaseChannel } from "@/interfaces/channel"
 import { useSendMessageMutation } from "@/hooks/mutations"
 import { Guild } from "@/interfaces/guild"
 import { getRoleColor } from "@/helpers/color.helper"
@@ -173,7 +173,7 @@ function formatTyping(names: string[]): { subject: string, verb: string } {
     return { subject, verb };
 }
 
-function TextInputItem({ channel, onSubmit, placeholder }: { channel: Channel, onSubmit: (message: SendMessageInput) => void, placeholder: string }) {
+function TextInputItem({ channel, onSubmit, placeholder }: { channel: BaseChannel, onSubmit: (message: SendMessageInput) => void, placeholder: string }) {
     const [inputHeight, setInputHeight] = useState(LINE_HEIGHT + VERTICAL_PADDING)
     const [isTypingStatusCooldown, setTypingStatusCooldown] = useState(false);
 
@@ -213,7 +213,7 @@ function TextInputItem({ channel, onSubmit, placeholder }: { channel: Channel, o
 }
 
 
-export function ChatView({ messages, channel, guild, acknowledge, textInputPlaceholder }: { messages: Message[], channel: Channel, guild?: Guild, acknowledge: Acknowledge, textInputPlaceholder: string }) {
+export function ChatView({ messages, channel, guild, acknowledge, textInputPlaceholder }: { messages: Message[], channel: BaseChannel, guild?: Guild, acknowledge: Acknowledge, textInputPlaceholder: string }) {
     const groupedMessages = useMemo(() => messages.reduce((groups, message) => {
         const key = message.createdAt.toLocaleDateString();
 

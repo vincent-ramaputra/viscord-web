@@ -1,6 +1,6 @@
 
 import Modal from "@/components/modals/modal";
-import { Channel } from "@/interfaces/channel";
+import { GuildChannel } from "@/interfaces/channel";
 import { MdClose } from "react-icons/md";
 import styled from "styled-components";
 import ButtonSecondary from "@/components/buttons/button-secondary";
@@ -82,7 +82,7 @@ const ContentFooter = styled.div`
     gap: 8px;
 `
 
-export function DeleteChannelModal({ channel, onClose }: { channel: Channel, onClose: () => void }) {
+export function DeleteChannelModal({ channel, onClose }: { channel: GuildChannel, onClose: () => void }) {
     const router = useRouter();
     const closeSettings = useSettingsOverlay(s => s.closeSettings);
     const guild = getGuild(channel.guildId);

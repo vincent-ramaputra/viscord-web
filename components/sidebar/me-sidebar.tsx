@@ -219,7 +219,7 @@ export default function MeSidebarContent() {
                         </DMListHeader>
                         <DMListWrapper>
                             {dmChannels?.map((channel) => {
-                                const recipient = userProfiles.get(channel.recipients![0].id)!;
+                                const recipient = userProfiles.get(channel.recipients[0].id)!;
                                 const isActive = pathname === `/channels/me/${channel.id}`;
                                 const hasNewMessage = channel.userChannelState.unreadCount > 0;
                                 return (

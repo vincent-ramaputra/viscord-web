@@ -17,7 +17,7 @@ export default function Page() {
     useEffect(() => {
         if (!channel) return;
 
-        document.title = `Viscord | @${channel.recipients![0].displayName}`
+        document.title = `Viscord | @${channel.recipients[0].displayName}`
     }, [channel]);
 
 
@@ -28,7 +28,7 @@ export default function Page() {
     return (
         <div className="h-full flex flex-col">
             <DMChannelHeader channel={channel} />
-            <ChatView messages={messages ?? []} channel={channel} acknowledge={acknowledge} textInputPlaceholder={`Message @${channel.recipients![0].displayName}`}/>
+            <ChatView messages={messages ?? []} channel={channel} acknowledge={acknowledge} textInputPlaceholder={`Message @${channel.recipients[0].displayName}`}/>
         </div>
     )
 }
