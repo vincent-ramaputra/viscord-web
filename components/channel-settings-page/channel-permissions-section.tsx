@@ -6,7 +6,7 @@ import Checkbox from "../checkbox/checkbox";
 import { checkPermission, denyPermission, getPermissionStatus } from "@/helpers/permissions.helper";
 import { Permissions } from "@/enums/permissions.enum";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { PermissionOverwrite } from "@/interfaces/permission-ovewrite";
+import { PermissionOverwrite } from "@/interfaces/permission-overwrite";
 import { PermissionOverwriteTargetType } from "@/enums/permission-overwrite-target-type.enum";
 import { useSyncChannel, useUpdatePermissionOverwrite } from "@/hooks/mutations";
 import { getRoleColor } from "@/helpers/color.helper";

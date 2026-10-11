@@ -3,7 +3,7 @@ import { ALL_PERMISSIONS } from "@/enums/permissions.enum";
 import { Channel } from "@/interfaces/channel";
 import { Guild } from "@/interfaces/guild";
 import { GuildMember } from "@/interfaces/guild-member";
-import { PermissionOverwrite } from "@/interfaces/permission-ovewrite";
+import { PermissionOverwrite } from "@/interfaces/permission-overwrite";
 import { Role } from "@/interfaces/role";
 
 

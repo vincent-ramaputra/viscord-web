@@ -5,7 +5,7 @@ export interface SendMessageInput {
     mentions: string[];
 }
 
-export type CreateMessageDto = SendMessageInput & {
+export type CreateMessageDTO = SendMessageInput & {
     attachments: {
         key: string;
         fileName: string;

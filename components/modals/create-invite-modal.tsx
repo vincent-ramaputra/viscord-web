@@ -23,7 +23,7 @@ import ButtonTertiary from "../buttons/button-tertiary";
 import { useQueryClient } from "@tanstack/react-query";
 import { MESSAGES_CACHE } from "@/constants/query-keys";
 import Dropdown, { DropdownOption } from "../dropdown/dropdown";
-import { CreateInviteDto } from "@/interfaces/dto/create-invite.dto";
+import { CreateInviteDTO } from "@/interfaces/dto/create-invite.dto";
 
 interface CreateInviteModalProps {
     channelId?: string;
@@ -210,7 +210,7 @@ export function CreateInviteModal({ channelId, guildId, onClose }: CreateInviteM
     const inviteLink = invite ? getInviteURL(invite.code) : '';
     const [copied, setCopied] = useState(false);
     const [screen, setScreen] = useState<"create-invite" | "edit-invite">("create-invite")
-    const [inviteSettings, setInviteSettings] = useState<CreateInviteDto>({ guildId, channelId, maxAge: INVITE_DURATIONS["7 days"] });
+    const [inviteSettings, setInviteSettings] = useState<CreateInviteDTO>({ guildId, channelId, maxAge: INVITE_DURATIONS["7 days"] });
     const didRun = useRef(false);
 
     useEffect(() => {

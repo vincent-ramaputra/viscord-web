@@ -7,7 +7,7 @@ import TextInput from "../text-input/text-input";
 import ButtonPrimary from "../buttons/button-primary";
 import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
-import { CreateGuildDto } from "@/interfaces/dto/create-guild.dto";
+import { CreateGuildDTO } from "@/interfaces/dto/create-guild.dto";
 import { createGuild } from "@/services/guild/guild.service";
 import { useGuildsStore } from "@/app/stores/guilds-store";
 
@@ -103,7 +103,7 @@ export function CreateGuildModal({ onClose }: { onClose: () => void }) {
     const addGuild = useGuildsStore(s => s.upsertGuild);
 
     const { mutate: createGuildMutation } = useMutation({
-        mutationFn: (dto: CreateGuildDto) => createGuild(dto),
+        mutationFn: (dto: CreateGuildDTO) => createGuild(dto),
         onSuccess: (response) => {
             if (!response.ok) {
                 return;

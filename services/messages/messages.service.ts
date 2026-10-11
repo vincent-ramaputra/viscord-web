@@ -1,5 +1,5 @@
 import { Message } from "@/interfaces/message";
-import { CreateMessageDto } from "@/interfaces/dto/create-message.dto";
+import { CreateMessageDTO } from "@/interfaces/dto/create-message.dto";
 import { CreateAttachmentResponseDTO } from "@/interfaces/dto/create-attachment-response.dto";
 import { CreateAttachmentDTO } from "@/interfaces/dto/create-attachment.dto";
 import { requestRaw } from "../request";
@@ -17,7 +17,7 @@ export const getMessages = (channelId: string) => requestRaw<Message[]>({
     url: messagePath(channelId)
 });
 
-export const sendMessage = (dto: CreateMessageDto) => requestRaw<Message>({
+export const sendMessage = (dto: CreateMessageDTO) => requestRaw<Message>({
     method: 'POST',
     url: messagePath(dto.channelId),
     data: dto

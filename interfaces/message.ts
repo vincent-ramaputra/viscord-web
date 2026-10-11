@@ -6,7 +6,7 @@ export interface Message {
     senderId: string
     content: string
     channelId: string
-    is_pinned: boolean
+    isPinned: boolean
     createdAt: Date
     updatedAt: Date
     mentions: string[]
