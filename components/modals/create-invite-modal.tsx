@@ -16,13 +16,13 @@ import ButtonSuccess from "../buttons/button-success";
 import ButtonPrimary from "../buttons/button-primary";
 import { Invite } from "@/interfaces/invite";
 import { createOrGetInvite } from "@/services/channels/channels.service";
-import { getInviteKeyByValue, INVITE_DURATIONS, isKeyOfInviteDuration } from "@/constants/guilds";
+import { getInviteKeyByValue, INVITE_DURATIONS } from "@/constants/guilds";
 import { Channel } from "@/interfaces/channel";
 import { useSendMessageMutation } from "@/hooks/mutations";
 import ButtonTertiary from "../buttons/button-tertiary";
 import { useQueryClient } from "@tanstack/react-query";
 import { MESSAGES_CACHE } from "@/constants/query-keys";
-import Dropdown from "../dropdown/dropdown";
+import Dropdown, { DropdownOption } from "../dropdown/dropdown";
 import { CreateInviteDto } from "@/interfaces/dto/create-invite.dto";
 
 interface CreateInviteModalProps {
@@ -199,6 +199,7 @@ function RelationshipItem({ channel, inviteLink }: { channel: Channel, inviteLin
 
 }
 
+const inviteOptions: DropdownOption<number | null>[] = Object.entries(INVITE_DURATIONS).map(([label, value]) => ({ label, value }));
 export function CreateInviteModal({ channelId, guildId, onClose }: CreateInviteModalProps) {
     const guild = useGuildsStore(s => s.getGuild(guildId));
     const channel = guild?.channels.find(ch => ch.id === channelId);
@@ -304,14 +305,11 @@ export function CreateInviteModal({ channelId, guildId, onClose }: CreateInviteM
                     <ContentBody>
                         <InputLabel>Expire After</InputLabel>
                         <Dropdown
-                            values={Object.keys(INVITE_DURATIONS)}
-                            value={getInviteKeyByValue(inviteSettings.maxAge)!}
-                            onChange={(key) => {
-                                if (isKeyOfInviteDuration(key)) {
-                                    setInviteSettings(prev => ({ ...prev, maxAge: INVITE_DURATIONS[key as keyof typeof INVITE_DURATIONS]! }))
-                                }
-                            }
-                            } />
+                            options={inviteOptions}
+                            value={inviteSettings.maxAge}
+                            onChange={(value) => {
+                                setInviteSettings(prev => ({ ...prev, maxAge: value }))
+                            }} />
                     </ContentBody>
                     <InviteLinkSettingActionButtons>
                         <ButtonSecondary size="lg" onClick={() => setScreen("create-invite")}>Cancel</ButtonSecondary>

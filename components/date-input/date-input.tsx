@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react";
-import Dropdown from "../dropdown/dropdown";
+import Dropdown, { DropdownOption } from "../dropdown/dropdown";
 import styles from './styles.module.css'
 
 export interface DateInputProps {
@@ -24,25 +24,23 @@ const months = [
     "November",
     "December",
 ];
+const days = Array.from({ length: 31 }, (_, i) => i + 1);
+const years = [...Array(150).keys()].map((i) => (new Date().getFullYear()) - i - 3);
 
-const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
-
-const years = [...Array(150).keys()].map((i) => String((new Date().getFullYear()) - i - 3));
+const dayOptions: DropdownOption<number>[] = days.map((day) => ({ label: String(day), value: day }));
+const monthOptions: DropdownOption<number>[] = months.map((month, index) => ({ label: month, value: index }));
+const yearOptions: DropdownOption<number>[] = years.map(year => ({ label: String(year), value: year }));
 
 export default function DateInput({ label, isRequired = false, onChange, errorMessage }: DateInputProps) {
-    const [month, setMonth] = useState("");
-    const [day, setDay] = useState("");
-    const [year, setYear] = useState("");
+    const [month, setMonth] = useState<number | undefined>();
+    const [day, setDay] = useState<number | undefined>();
+    const [year, setYear] = useState<number | undefined>();
 
     useEffect(() => {
-        if (month.length > 0 && day.length > 0 && year.length > 0) {
-            try {
-                const date = new Date(`${month}-${day}-${year}`);
-                onChange(date);
-            } catch (error) {
-                console.error(error)
-            }
-        }
+        if (year === undefined || month === undefined || day === undefined) return;
+
+        const date = new Date(year, month, day);
+        onChange(date);
     }, [month, year, day])
 
     return (
@@ -53,9 +51,9 @@ export default function DateInput({ label, isRequired = false, onChange, errorMe
                 {errorMessage && <p className="tracking-wide text-red-400 leading-[1.333] italic">{` - ${errorMessage}`}</p>}
             </div>
             <div className={styles["input-wrapper"]}>
-                <Dropdown placeholder="Month" values={months} value={month} onChange={(val) => setMonth(val)} />
-                <Dropdown placeholder="Day" values={days} value={day} onChange={(val) => setDay(val)} />
-                <Dropdown placeholder="Year" values={years} value={year} onChange={(val) => setYear(val)} />
+                <Dropdown placeholder="Month" options={monthOptions} value={month} onChange={(val) => setMonth(val)} />
+                <Dropdown placeholder="Day" options={dayOptions} value={day} onChange={(val) => setDay(val)} />
+                <Dropdown placeholder="Year" options={yearOptions} value={year} onChange={(val) => setYear(val)} />
             </div>
         </div>
     );

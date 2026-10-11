@@ -3,18 +3,23 @@ import { FaChevronDown } from "react-icons/fa";
 import styles from './styles.module.css'
 import { useEffect, useRef, useState } from "react";
 
-export interface DropdownProps {
+export interface DropdownOption<T> {
+    value: T;
+    label: string;
+}
+interface DropdownProps<T> {
     placeholder?: string;
-    values: string[];
-    value: string;
-    onChange: (val: string) => void;
+    options: DropdownOption<T>[]
+    value: T | undefined;
+    onChange: (val: T) => void;
 }
 
 
-export default function Dropdown({ placeholder = "", values, value, onChange }: DropdownProps) {
+export default function Dropdown<T>({ placeholder = "",  options, value, onChange }: DropdownProps<T>) {
     const [showDropdown, setShowDropdown] = useState(false);
-    const [input, setInput] = useState(value);
-    const filteredResult = values.filter((item) => item.toLowerCase().includes(input.toString().toLowerCase()));
+    const selectedLabel = options.find(opt => opt.value === value)?.label ?? "";
+    const [query, setQuery] = useState("");
+    const filteredResult = options.filter((option) => option.label.toLowerCase().includes(query.toLowerCase()));
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -36,13 +41,12 @@ export default function Dropdown({ placeholder = "", values, value, onChange }: 
             <input className={styles["input"]}
                 placeholder={placeholder}
                 onFocus={() => {
-                    setInput("");
+                    setQuery("");
                     setShowDropdown(true)
                 }}
-                value={input}
+                value={showDropdown ? query : selectedLabel}
                 onChange={(e) => {
-                    onChange(e.target.value);
-                    setInput(e.target.value);
+                    setQuery(e.target.value);
                 }
                 } />
             <span className={styles["dropdown-icon"]}><FaChevronDown size={14} /></span>
@@ -50,11 +54,10 @@ export default function Dropdown({ placeholder = "", values, value, onChange }: 
                 {filteredResult.length != 0 ?
                     filteredResult.map((item) => {
                         return (
-                            <div className={styles["dropdown-select-item"]} key={item} onClick={() => {
-                                onChange(item.toString());
-                                setInput(item);
+                            <div className={styles["dropdown-select-item"]} key={item.label} onClick={() => {
+                                onChange(item.value);
                                 setShowDropdown(false);
-                            }}>{item}</div>
+                            }}>{item.label}</div>
                         )
                     }) :
                     <div className={styles["dropdown-select-item-not-found"]} onClick={() => {

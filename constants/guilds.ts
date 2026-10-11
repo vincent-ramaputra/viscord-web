@@ -14,10 +14,6 @@ export function getInviteKeyByValue(value?: number | null) {
   return Object.entries(INVITE_DURATIONS).find(([, v]) => v === value)?.[0];
 }
 
-export function isKeyOfInviteDuration(key: string) {
-  return key in INVITE_DURATIONS;
-}
-
 export const ROLE_COLOR_DEFAULT = '#99aab5';
 
 export const ROLE_COLORS = {
