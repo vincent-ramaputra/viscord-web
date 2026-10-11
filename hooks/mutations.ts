@@ -6,7 +6,7 @@ import { login, logout } from "@/services/auth/auth.service";
 import { acknowledgeMessage, createAttachment, sendMessage } from "@/services/messages/messages.service";
 import { acceptFriendRequest, declineFriendRequest } from "@/services/relationships/relationships.service";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Message } from "@/interfaces/message";
+import { Message, toMessage } from "@/interfaces/message";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { MessageStatus } from "@/enums/message-status.enum";
 import { useChannelsStore } from "@/app/stores/channels-store";
@@ -130,7 +130,7 @@ export function useSendMessageMutation(guildId?: string) {
 
             }
 
-            return unwrap(await sendMessage({ ...dto, attachments: attachmentKeys }));
+            return toMessage(unwrap(await sendMessage({ ...dto, attachments: attachmentKeys })));
         },
         onMutate: ({ dto, clientId, attachments }) => {
             const { user } = useCurrentUserStore.getState();
@@ -169,8 +169,6 @@ export function useSendMessageMutation(guildId?: string) {
                 if (!old) {
                     return [];
                 }
-                message.createdAt = new Date(message.createdAt);
-
                 const newMessages = [...old].map(m => {
                     if (m.id === optimisticMessage.id) {
                         return message;

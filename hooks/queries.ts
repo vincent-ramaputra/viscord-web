@@ -4,7 +4,7 @@ import { getDMChannels } from "@/services/channels/channels.service";
 import { getGuildDetail, getGuildInvites, getGuilds } from "@/services/guild/guild.service";
 import { getMessages } from "@/services/messages/messages.service";
 import { useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
-import { Message } from "@/interfaces/message"
+import { toMessage } from "@/interfaces/message"
 import { getRelationships } from "@/services/relationships/relationships.service";
 import { getCurrentUserData } from "@/services/users/users.service";
 import Relationship from "@/interfaces/relationship";
@@ -91,7 +91,7 @@ export function useMessagesQuery(channelId: string) {
                 return [];
             }
 
-            const data = res.data.map(m => ({ ...m, createdAt: new Date(m.createdAt), updatedAt: new Date(m.updatedAt) }) as Message)
+            const data = res.data.map(toMessage);
 
             return data.sort((a, b) => a.createdAt > b.createdAt ? 1 : a.createdAt < b.createdAt ? -1 : 0);
         }

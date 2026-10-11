@@ -9,6 +9,6 @@ export interface UserProfile {
     status: UserStatus;
     avatarURL?: string;
     defaultAvatarURL: string;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
 }
