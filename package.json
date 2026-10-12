@@ -6,7 +6,9 @@
     "dev": "next dev --experimental-https -p 3002 --turbopack --experimental-https-cert ../certs/cert.pem --experimental-https-key ../certs/key.pem",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.67.1",
@@ -27,7 +29,7 @@
     "@eslint/eslintrc": "^3",
     "@tanstack/eslint-plugin-query": "^5.66.1",
     "@types/colorthief": "^2.6.0",
-    "@types/node": "^20",
+    "@types/node": "^22.20.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-styled-components": "^2.1.4",
@@ -35,6 +37,7 @@
     "eslint-config-next": "15.1.6",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.3"
   }
 }
