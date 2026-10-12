@@ -3,7 +3,7 @@ import styled from "styled-components";
 import ButtonSecondary from "../buttons/button-secondary";
 import { FaCheck, FaCirclePlus, FaLock } from "react-icons/fa6";
 import Checkbox from "../checkbox/checkbox";
-import { checkPermission, denyPermission, getPermissionStatus } from "@/helpers/permissions.helper";
+import { checkPermission, getPermissionStatus } from "@/helpers/permissions.helper";
 import { Permissions } from "@/enums/permissions.enum";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { PermissionOverwrite } from "@/interfaces/permission-overwrite";
@@ -462,8 +462,8 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
     const { showMenu } = useContextMenu();
     const channel = guild?.channels.find(channel => channel.id === channelId);
     const permissionOverwrites = (channel?.isSynced ? guild?.channels.find(ch => ch.id === channel.parent?.id)?.permissionOverwrites : channel?.permissionOverwrites) ?? [];
-    const everyoneOW: PermissionOverwrite | undefined = permissionOverwrites.find(ow => ow.targetId === guild?.id);
-    const isPrivate = checkPermission(BigInt(everyoneOW?.deny ?? 0n), Permissions.VIEW_CHANNELS)
+    const everyoneOW = permissionOverwrites.find(ow => ow.targetId === guild?.id)!;
+    const isPrivate = checkPermission(BigInt(everyoneOW.deny ?? 0n), Permissions.VIEW_CHANNELS)
     const { mutateAsync: updatePermissionOverwrite, isPending } = useUpdatePermissionOverwrite(channel?.parent?.id);
     const { mutate: syncChannel } = useSyncChannel();
     const [selectedTarget, setSelectedTarget] = useState<PermissionOverwrite | undefined>(everyoneOW);
@@ -550,12 +550,25 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
         return <div></div>;
     }
 
-    function setChannelPrivate() {
+    async function setChannelPrivate(checked: boolean) {
         if (!channel) return;
 
-        const everyoneOW = channel?.permissionOverwrites.find(ow => ow.targetId === guild!.id);
-        if (!everyoneOW) return;
-        everyoneOW.deny = denyPermission(BigInt(everyoneOW.deny), Permissions.VIEW_CHANNELS).toString();
+        const current = BigInt(everyoneOW.deny)
+        const deny = checked
+            ? current | Permissions.VIEW_CHANNELS
+            : current & ~Permissions.VIEW_CHANNELS;
+
+        try {
+            await updatePermissionOverwrite({
+                channelId,
+                targetId: guildId,
+                targetType: PermissionOverwriteTargetType.ROLE,
+                allow: everyoneOW.allow ?? "0",
+                deny: deny.toString(),
+            });
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     function resetChanges() {
