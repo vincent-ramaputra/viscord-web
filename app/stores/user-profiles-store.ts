@@ -1,3 +1,4 @@
+import { DMChannel, getDMRecipientId } from "@/interfaces/channel";
 import { UserProfile } from "@/interfaces/user-profile";
 import { create } from "zustand";
 
@@ -42,4 +43,9 @@ export const useUserProfileStore = create<UserProfileStoreState>((set, get) => (
 
 export function useGetUserProfile(userId: string) {
     return useUserProfileStore(state => state.getUserProfile(userId));
+}
+
+// The other user's profile in a DM, or undefined if it isn't loaded (render a placeholder, don't assert).
+export function useDMRecipient(channel: DMChannel | undefined) {
+    return useUserProfileStore(state => channel ? state.userProfiles.get(getDMRecipientId(channel)) : undefined);
 }

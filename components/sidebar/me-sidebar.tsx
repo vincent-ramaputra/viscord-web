@@ -5,6 +5,7 @@ import { useUserTypingStore, isTypingIn } from "@/app/stores/user-typing-store";
 import SidebarContentContainer from "@/components/guild-sidebar/sidebar-content-container";
 import SidebarHeader from "@/components/guild-sidebar/sidebar-header";
 import UserAvatar from "@/components/user-avatar/user-avatar";
+import { getDMRecipientId } from "@/interfaces/channel";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment } from "react";
 import styled from "styled-components";
@@ -219,7 +220,8 @@ export default function MeSidebarContent() {
                         </DMListHeader>
                         <DMListWrapper>
                             {dmChannels?.map((channel) => {
-                                const recipient = userProfiles.get(channel.recipients[0].id)!;
+                                const recipient = userProfiles.get(getDMRecipientId(channel));
+                                if (!recipient) return null;
                                 const isActive = pathname === `/channels/me/${channel.id}`;
                                 const hasNewMessage = channel.userChannelState.unreadCount > 0;
                                 return (

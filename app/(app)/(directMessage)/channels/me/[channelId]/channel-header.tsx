@@ -1,12 +1,12 @@
 import ContentHeader from "@/app/(app)/content-header";
 import { useCurrentUserStore } from "@/app/stores/current-user-store";
 import { useMediasoupStore } from "@/app/stores/mediasoup-store";
-import { useUserProfileStore } from "@/app/stores/user-profiles-store";
+import { useDMRecipient, useUserProfileStore } from "@/app/stores/user-profiles-store";
 import { useIsUserTyping } from "@/app/stores/user-typing-store";
 import { getChannelVoiceStates, useChannelVoiceStates } from "@/app/stores/voice-state-store";
 import Tooltip from "@/components/tooltip/tooltip";
 import UserAvatar from "@/components/user-avatar/user-avatar";
-import { DMChannel } from "@/interfaces/channel";
+import { DMChannel, getDMRecipientId } from "@/interfaces/channel";
 import { UserProfile } from "@/interfaces/user-profile";
 import { VoiceState } from "@/interfaces/voice-state";
 import { ringChannelRecipients } from "@/services/channels/channels.service";
@@ -252,8 +252,7 @@ function UserTile({ user, showDisplayName, isSpeaking, isMuted = false, isDeafen
 function CallHeader({ channel }: { channel: DMChannel }) {
     const [isHovering, setIsHovering] = useState(false);
     const user = useCurrentUserStore(s => s.user);
-    const userProfiles = useUserProfileStore(s => s.userProfiles);
-    const recipient: UserProfile = userProfiles.get(channel.recipients[0].id) || channel.recipients[0];
+    const recipient = useDMRecipient(channel);
     const { join, leave } = useVoice();
 
     async function handleJoinVoiceCall() {
@@ -276,12 +275,12 @@ function CallHeader({ channel }: { channel: DMChannel }) {
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
         >
-            <CallHeaderTop
+            {recipient && <CallHeaderTop
                 recipient={recipient}
                 channel={channel}
                 isHovering={isHovering}
                 onJoinCall={handleJoinVoiceCall}
-            />
+            />}
 
             <CallContent
                 channel={channel}
@@ -808,9 +807,8 @@ function getTileKey(tile: CallTileData): string {
 
 export function DMChannelHeader({ channel }: { channel: DMChannel }) {
     const [isHoveringName, setIsHoveringName] = useState(false);
-    const userProfiles = useUserProfileStore(s => s.userProfiles);
-    const recipient: UserProfile = userProfiles.get(channel.recipients[0].id) || channel.recipients[0];
-    const isTyping = useIsUserTyping(channel.id, recipient.id);
+    const recipient = useDMRecipient(channel);
+    const isTyping = useIsUserTyping(channel.id, getDMRecipientId(channel));
     const voiceStates = useChannelVoiceStates(channel.id);
     const { join } = useVoice();
 
@@ -821,6 +819,10 @@ export function DMChannelHeader({ channel }: { channel: DMChannel }) {
 
     if (voiceStates.length > 0) {
         return <CallHeader channel={channel} />
+    }
+
+    if (!recipient) {
+        return <ContentHeader>{null}</ContentHeader>;
     }
 
     return (

@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { DMChannelHeader } from "./channel-header";
 import { ChatView } from "@/components/chat-view/chat-view";
 import { useAcknowledgeMessageMutation } from "@/hooks/mutations";
+import { useDMRecipient } from "@/app/stores/user-profiles-store";
 
 
 export default function Page() {
@@ -13,12 +14,13 @@ export default function Page() {
     const channel = useChannelsStore(s => s.getChannel(channelId));
     const { data: messages } = useMessagesQuery(channelId);
     const { mutateAsync: acknowledge } = useAcknowledgeMessageMutation();
+    const recipientName = useDMRecipient(channel)?.displayName;
 
     useEffect(() => {
-        if (!channel) return;
+        if (!recipientName) return;
 
-        document.title = `Viscord | @${channel.recipients[0].displayName}`
-    }, [channel]);
+        document.title = `Viscord | @${recipientName}`
+    }, [recipientName]);
 
 
     if (!channel) {
@@ -28,7 +30,7 @@ export default function Page() {
     return (
         <div className="h-full flex flex-col">
             <DMChannelHeader channel={channel} />
-            <ChatView messages={messages ?? []} channel={channel} acknowledge={acknowledge} textInputPlaceholder={`Message @${channel.recipients[0].displayName}`}/>
+            <ChatView messages={messages ?? []} channel={channel} acknowledge={acknowledge} textInputPlaceholder={recipientName ? `Message @${recipientName}` : "Message"}/>
         </div>
     )
 }
