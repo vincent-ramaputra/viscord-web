@@ -462,8 +462,9 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
     const { showMenu } = useContextMenu();
     const channel = guild?.channels.find(channel => channel.id === channelId);
     const permissionOverwrites = (channel?.isSynced ? guild?.channels.find(ch => ch.id === channel.parent?.id)?.permissionOverwrites : channel?.permissionOverwrites) ?? [];
-    const everyoneOW = permissionOverwrites.find(ow => ow.targetId === guild?.id)!;
-    const isPrivate = checkPermission(BigInt(everyoneOW.deny ?? 0n), Permissions.VIEW_CHANNELS)
+    const everyoneOW = permissionOverwrites.find(ow => ow.targetId === guild?.id);
+    // undefined while the channel is missing from the store (e.g. deleted while settings are open).
+    const isPrivate = checkPermission(BigInt(everyoneOW?.deny ?? "0"), Permissions.VIEW_CHANNELS)
     const { mutateAsync: updatePermissionOverwrite, isPending } = useUpdatePermissionOverwrite(channel?.parent?.id);
     const { mutate: syncChannel } = useSyncChannel();
     const [selectedTarget, setSelectedTarget] = useState<PermissionOverwrite | undefined>(everyoneOW);
@@ -551,7 +552,7 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
     }
 
     async function setChannelPrivate(checked: boolean) {
-        if (!channel) return;
+        if (!channel || !everyoneOW) return;
 
         const current = BigInt(everyoneOW.deny)
         const deny = checked
@@ -563,7 +564,7 @@ export function ChannelPermissionsSection({ channelId, guildId }: ChannelPermiss
                 channelId,
                 targetId: guildId,
                 targetType: PermissionOverwriteTargetType.ROLE,
-                allow: everyoneOW.allow ?? "0",
+                allow: everyoneOW.allow,
                 deny: deny.toString(),
             });
         } catch (error) {
