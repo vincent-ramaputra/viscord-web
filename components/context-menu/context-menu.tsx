@@ -10,14 +10,13 @@ import { Permissions } from "@/enums/permissions.enum";
 import { RelationshipType } from "@/enums/relationship-type.enum";
 import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
 import { checkPermission, getEffectivePermission } from "@/helpers/permissions.helper";
-import { useDeleteRelationshipMutation } from "@/hooks/mutations";
+import { useCreateDMChannelMutation, useDeleteRelationshipMutation } from "@/hooks/mutations";
 import { useDMChannelsQuery } from "@/hooks/queries";
-import { GuildChannel } from "@/interfaces/channel";
+import { getDMRecipientId, GuildChannel } from "@/interfaces/channel";
 import { Guild } from "@/interfaces/guild";
 import { GuildMember } from "@/interfaces/guild-member";
 import Relationship from "@/interfaces/relationship";
 import { Role } from "@/interfaces/role";
-import { createDMChannel } from "@/services/channels/channels.service";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getChannelURL } from "@/utils/url.utils";
@@ -65,6 +64,7 @@ function UserContextMenu({ relationship }: { relationship: Relationship }) {
     const guilds = useGuildsStore(s => s.guilds);
     const [showGuilds, setShowGuilds] = useState(false);
     const { mutate: removeFriend } = useDeleteRelationshipMutation();
+    const { mutateAsync: createDMChannel } = useCreateDMChannelMutation();
     const { data: channels } = useDMChannelsQuery();
     const { hideMenu } = useContextMenu();
     const router = useRouter();
@@ -74,11 +74,16 @@ function UserContextMenu({ relationship }: { relationship: Relationship }) {
             <div className="">
                 <ListItem>Profile</ListItem>
                 <ListItem onClick={async () => {
-                    const channel = channels?.find(ch => ch.recipients[0].id === relationship.user.id);
+                    let channel = channels?.find(ch => getDMRecipientId(ch) === relationship.user.id);
                     if (!channel) {
-                        await createDMChannel(relationship.user.id);
+                        try {
+                            channel = await createDMChannel(relationship.user.id);
+                        } catch (error) {
+                            console.error('Failed creating DM channel', error);
+                            return;
+                        }
                     }
-                    router.push(`/channels/me/${channel!.id}`);
+                    router.push(`/channels/me/${channel.id}`);
                 }}>Message</ListItem>
                 <ListItem>Call</ListItem>
             </div>

@@ -219,8 +219,12 @@ export function useCreateDMChannelMutation() {
     return useMutation({
         mutationFn: async (recipientId: string) => unwrap(await createDMChannel(recipientId)),
         onSuccess: (channel) => {
+            // Components read DM recipients from the profile store, so add them before the channel.
+            const { upsertUserProfile } = useUserProfileStore.getState();
+            for (const recipient of channel.recipients) upsertUserProfile(recipient);
+
             const { updateChannel } = useChannelsStore.getState();
-            updateChannel(channel!);
+            updateChannel(channel);
         }
     })
 }

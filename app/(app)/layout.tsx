@@ -12,7 +12,7 @@ import { ContextMenuProvider } from "@/contexts/context-menu.context";
 import SocketProvider, { useSocket } from "@/contexts/socket.context";
 import { CLIENT_READY_EVENT, GET_USERS_PRESENCE_EVENT, SUBSCRIBE_EVENTS, USER_PRESENCE_UPDATE_EVENT, USER_PROFILE_UPDATE_EVENT } from "@/constants/events";
 import { UserProfile } from "@/interfaces/user-profile";
-import { useGetUserProfile, useUserProfileStore } from "../stores/user-profiles-store";
+import { useDMRecipient, useUserProfileStore } from "../stores/user-profiles-store";
 import { useChannelsStore, useGetDMChannels } from "../stores/channels-store";
 import { DMChannel } from "@/interfaces/channel";
 import UserAvatar from "@/components/user-avatar/user-avatar";
@@ -207,7 +207,7 @@ const UnreadDMWrapper = styled.div`
 `
 
 function UnreadDMChannel({ channel }: { channel: DMChannel }) {
-    const recipient = useGetUserProfile(channel.recipients[0].id);
+    const recipient = useDMRecipient(channel);
     const router = useRouter();
     const [isHovering, setIsHovering] = useState(false);
     if (!recipient) {
@@ -310,9 +310,8 @@ function AppInitializer({ children }: { children: ReactNode }) {
             }
 
             const userProfiles: UserProfile[] = [currentUser.profile].concat(data.relationships?.map(rel => rel.user) ?? []);
-            const dmRecipients = data.dmChannels ? data.dmChannels
-                .map(channel => channel.recipients.find(rep => rep.id !== currentUser.id))
-                .filter(rep => rep !== undefined) : [];
+            // Seed every DM recipient's profile: components read profiles only from the store.
+            const dmRecipients = data.dmChannels?.flatMap(channel => channel.recipients) ?? [];
 
             const uniqueUsers = new Map<string, UserProfile>();
             [...userProfiles, ...dmRecipients, currentUser.profile, ...Array.from(guildsMap.values()).flatMap(guild => guild.members.map(m => m.profile))].forEach(user => {

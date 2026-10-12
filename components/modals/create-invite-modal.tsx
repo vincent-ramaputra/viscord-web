@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { getInviteURL } from "@/utils/url.utils";
 import { useGetDMChannels } from "@/app/stores/channels-store";
 import UserAvatar from "../user-avatar/user-avatar";
-import { useUserProfileStore } from "@/app/stores/user-profiles-store";
+import { useDMRecipient } from "@/app/stores/user-profiles-store";
 import ButtonSecondary from "../buttons/button-secondary";
 import ButtonSuccess from "../buttons/button-success";
 import ButtonPrimary from "../buttons/button-primary";
@@ -166,11 +166,8 @@ const InviteLinkSettingActionButtons = styled.div`
 
 function RelationshipItem({ channel, inviteLink }: { channel: DMChannel, inviteLink: string }) {
     const queryClient = useQueryClient();
-    const userProfiles = useUserProfileStore(s => s.userProfiles);
+    const user = useDMRecipient(channel);
     const { mutate: sendMessage, isPending, isSuccess } = useSendMessageMutation();
-
-    const userId = channel.recipients[0].id;
-    const user = userProfiles.get(userId);
 
     function onSendInvite() {
         sendMessage({ dto: { channelId: channel!.id, content: inviteLink, mentions: [] }, clientId: crypto.randomUUID() }, {
