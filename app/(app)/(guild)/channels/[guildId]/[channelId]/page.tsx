@@ -72,12 +72,12 @@ export default function Page() {
     const [showMemberList, setShowMemberList] = useState(true);
     const typingUsersMap = useUserTypingStore(s => s.typingUsers);
     const presenceMap = useUserPresenceStore(s => s.presenceMap);
-    const allowedMembers = guild?.members.filter(member => {
+    const allowedMembers = useMemo(() => guild?.members.filter(member => {
         const parent = guild.channels.find(ch => ch.id === channel?.parent?.id);
         const effectivePermission = getEffectivePermission(member, guild, channel, parent);
         return checkPermission(effectivePermission, Permissions.VIEW_CHANNELS);
-    }) ?? [];
-    const offlineMembers = allowedMembers?.filter(re => !presenceMap.get(re.userId)) ?? [];
+    }) ?? [], [guild, channel]);
+    const offlineMembers = allowedMembers.filter(re => !presenceMap.get(re.userId));
     const roleGroups = useMemo(() => {
         const hoistedRoles = guild?.roles.filter(role => role.isHoisted).sort((a, b) => b.position - a.position) ?? [];
         const groups: { role: Role | null, members: GuildMember[] }[] = [];
@@ -93,11 +93,11 @@ export default function Page() {
             if (members.length > 0) groups.push({ role, members });
         }
 
-        const noHoistedRoleMembers = guild?.members.filter(member => {
+        const noHoistedRoleMembers = guild ? allowedMembers.filter(member => {
             const roles = member.roles.map(roleId => guild.roles.find(role => roleId === role.id)).filter(role => role !== undefined);
 
             return !!presenceMap.get(member.userId) && !roles.some(role => role.isHoisted);
-        }) ?? [];
+        }) : [];
 
         if (noHoistedRoleMembers.length > 0) groups.push({ role: null, members: noHoistedRoleMembers });
 
