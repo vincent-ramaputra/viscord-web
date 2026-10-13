@@ -340,18 +340,18 @@ export function useUpdatePermissionOverwrite(parentId?: string) {
             const parent = parentId ? getChannel(parentId) : undefined;
             if (!channel) return;
 
-            if (channel.isSynced && channel.parent) {
-                channel.isSynced = false;
-                channel.permissionOverwrites = parent!.permissionOverwrites;
-            }
-            const oldOverwrites = channel.permissionOverwrites;
-            if (oldOverwrites.find(ow => ow.targetId === overwrite.targetId)) {
-                channel.permissionOverwrites = oldOverwrites.map(ow => ow.targetId !== overwrite!.targetId ? ow : overwrite);
-            }
-            else {
-                channel.permissionOverwrites = [...oldOverwrites, overwrite]
-            }
-            updateChannel(channel.guildId, channel.id, channel);
+            const unsync = channel.isSynced && channel.parent;
+            const base = unsync ? parent!.permissionOverwrites : channel.permissionOverwrites;
+            const exists = base.some(ow => ow.targetId === overwrite.targetId);
+            const updatedOverwrites = exists
+                ? base.map(ow => ow.targetId !== overwrite.targetId ? ow : overwrite)
+                : [...base, overwrite];
+
+            updateChannel(channel.guildId, channel.id, {
+                ...channel,
+                isSynced: unsync ? false : channel.isSynced,
+                permissionOverwrites: updatedOverwrites
+            });
         }
     })
 }
@@ -377,9 +377,10 @@ export function useDeletePermissionOverwrite() {
             const channel = getChannel(dto.channelId);
             if (!channel) return;
 
-            const oldOverwrites = channel.permissionOverwrites;
-            channel.permissionOverwrites = oldOverwrites.filter(ow => ow.targetId !== dto.targetId);
-            updateChannel(channel.guildId, channel.id, channel);
+            updateChannel(channel.guildId, channel.id, {
+                ...channel,
+                permissionOverwrites: channel.permissionOverwrites.filter(ow => ow.targetId !== dto.targetId)
+            });
         }
     });
 }

@@ -224,8 +224,10 @@ export const useGuildsStore = create<GuildStoreState>((set, get) => ({
                 ...guild,
                 roles: guild.roles.filter(r => r.id !== roleId),
                 members: guild.members.map(m => {
-                    m.roles = m.roles.filter(id => id !== roleId);
-                    return m;
+                    return {
+                        ...m,
+                        roles: m.roles.filter(id => id !== roleId)
+                    };
                 })
             };
 
