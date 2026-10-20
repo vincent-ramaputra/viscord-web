@@ -1,6 +1,7 @@
 import { UserStatusString } from "@/enums/user-status.enum";
 import { BsMicFill, BsMicMuteFill } from "react-icons/bs";
 import { LuHeadphoneOff, LuHeadphones } from "react-icons/lu";
+import { PiWarningFill } from "react-icons/pi";
 import { FaGear } from "react-icons/fa6";
 import TransparentButton from "../transparent-button/transparent-button";
 import { useEffect, useRef, useState } from "react";
@@ -136,6 +137,15 @@ const IconContainer = styled.div`
 
 `
 
+const MicWarning = styled.span`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  color: var(--icon-warning);
+  pointer-events: none;
+`
+
 const VoiceContainer = styled.div`
     padding: 12px;
     border-bottom: 1px solid var(--border-container);
@@ -208,9 +218,10 @@ export default function UserArea() {
     const [isHovering, setIsHovering] = useState(false);
     const [showProfileCard, setShowProfileCard] = useState(false);
     const profileCardRef = useRef<HTMLDivElement>(null!)
-    const { isDeafened, isMicOff, toggleDeafened, toggleMute } = useVoice();
-    const channelId = useMediasoupStore(s => s.channelId);
+    const { isDeafened, isMicOff, toggleDeafened, toggleMute, channelId, isMicAvailable, status} = useVoice();
     const openSettings = useSettingsOverlay(s => s.openSettings);
+    // the flag is false until the mic is produced, so only warn once connected
+    const showMicWarning = status === 'connected' && !isMicAvailable;
 
     useEffect(() => {
         function handleOutsideClick(e: MouseEvent) {
@@ -248,11 +259,14 @@ export default function UserArea() {
                 <SettingsWrapper>
                     <TransparentButton
                         tooltipSize="14px"
-                        tooltip={isMicOff ? "Turn On Microphone" : "Turn Off Microphone"}
+                        tooltip={showMicWarning ? "Microphone Unavailable" : isMicOff ? "Turn On Microphone" : "Turn Off Microphone"}
                         tooltipPosition="top"
                         onClick={toggleMute}
                     >
                         <IconContainer className={`${isMicOff && 'active'}`}>
+                            {showMicWarning && (
+                                <MicWarning aria-label="Microphone unavailable"><PiWarningFill size={12} /></MicWarning>
+                            )}
                             {isMicOff ? <BsMicMuteFill size={18} /> : <BsMicFill size={18} />}
                         </IconContainer>
                     </TransparentButton>
