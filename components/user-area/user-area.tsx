@@ -2,6 +2,7 @@ import { UserStatusString } from "@/enums/user-status.enum";
 import { BsMicFill, BsMicMuteFill } from "react-icons/bs";
 import { LuHeadphoneOff, LuHeadphones } from "react-icons/lu";
 import { PiWarningFill } from "react-icons/pi";
+import { MdClose } from "react-icons/md";
 import { FaGear } from "react-icons/fa6";
 import TransparentButton from "../transparent-button/transparent-button";
 import { useEffect, useRef, useState } from "react";
@@ -18,7 +19,7 @@ import { useGuildsStore } from "@/app/stores/guilds-store";
 import { SettingsOverlayType } from "@/enums/settings-overlay-type.enum";
 import { useSettingsOverlay } from "@/app/stores/settings-overlay-store";
 import { useVoice } from "@/hooks/use-voice";
-import { VoiceSessionStatus } from "@/lib/voice/voice-session";
+import { VoiceErrorReason, VoiceSessionStatus } from "@/lib/voice/voice-session";
 import { Channel } from "@/interfaces/channel";
 
 const Container = styled.div`
@@ -159,6 +160,15 @@ const VoiceStatus = styled.h2`
     &.warning {
         color: var(--text-warning);
     }
+
+    &.danger {
+        color: var(--text-danger);
+    }
+`
+
+const VoiceErrorDetail = styled.p`
+    font-size: var(--text-xs);
+    color: var(--header-secondary);
 `
 
 const VoiceChannelInfo = styled.p`
@@ -175,6 +185,11 @@ const STATUS_DISPLAY: Record<VoiceSessionStatus, { label: string, type: string }
     connecting: { label: 'Connecting', type: 'warning' },
     connected: { label: 'Voice Connected', type: 'positive' },
     reconnecting: { label: 'Reconnecting', type: 'warning' }
+};
+
+const ERROR_DISPLAY: Record<VoiceErrorReason, { label: string, detail: string }> = {
+    join_failed: { label: "Couldn't Connect", detail: 'Joining voice failed. Try again.' },
+    reconnect_failed: { label: 'Connection Lost', detail: 'You were disconnected from voice.' }
 };
 
 function Voice() {
@@ -213,12 +228,28 @@ function Voice() {
     );
 }
 
+function VoiceError({ reason, onDismiss }: { reason: VoiceErrorReason, onDismiss: () => void }) {
+    const errorDisplay = ERROR_DISPLAY[reason];
+
+    return (
+        <VoiceContainer role="alert">
+            <div className="flex">
+                <div className="flex flex-col flex-1">
+                    <VoiceStatus className="danger">{errorDisplay.label}</VoiceStatus>
+                    <VoiceErrorDetail>{errorDisplay.detail}</VoiceErrorDetail>
+                </div>
+                <IconContainer onClick={onDismiss} aria-label="Dismiss"><MdClose /></IconContainer>
+            </div>
+        </VoiceContainer>
+    );
+}
+
 export default function UserArea() {
     const user = useCurrentUserStore(s => s.user);
     const [isHovering, setIsHovering] = useState(false);
     const [showProfileCard, setShowProfileCard] = useState(false);
     const profileCardRef = useRef<HTMLDivElement>(null!)
-    const { isDeafened, isMicOff, toggleDeafened, toggleMute, channelId, isMicAvailable, status} = useVoice();
+    const { isDeafened, isMicOff, toggleDeafened, toggleMute, channelId, isMicAvailable, status, errorReason, clearError } = useVoice();
     const openSettings = useSettingsOverlay(s => s.openSettings);
     // the flag is false until the mic is produced, so only warn once connected
     const showMicWarning = status === 'connected' && !isMicAvailable;
@@ -244,7 +275,7 @@ export default function UserArea() {
 
     return (
         <Container onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
-            {channelId && <Voice />}
+            {channelId ? <Voice /> : errorReason && <VoiceError reason={errorReason} onDismiss={clearError} />}
             <UserContainer>
                 <UserInfo onClick={() => setShowProfileCard(true)}>
                     <UserAvatar user={user.profile} showStatus={true} />
