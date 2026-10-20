@@ -1,15 +1,18 @@
 import { create } from "zustand";
 import { Consumer, Producer } from "mediasoup-client/types";
-import type { VoiceSessionStatus } from "@/lib/voice/voice-session";
+import type { VoiceErrorReason, VoiceSessionStatus } from "@/lib/voice/voice-session";
 
 interface MediasoupStoreState {
   channelId?: string;
   producers: Map<string, Producer>;
   consumers: Map<string, Consumer>;
   activeSpeakers: Map<string, boolean>;
-  voiceStatus: VoiceSessionStatus,
+  voiceStatus: VoiceSessionStatus;
+  errorReason?: VoiceErrorReason;
+  micAvailable: boolean;
+  setMicAvailable: (micAvailable: boolean) => void;
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => void;
-  setVoiceStatus: (status: VoiceSessionStatus, channelId?: string) => void;
+  setVoiceStatus: (status: VoiceSessionStatus, channelId?: string, errorReason?: VoiceErrorReason) => void;
   addProducer: (id: string, producer: Producer) => void;
   removeProducer: (producerId: string) => void;
   addConsumer: (consumerId: string, consumer: Consumer) => void;
@@ -24,7 +27,10 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
   consumers: new Map(),
   activeSpeakers: new Map(),
   voiceStatus: 'none',
-  setVoiceStatus: (status, channelId) => { set({ voiceStatus: status, channelId }) },
+  errorReason: undefined,
+  micAvailable: false,
+  setMicAvailable: (micAvailable) => set({ micAvailable }),
+  setVoiceStatus: (status, channelId, errorReason) => set({ voiceStatus: status, channelId, errorReason }),
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => {
     const map = new Map(get().activeSpeakers);
     if (isSpeaking) map.set(userId, true);
@@ -59,6 +65,6 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
     set({ consumers: map });
   },
   resetMedia: () => {
-    set({producers: new Map(), consumers: new Map()});
+    set({ producers: new Map(), consumers: new Map() });
   },
 }));

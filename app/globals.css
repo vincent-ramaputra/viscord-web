@@ -46,6 +46,7 @@
   --icon-primary: #ffffff;
   --icon-secondary: oklab(0.834228 0.00196606 -0.00659835);
   --icon-tertiary: oklab(0.75264 0.00240251 -0.00813961);
+  --icon-warning: #F0B232;
 
   --container-background: #2e2e34;
   --container-background-hover: #3a3a41;

@@ -6,6 +6,7 @@ export function useVoice() {
     const channelId = useMediasoupStore((s) => s.channelId);
     const isMuted = useAppSettingsStore(s => s.mediaSettings.isMuted)
     const isDeafened = useAppSettingsStore(s => s.mediaSettings.isDeafened)
+    const isMicAvailable = useMediasoupStore(s => s.micAvailable);
     // deafening also silences the mic without touching isMuted
     const isMicOff = isMuted || isDeafened;
 
@@ -53,6 +54,7 @@ export function useVoice() {
         isMuted,
         isDeafened,
         isMicOff,
+        isMicAvailable,
         status,
         join,
         leave,
