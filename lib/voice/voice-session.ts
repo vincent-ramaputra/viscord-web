@@ -15,6 +15,7 @@ import { VoiceStatePatch } from "@/app/stores/voice-state-store";
 import { unwrap } from "@/services/request";
 
 export type VoiceSessionStatus = 'none' | 'connecting' | 'reconnecting' | 'connected';
+export type VoiceErrorReason = 'join_failed' | 'reconnect_failed';
 
 const RETRY_BASE_DELAY = 2000;
 const MAX_DELAY = 8000;
@@ -38,9 +39,10 @@ interface VoiceSessionDeps {
         removeConsumer(consumerId: string): void;
         addProducer(producer: Producer): void;
         removeProducer(producerId: string): void;
-        setVoice: (status: VoiceSessionStatus, channelId?: string) => void;
+        setVoice: (status: VoiceSessionStatus, channelId?: string, reason?: VoiceErrorReason) => void;
         resetMedia: () => void;
         setActiveSpeaker(userId: string, speaking: boolean): void;
+        setMicAvailable(micAvailable: boolean): void;
     };
 }
 
@@ -85,6 +87,7 @@ export class VoiceSession {
             localAudio?.stop();
             if (attemptNumber !== this.attempt) return;
             console.error("Failed getting audio input", error);
+            this.deps.store.setMicAvailable(false);
         }
 
         try {
@@ -101,7 +104,7 @@ export class VoiceSession {
             if (attemptNumber !== this.attempt) return;
             console.error('Failed connecting to SFU Server', error);
 
-            this.teardown();
+            this.teardown('join_failed');
 
             throw error;
         }
@@ -152,9 +155,11 @@ export class VoiceSession {
             if (this.localAudio) {
                 try {
                     await mediaSession.produceMic(this.localAudio.track);
+                    this.deps.store.setMicAvailable(true);
                 } catch (error) {
                     if (this.attempt !== attempt) throw new Error("Connection closed");
                     console.error("Mic unavailable", error);
+                    this.deps.store.setMicAvailable(false);
                 }
             }
 
@@ -197,8 +202,9 @@ export class VoiceSession {
                 console.error(`Voice reconnection attempt ${retryCount + 1}/${MAX_RETRIES} failed`, error);
             }
         }
+        ++this.attempt;
+        this.teardown('reconnect_failed');
 
-        await this.leave();
     }
 
     private onSessionReplaced = () => {
@@ -213,11 +219,20 @@ export class VoiceSession {
 
     private switchInputDevice = async (deviceId?: string) => {
         if (!this.localAudio) return;
+
+        let track: MediaStreamTrack;
         try {
-            const track = await this.localAudio.switchDevice(deviceId);
-            await this.mediaSession?.replaceMicTrack(track);
+            track = await this.localAudio.switchDevice(deviceId);
         } catch (error) {
-            console.error('Error switching input device', error)
+            console.error('Error switching input device', error);
+            return;
+        }
+        try {
+            await this.mediaSession?.replaceMicTrack(track);
+            this.deps.store.setMicAvailable(true);
+        } catch (error) {
+            console.error('Error replacing mic track', error);
+            this.deps.store.setMicAvailable(false);
         }
     }
 
@@ -293,7 +308,7 @@ export class VoiceSession {
 
     handleServerLeave(channelId: string) {
         if (channelId !== this.channelId) return;
-        if (this.status !== 'connected' && this.status !== 'reconnecting') return; 
+        if (this.status !== 'connected' && this.status !== 'reconnecting') return;
 
         ++this.attempt;
         this.teardown();
@@ -311,7 +326,7 @@ export class VoiceSession {
         this.deps.store.resetMedia();
     }
 
-    private teardown() {
+    private teardown(reason?: VoiceErrorReason) {
         this.resetConnection();
 
         this.localAudio?.stop();
@@ -319,14 +334,15 @@ export class VoiceSession {
 
         this.localAudio = undefined;
         this.channelId = undefined;
+        this.deps.store.setMicAvailable(false);
 
 
-        this.setStatus('none');
+        this.setStatus('none', reason);
     }
 
-    private setStatus(status: VoiceSessionStatus) {
+    private setStatus(status: VoiceSessionStatus, reason?: VoiceErrorReason) {
         this.status = status;
-        this.deps.store.setVoice(status, this.channelId);
+        this.deps.store.setVoice(status, this.channelId, reason);
     }
 }
 
@@ -411,9 +427,9 @@ export const voiceSession = new VoiceSession({
             const { removeProducer } = useMediasoupStore.getState();
             removeProducer(producerId);
         },
-        setVoice: (status, channelId) => {
+        setVoice: (status, channelId, reason) => {
             const { setVoiceStatus } = useMediasoupStore.getState();
-            setVoiceStatus(status, channelId);
+            setVoiceStatus(status, channelId, reason);
         },
         resetMedia: () => {
             const { resetMedia } = useMediasoupStore.getState();
@@ -422,6 +438,10 @@ export const voiceSession = new VoiceSession({
         setActiveSpeaker: (userId, speaking) => {
             const { updateActiveSpeakers } = useMediasoupStore.getState();
             updateActiveSpeakers(userId, speaking);
+        },
+        setMicAvailable: (micAvailable) => {
+            const { setMicAvailable } = useMediasoupStore.getState();
+            setMicAvailable(micAvailable);
         }
     }
 })
