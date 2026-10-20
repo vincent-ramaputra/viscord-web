@@ -11,6 +11,7 @@ interface MediasoupStoreState {
   errorReason?: VoiceErrorReason;
   micAvailable: boolean;
   setMicAvailable: (micAvailable: boolean) => void;
+  clearErrorReason: () => void;
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => void;
   setVoiceStatus: (status: VoiceSessionStatus, channelId?: string, errorReason?: VoiceErrorReason) => void;
   addProducer: (id: string, producer: Producer) => void;
@@ -30,6 +31,7 @@ export const useMediasoupStore = create<MediasoupStoreState>((set, get) => ({
   errorReason: undefined,
   micAvailable: false,
   setMicAvailable: (micAvailable) => set({ micAvailable }),
+  clearErrorReason: () => set({ errorReason: undefined }),
   setVoiceStatus: (status, channelId, errorReason) => set({ voiceStatus: status, channelId, errorReason }),
   updateActiveSpeakers: (userId: string, isSpeaking: boolean) => {
     const map = new Map(get().activeSpeakers);
